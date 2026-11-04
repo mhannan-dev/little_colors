@@ -44,8 +44,8 @@ Anything not listed: ask the user before editing.
 | C-02 | Claude | Color Mixing core + desktop UI + E2E | 05, 11 | done |
 | C-03 | Claude | UI gallery (screenshots in `docs/ui/`) | — | done |
 | X-01 | Codex | Shape Matching + Numbers core logic and tests | 06, 07, 11 | done, see [codex-report-01.md](codex-report-01.md) |
-| C-04 | Claude | Wire X-01 into `index.ts` + voice manifest; Shape Matching UI | 06, 08, 09 | ready, see [claude-task-C-04.md](claude-task-C-04.md) |
-| C-05 | Claude | Numbers UI | 07, 09 | ready after C-04 step 1, see [claude-task-C-05.md](claude-task-C-05.md) |
+| C-04 | Claude | Wire X-01 into `index.ts` + voice manifest; Shape Matching UI | 06, 08, 09 | done, see [claude-report-C-04.md](claude-report-C-04.md) |
+| C-05 | Claude | Numbers UI | 07, 09 | ready, see [claude-task-C-05.md](claude-task-C-05.md) |
 | X-02 | Codex | Settings service, progress service, session timer, parent-gate question generator (core only) | 10, 11, 12 | in progress, see [codex-task-02.md](codex-task-02.md) |
 | C-06 | Claude | Parent gate + settings screen + rest screen UI; IndexedDB adapter; wiring X-02 | 10, 11, 12 | blocked by X-02, see [claude-task-C-06.md](claude-task-C-06.md) |
 | C-07 | Claude | Audio manager + desktop audio adapters, asset manifest, placeholder report, narration script, large-screen scaling | 08, 14, 02 | done, see [claude-report-c07-c08.md](claude-report-c07-c08.md) |

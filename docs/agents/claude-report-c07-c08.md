@@ -37,7 +37,8 @@ Mascot art, all narration recordings (Speech Synthesis / captions for now), and 
 
 ## C-08 — in progress
 
-The release installer build (`pnpm tauri build`) was started; its result will be added here.
+- Release build: **done**. `pnpm tauri build` produced `apps/desktop/src-tauri/target/release/bundle/nsis/Little Colors_0.1.0_x64-setup.exe`, **4.33 MiB** (OF-26 target < 50 MB: met). Tauri downloaded NSIS 3.13 on the first build.
+- Not yet done: installing and running the installer, the offline check, the axe scan, and performance numbers (see claude-task-C-08.md).
 
 ## Requests
 

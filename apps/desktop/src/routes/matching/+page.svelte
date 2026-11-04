@@ -1,5 +1,5 @@
 <script lang="ts">
-	import ComingSoon from '#lib/components/ComingSoon.svelte';
+	import MatchingScene from '#lib/features/shape-matching/MatchingScene.svelte';
 </script>
 
-<ComingSoon />
+<MatchingScene />

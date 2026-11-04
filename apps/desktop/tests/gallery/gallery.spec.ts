@@ -67,10 +67,45 @@ test('main flow at 1280×800', async ({ page }) => {
 	await shot(page, '09-round-complete');
 
 	await page.getByRole('button', { name: 'অন্য খেলা' }).click();
-	await page.getByRole('button', { name: 'আকার মেলানো' }).click();
+	await page.getByRole('button', { name: 'সংখ্যা গোনা' }).click();
 	await expect(page.getByText('এই খেলাটা শীঘ্রই আসছে!').last()).toBeVisible();
 	await settle(page, 600);
 	await shot(page, '10-coming-soon-placeholder');
+});
+
+test('shape matching at 1280×800', async ({ page }) => {
+	await page.setViewportSize({ width: 1280, height: 800 });
+	await page.goto('/play');
+	await page.getByRole('button', { name: 'আকার মেলানো' }).click();
+	const src = page.locator('.sources button.source').first();
+	await expect(src).toBeVisible();
+	await settle(page, 800);
+	await shot(page, '13-matching-ready');
+
+	const name = (await src.getAttribute('aria-label')) ?? '';
+	await src.click();
+	await settle(page, 600);
+	await shot(page, '14-matching-selected');
+
+	// Mid-drag toward the right target.
+	await page.keyboard.press('Escape');
+	await page.locator('.field').click({ position: { x: 5, y: 5 } });
+	const target = page.getByRole('button', { name: `জায়গা: ${name}`, exact: true });
+	const a = (await src.boundingBox())!;
+	const b = (await target.boundingBox())!;
+	await page.mouse.move(a.x + a.width / 2, a.y + a.height / 2);
+	await page.mouse.down();
+	await page.mouse.move((a.x + b.x) / 2 + 60, (a.y + b.y) / 2 - 20, { steps: 10 });
+	await settle(page, 200);
+	await shot(page, '15-matching-dragging');
+	await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2, { steps: 6 });
+	await page.mouse.up();
+	await expect(target.locator('.snapped')).toBeVisible();
+	await settle(page, 700);
+	await shot(page, '16-matching-snapped');
+	await expect(page.getByRole('button', { name: 'পরেরটা' })).toBeVisible({ timeout: 8000 });
+	await settle(page, 400);
+	await shot(page, '17-matching-next');
 });
 
 test('small window 800×600', async ({ page }) => {
