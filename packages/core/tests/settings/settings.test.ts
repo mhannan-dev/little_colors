@@ -47,7 +47,7 @@ describe('settings service (PS-10, PS-23)', () => {
 		service.subscribe((settings) => { if (settings.language === 'en-US') sawChange(); settings.darkMode = true; });
 		const update = service.update({ language: 'en-US' });
 		await changed;
-		expect(service).toBeDefined(); release(); await update;
+		release(); await update;
 		expect((await service.load()).darkMode).toBe(false);
 	});
 	it('serializes overlapping updates and protects returned snapshots', async () => {

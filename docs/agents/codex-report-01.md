@@ -83,6 +83,12 @@ From `packages/core`:
   `setTimeout` in Claude-owned `tests/audio/audioManager.test.ts`; Claude replaced
   that helper, and the rerun passed without changing the shared contracts.
 
+Final verification after X-02 and concurrent catalog integration:
+`npx vitest run` **16 files / 457 tests passed**; `npx tsc --noEmit` **passed**.
+The 1,000-seed sweeps use scoped 60-second test timeouts to tolerate CPU
+contention without removing any assertions. See `codex-report-02.md` for the
+service handoff and current shared-package validation.
+
 ## Integration and assumptions
 
 1. Import the module barrels from `shape-matching/index.ts` and `numbers/index.ts`.
