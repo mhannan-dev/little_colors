@@ -43,13 +43,13 @@ Anything not listed: ask the user before editing.
 | C-01 | Claude | Monorepo, Tauri shell, design tokens, navigation shell | 02, 04, 09, 13 | done |
 | C-02 | Claude | Color Mixing core + desktop UI + E2E | 05, 11 | done |
 | C-03 | Claude | UI gallery (screenshots in `docs/ui/`) | — | done |
-| X-01 | Codex | Shape Matching + Numbers core logic and tests | 06, 07, 11 | in progress, see [codex-task-01.md](codex-task-01.md) |
-| C-04 | Claude | Wire X-01 into `index.ts` + voice manifest; Shape Matching UI | 06, 08, 09 | blocked by X-01 |
-| C-05 | Claude | Numbers UI | 07, 09 | blocked by X-01 |
-| X-02 | Codex | Settings service, progress service, session timer, parent-gate question generator (core only) | 10, 11, 12 | queued, see [codex-task-02.md](codex-task-02.md) |
-| C-06 | Claude | Parent gate + settings screen + rest screen UI; IndexedDB adapter; wiring X-02 | 10, 11, 12 | blocked by X-02 |
+| X-01 | Codex | Shape Matching + Numbers core logic and tests | 06, 07, 11 | done, see [codex-report-01.md](codex-report-01.md) |
+| C-04 | Claude | Wire X-01 into `index.ts` + voice manifest; Shape Matching UI | 06, 08, 09 | ready, see [claude-task-C-04.md](claude-task-C-04.md) |
+| C-05 | Claude | Numbers UI | 07, 09 | ready after C-04 step 1, see [claude-task-C-05.md](claude-task-C-05.md) |
+| X-02 | Codex | Settings service, progress service, session timer, parent-gate question generator (core only) | 10, 11, 12 | in progress, see [codex-task-02.md](codex-task-02.md) |
+| C-06 | Claude | Parent gate + settings screen + rest screen UI; IndexedDB adapter; wiring X-02 | 10, 11, 12 | blocked by X-02, see [claude-task-C-06.md](claude-task-C-06.md) |
 | C-07 | Claude | Audio manager + desktop audio adapters, asset manifest, placeholder report, narration script, large-screen scaling | 08, 14, 02 | done, see [claude-report-c07-c08.md](claude-report-c07-c08.md) |
-| C-08 | Claude | QA pass and Windows installer | 13, 15 | in progress |
+| C-08 | Claude | QA pass and Windows installer | 13, 15 | in progress, see [claude-task-C-08.md](claude-task-C-08.md) |
 
 Rule of thumb: **Codex builds pure logic in `packages/core` (rules, machines, services, tests). Claude builds everything the child sees (`apps/desktop`) and integrates Codex's modules.**
 
@@ -60,9 +60,15 @@ Rule of thumb: **Codex builds pure logic in `packages/core` (rules, machines, se
 3. **Imports across ownership lines:** import from the module's own file (for example `../fsm/createMachine.ts`), never from `src/index.ts`, so that index wiring stays with Claude.
 4. **Shared contracts are frozen while a task runs:** `createMachine` API, `Color` / `Difficulty` / `Locale` / `GameMode` types, `StorageAdapter`, `Clock`, `NarrationEntry`. Changing any of them requires a request and the user's OK.
 5. **No destructive git:** neither agent runs `reset`, `checkout -- <path>`, `stash`, `clean`, rebase, or force operations. Commits only when the user asks.
-6. **Overwriting:** never write a whole file with `cat >`, `Set-Content`, or a full Write without first reading its current content in the same session.
-7. **Finishing:** run `npx vitest run` and `npx tsc --noEmit` in `packages/core` (Codex), or `pnpm test`, `pnpm typecheck`, and `pnpm --filter desktop test:e2e` from the root (Claude). Then write your report and update your row's status in the task board (owner of this file: Claude updates it from the report).
-8. **Conflicts:** if you find that a file you own was changed by someone else, stop and tell the user. Don't revert it.
+6. **Separate commits per agent:** Claude commits only Claude-owned files (subject starts with `Claude:`, ends with the Claude co-author trailer). Codex work is committed separately (subject starts with `Codex:`). Never mix both agents' files in one commit; if both changed, make two commits. Don't commit the other agent's in-progress files.
+7. **Overwriting:** never write a whole file with `cat >`, `Set-Content`, or a full Write without first reading its current content in the same session.
+8. **Finishing:** run `npx vitest run` and `npx tsc --noEmit` in `packages/core` (Codex), or `pnpm test`, `pnpm typecheck`, and `pnpm --filter desktop test:e2e` from the root (Claude). Then write your report and update your row's status in the task board (owner of this file: Claude updates it from the report).
+9. **Conflicts:** if you find that a file you own was changed by someone else, stop and tell the user. Don't revert it.
+
+## Task files
+
+- Codex: [codex-task-01.md](codex-task-01.md), [codex-task-02.md](codex-task-02.md)
+- Claude: [claude-task-C-04.md](claude-task-C-04.md), [claude-task-C-05.md](claude-task-C-05.md), [claude-task-C-06.md](claude-task-C-06.md), [claude-task-C-08.md](claude-task-C-08.md)
 
 ## Reports
 
