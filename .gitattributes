@@ -1,0 +1,11 @@
+# Keep LF everywhere so Windows checkouts do not create whitespace-only diffs.
+* text=auto eol=lf
+
+# Binary assets
+*.png binary
+*.jpg binary
+*.ico binary
+*.icns binary
+*.mp3 binary
+*.woff binary
+*.woff2 binary
