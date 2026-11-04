@@ -1,4 +1,4 @@
-import { VOICE_MANIFEST } from '../audio/voiceManifest.ts';
+import { NARRATION_CATALOG } from '../audio/catalog.ts';
 import type { Locale } from '../types/colors.ts';
 
 /** Spec 14 — every asset the apps use, with its status and license (AS-10..AS-12). */
@@ -67,7 +67,7 @@ const VISUALS: AssetEntry[] = [
 ];
 
 /** Narration recordings: none exist yet, so every line is a placeholder (Speech Synthesis / captions). */
-const NARRATION: AssetEntry[] = VOICE_MANIFEST.flatMap((entry) =>
+const NARRATION: AssetEntry[] = NARRATION_CATALOG.flatMap((entry) =>
 	LOCALES.map(
 		(locale): AssetEntry => ({
 			key: `audio.${locale}.${entry.key}`,

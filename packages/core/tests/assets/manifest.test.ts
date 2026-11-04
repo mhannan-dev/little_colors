@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ASSET_MANIFEST, audioPathFor, placeholders } from '../../src/assets/manifest.ts';
-import { VOICE_MANIFEST } from '../../src/audio/voiceManifest.ts';
+import { NARRATION_CATALOG as VOICE_MANIFEST } from '../../src/audio/catalog.ts';
 
 describe('asset manifest (spec 14)', () => {
 	it('has unique keys, and every entry has a path, status, and license (AS-10, AS-50)', () => {

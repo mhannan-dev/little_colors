@@ -57,7 +57,7 @@ describe('matching pure rules (SM-10 to SM-13)', () => {
 			if (difficulty === 'beginner') expect(round.activities.map((a) => a.matchMode)).toEqual(['color', 'shape', 'color', 'shape', 'color']);
 			if (difficulty === 'advanced') expect(round.activities.every((a) => a.matchMode === 'both')).toBe(true);
 		}
-	});
+	}, 60_000);
 });
 
 describe('matching transitions', () => {

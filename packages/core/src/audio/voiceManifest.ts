@@ -96,23 +96,7 @@ export const VOICE_MANIFEST: readonly NarrationEntry[] = [
 	line('feedback.try-again', 'আবার চেষ্টা করি!', "Let's try again!")
 ];
 
-const BY_KEY = new Map(VOICE_MANIFEST.map((e) => [e.key, e]));
-
-export function getNarration(key: string): NarrationEntry | undefined {
-	return BY_KEY.get(key);
-}
-
-/** Resolves the text to show/speak for a key, honoring the Islamic-expressions setting (AU-30). */
-export function narrationText(
-	key: string,
-	locale: Locale,
-	islamicExpressionsEnabled: boolean
-): string {
-	const entry = BY_KEY.get(key);
-	if (!entry) return '';
-	const bn = locale === 'bn-BD';
-	if (entry.islamic && !islamicExpressionsEnabled) {
-		return (bn ? entry.neutralBn : entry.neutralEn) ?? '';
-	}
-	return bn ? entry.bn : entry.en;
-}
+// Lookups (getNarration / narrationText) live in ./catalog.ts, which merges these base lines
+// with each game mode's narration. They cannot live here: mode narration modules import
+// COLOR_NAMES from this file, so importing them back would create a circular import.
+export type { Locale };

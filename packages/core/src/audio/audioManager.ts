@@ -1,6 +1,6 @@
 import type { Locale } from '../types/colors.ts';
 import type { AudioPlayer, PlaybackResult, SpeechFallback } from './types.ts';
-import { narrationText } from './voiceManifest.ts';
+import { narrationText } from './catalog.ts';
 
 /**
  * Spec 08 — narration manager.

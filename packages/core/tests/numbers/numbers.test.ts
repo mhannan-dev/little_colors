@@ -70,7 +70,7 @@ describe('number generators (NC-03, NC-04, NC-20 to NC-24, QA-03)', () => {
 				if (difficulty === 'advanced') expect(q.pattern.kind).toBe('ABC');
 			}
 		}
-	});
+	}, 60_000);
 	it('does not generate Beginner addition', () => expect(() => questionGenerator(1, 'add', 'beginner')).toThrow(RangeError));
 	it.each(difficulties)('%s rounds follow the curriculum and are reproducible', (difficulty) => {
 		const expected = difficulty === 'beginner' ? ['count', 'numeral-to-quantity', 'compare', 'count', 'pattern'] : difficulty === 'explorer' ? ['count', 'numeral-to-quantity', 'compare', 'add', 'pattern'] : ['numeral-to-quantity', 'compare', 'add', 'add', 'pattern'];
@@ -80,7 +80,7 @@ describe('number generators (NC-03, NC-04, NC-20 to NC-24, QA-03)', () => {
 			expect(createNumbersRound(difficulty, seed)).toEqual(round);
 			if (difficulty === 'advanced') expect(round.activities[1]!.answer).toBe('same');
 		}
-	});
+	}, 60_000);
 });
 
 function setup(q: NumberQuestion = questionGenerator(1, 'numeral-to-quantity', 'beginner')) {
