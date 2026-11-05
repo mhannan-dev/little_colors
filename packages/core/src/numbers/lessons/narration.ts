@@ -11,7 +11,7 @@ export const THINKING_NARRATION: NarrationEntry[] = [
 	{ key: 'thinking.kind.grid-path', bn: 'পথ খুঁজে নিই', en: 'Find a path' },
 	{ key: 'thinking.detail.odd-one-out', bn: 'খেয়াল করে মিল–অমিল খুঁজি', en: 'Look closely and compare' },
 	{ key: 'thinking.detail.sequence-memory', bn: 'দেখি, ঢাকি, তারপর সাজাই', en: 'Look, hide, then recall' },
-	{ key: 'thinking.detail.number-pattern', bn: 'নিয়ম খুঁজে পরের সংখ্যা বলি', en: 'Find the rule and the next number' },
+	{ key: 'thinking.detail.number-pattern', bn: 'ধারা খুঁজি, যোগ আর বিয়োগের গাড়ি খেলি', en: 'Find number patterns and play addition/subtraction drives' },
 	{ key: 'thinking.detail.grid-path', bn: 'বাধা এড়িয়ে পতাকায় পৌঁছাই', en: 'Plan around obstacles to the flag' },
 	{ key: 'thinking.instruction.odd.shape', bn: 'আকার দেখে আলাদা জিনিসটি বেছে নাও।', en: 'Which item has a different shape?' },
 	{ key: 'thinking.instruction.odd.quantity', bn: 'কোন দলে জিনিসের সংখ্যা আলাদা?', en: 'Which group has a different number of objects?' },

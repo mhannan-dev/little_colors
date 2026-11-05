@@ -1,9 +1,23 @@
 import type { NarrationEntry } from '../audio/voiceManifest.ts';
 import { NUMBER_VOCABULARY } from './numberVocabulary.ts';
 import { THINKING_NARRATION } from './lessons/narration.ts';
+import { PICNIC_NARRATION } from './lessons/picnicNarration.ts';
+import { PLAYGROUND_NARRATION } from './lessons/playgroundNarration.ts';
+import { TREASURE_NARRATION } from './lessons/treasureNarration.ts';
+import { SHOP_NARRATION } from './lessons/shopNarration.ts';
+import { TRAIN_NARRATION } from './lessons/trainNarration.ts';
+import { LETTER_NARRATION } from './lessons/letterNarration.ts';
+import { RALLY_NARRATION } from './lessons/rallyNarration.ts';
 
 export const NUMBERS_NARRATION: NarrationEntry[] = [
 	...THINKING_NARRATION,
+	...PICNIC_NARRATION,
+	...PLAYGROUND_NARRATION,
+	...TREASURE_NARRATION,
+	...SHOP_NARRATION,
+	...TRAIN_NARRATION,
+	...LETTER_NARRATION,
+	...RALLY_NARRATION,
 	{ key: 'numbers.instruction.count', bn: 'চলো গুনি! কয়টি জিনিস?', en: "Let's count! How many objects?" },
 	{ key: 'numbers.instruction.numeral-to-quantity', bn: 'সংখ্যার সঙ্গে জিনিসগুলো মেলাই!', en: 'Match the number to the objects!' },
 	{ key: 'numbers.instruction.add', bn: 'সব মিলিয়ে কয়টি?', en: 'How many altogether?' },

@@ -4,7 +4,8 @@ import type { Color } from '../../types/colors.ts';
 export type ThinkingAgeBand = '5-7' | '8-10';
 export type ThinkingKind = 'odd-one-out' | 'sequence-memory' | 'number-pattern' | 'grid-path';
 export type ThinkingShape = 'circle' | 'square' | 'triangle' | 'star';
-export interface ThinkingToken { id: string; shape: ThinkingShape; color: Color }
+export type PicnicPicture = 'apple' | 'sandwich' | 'bottle' | 'napkin' | 'sock';
+export interface ThinkingToken { id: string; shape: ThinkingShape; color: Color; picture?: PicnicPicture }
 export interface GridCell { row: number; column: number }
 export type GridDirection = 'up' | 'down' | 'left' | 'right';
 interface LessonBase { id: string; kind: ThinkingKind; ageBand: ThinkingAgeBand; instructionKey: string }

@@ -22,6 +22,7 @@ Any game screen ──(session timer)──▶ Rest Break
 | `/mixing` | Color Mixing | [05](05-color-mixing.md) |
 | `/matching` | Shape Matching | [06](06-shape-matching.md) |
 | `/numbers` | Numbers & Counting | [07](07-numbers-counting.md) |
+| `/holy-puzzle` | Mosque & Kaaba Picture Puzzle | this file |
 | `/parent` | Parent Settings (behind gate) | [10](10-parent-settings.md) |
 | overlay | Completion | this file |
 | overlay | Rest Break | [12](12-session-rest.md) |
@@ -94,6 +95,7 @@ apps/desktop/src/lib/components/CompletionOverlay.svelte
 ## Tests
 
 - E2E: Welcome → Play → each mode → Back.
+- E2E: choose a mosque or Kaaba picture, solve its tile puzzle, and verify it at small viewport sizes.
 - E2E: complete a round → Completion → Replay and Choose Another Game.
 - Accessibility: keyboard-only navigation through every screen; labels in both languages.
 

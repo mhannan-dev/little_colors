@@ -1,0 +1,1994 @@
+[
+  {
+    "id": "ad",
+    "label": {
+      "bn": "আন্ডোরা",
+      "en": "Andorra"
+    },
+    "continent": "Europe"
+  },
+  {
+    "id": "ae",
+    "label": {
+      "bn": "সংযুক্ত আরব আমিরাত",
+      "en": "United Arab Emirates"
+    },
+    "continent": "Asia"
+  },
+  {
+    "id": "af",
+    "label": {
+      "bn": "আফগানিস্তান",
+      "en": "Afghanistan"
+    },
+    "continent": "Asia"
+  },
+  {
+    "id": "ag",
+    "label": {
+      "bn": "অ্যান্টিগুয়া ও বারবুডা",
+      "en": "Antigua & Barbuda"
+    },
+    "continent": "North America"
+  },
+  {
+    "id": "ai",
+    "label": {
+      "bn": "অ্যাঙ্গুইলা",
+      "en": "Anguilla"
+    },
+    "continent": "North America"
+  },
+  {
+    "id": "al",
+    "label": {
+      "bn": "আলবেনিয়া",
+      "en": "Albania"
+    },
+    "continent": "Europe"
+  },
+  {
+    "id": "am",
+    "label": {
+      "bn": "আর্মেনিয়া",
+      "en": "Armenia"
+    },
+    "continent": "Asia"
+  },
+  {
+    "id": "ao",
+    "label": {
+      "bn": "অ্যাঙ্গোলা",
+      "en": "Angola"
+    },
+    "continent": "Africa"
+  },
+  {
+    "id": "aq",
+    "label": {
+      "bn": "অ্যান্টার্কটিকা",
+      "en": "Antarctica"
+    },
+    "continent": ""
+  },
+  {
+    "id": "ar",
+    "label": {
+      "bn": "আর্জেন্টিনা",
+      "en": "Argentina"
+    },
+    "continent": "South America"
+  },
+  {
+    "id": "as",
+    "label": {
+      "bn": "আমেরিকান সামোয়া",
+      "en": "American Samoa"
+    },
+    "continent": "Oceania"
+  },
+  {
+    "id": "at",
+    "label": {
+      "bn": "অস্ট্রিয়া",
+      "en": "Austria"
+    },
+    "continent": "Europe"
+  },
+  {
+    "id": "au",
+    "label": {
+      "bn": "অস্ট্রেলিয়া",
+      "en": "Australia"
+    },
+    "continent": "Oceania"
+  },
+  {
+    "id": "aw",
+    "label": {
+      "bn": "আরুবা",
+      "en": "Aruba"
+    },
+    "continent": "South America"
+  },
+  {
+    "id": "ax",
+    "label": {
+      "bn": "অলান্ড দ্বীপপুঞ্জ",
+      "en": "Åland Islands"
+    },
+    "continent": "Europe"
+  },
+  {
+    "id": "az",
+    "label": {
+      "bn": "আজারবাইজান",
+      "en": "Azerbaijan"
+    },
+    "continent": "Asia"
+  },
+  {
+    "id": "ba",
+    "label": {
+      "bn": "বসনিয়া ও হার্জেগোভিনা",
+      "en": "Bosnia & Herzegovina"
+    },
+    "continent": "Europe"
+  },
+  {
+    "id": "bb",
+    "label": {
+      "bn": "বার্বাডোজ",
+      "en": "Barbados"
+    },
+    "continent": "North America"
+  },
+  {
+    "id": "bd",
+    "label": {
+      "bn": "বাংলাদেশ",
+      "en": "Bangladesh"
+    },
+    "continent": "Asia"
+  },
+  {
+    "id": "be",
+    "label": {
+      "bn": "বেলজিয়াম",
+      "en": "Belgium"
+    },
+    "continent": "Europe"
+  },
+  {
+    "id": "bf",
+    "label": {
+      "bn": "বুরকিনা ফাসো",
+      "en": "Burkina Faso"
+    },
+    "continent": "Africa"
+  },
+  {
+    "id": "bg",
+    "label": {
+      "bn": "বুলগেরিয়া",
+      "en": "Bulgaria"
+    },
+    "continent": "Europe"
+  },
+  {
+    "id": "bh",
+    "label": {
+      "bn": "বাহারিন",
+      "en": "Bahrain"
+    },
+    "continent": "Asia"
+  },
+  {
+    "id": "bi",
+    "label": {
+      "bn": "বুরুন্ডি",
+      "en": "Burundi"
+    },
+    "continent": "Africa"
+  },
+  {
+    "id": "bj",
+    "label": {
+      "bn": "বেনিন",
+      "en": "Benin"
+    },
+    "continent": "Africa"
+  },
+  {
+    "id": "bl",
+    "label": {
+      "bn": "সেন্ট বার্থেলেমি",
+      "en": "St. Barthélemy"
+    },
+    "continent": "North America"
+  },
+  {
+    "id": "bm",
+    "label": {
+      "bn": "বারমুডা",
+      "en": "Bermuda"
+    },
+    "continent": "North America"
+  },
+  {
+    "id": "bn",
+    "label": {
+      "bn": "ব্রুনেই",
+      "en": "Brunei"
+    },
+    "continent": "Asia"
+  },
+  {
+    "id": "bo",
+    "label": {
+      "bn": "বলিভিয়া",
+      "en": "Bolivia"
+    },
+    "continent": "South America"
+  },
+  {
+    "id": "bq",
+    "label": {
+      "bn": "ক্যারিবিয়ান নেদারল্যান্ডস",
+      "en": "Caribbean Netherlands"
+    },
+    "continent": "South America"
+  },
+  {
+    "id": "br",
+    "label": {
+      "bn": "ব্রাজিল",
+      "en": "Brazil"
+    },
+    "continent": "South America"
+  },
+  {
+    "id": "bs",
+    "label": {
+      "bn": "বাহামা দ্বীপপুঞ্জ",
+      "en": "Bahamas"
+    },
+    "continent": "North America"
+  },
+  {
+    "id": "bt",
+    "label": {
+      "bn": "ভুটান",
+      "en": "Bhutan"
+    },
+    "continent": "Asia"
+  },
+  {
+    "id": "bv",
+    "label": {
+      "bn": "বোভেট দ্বীপ",
+      "en": "Bouvet Island"
+    },
+    "continent": ""
+  },
+  {
+    "id": "bw",
+    "label": {
+      "bn": "বতসোয়ানা",
+      "en": "Botswana"
+    },
+    "continent": "Africa"
+  },
+  {
+    "id": "by",
+    "label": {
+      "bn": "বেলারুশ",
+      "en": "Belarus"
+    },
+    "continent": "Europe"
+  },
+  {
+    "id": "bz",
+    "label": {
+      "bn": "বেলিজ",
+      "en": "Belize"
+    },
+    "continent": "North America"
+  },
+  {
+    "id": "ca",
+    "label": {
+      "bn": "কানাডা",
+      "en": "Canada"
+    },
+    "continent": "North America"
+  },
+  {
+    "id": "cc",
+    "label": {
+      "bn": "কোকোস (কিলিং) দ্বীপপুঞ্জ",
+      "en": "Cocos (Keeling) Islands"
+    },
+    "continent": "Asia"
+  },
+  {
+    "id": "cd",
+    "label": {
+      "bn": "কঙ্গো-কিনশাসা",
+      "en": "Congo - Kinshasa"
+    },
+    "continent": "Africa"
+  },
+  {
+    "id": "cf",
+    "label": {
+      "bn": "মধ্য আফ্রিকান প্রজাতন্ত্র",
+      "en": "Central African Republic"
+    },
+    "continent": "Africa"
+  },
+  {
+    "id": "cg",
+    "label": {
+      "bn": "কঙ্গো - ব্রাজাভিল",
+      "en": "Congo - Brazzaville"
+    },
+    "continent": "Africa"
+  },
+  {
+    "id": "ch",
+    "label": {
+      "bn": "সুইজারল্যান্ড",
+      "en": "Switzerland"
+    },
+    "continent": "Europe"
+  },
+  {
+    "id": "ci",
+    "label": {
+      "bn": "কোট ডি‘আইভোর",
+      "en": "Côte d’Ivoire"
+    },
+    "continent": "Africa"
+  },
+  {
+    "id": "ck",
+    "label": {
+      "bn": "কুক দ্বীপপুঞ্জ",
+      "en": "Cook Islands"
+    },
+    "continent": "Oceania"
+  },
+  {
+    "id": "cl",
+    "label": {
+      "bn": "চিলি",
+      "en": "Chile"
+    },
+    "continent": "South America"
+  },
+  {
+    "id": "cm",
+    "label": {
+      "bn": "ক্যামেরুন",
+      "en": "Cameroon"
+    },
+    "continent": "Africa"
+  },
+  {
+    "id": "cn",
+    "label": {
+      "bn": "চীন",
+      "en": "China"
+    },
+    "continent": "Asia"
+  },
+  {
+    "id": "co",
+    "label": {
+      "bn": "কলম্বিয়া",
+      "en": "Colombia"
+    },
+    "continent": "South America"
+  },
+  {
+    "id": "cr",
+    "label": {
+      "bn": "কোস্টারিকা",
+      "en": "Costa Rica"
+    },
+    "continent": "North America"
+  },
+  {
+    "id": "cu",
+    "label": {
+      "bn": "কিউবা",
+      "en": "Cuba"
+    },
+    "continent": "North America"
+  },
+  {
+    "id": "cv",
+    "label": {
+      "bn": "কেপ ভার্দে",
+      "en": "Cape Verde"
+    },
+    "continent": "Africa"
+  },
+  {
+    "id": "cw",
+    "label": {
+      "bn": "কুরাসাও",
+      "en": "Curaçao"
+    },
+    "continent": "South America"
+  },
+  {
+    "id": "cx",
+    "label": {
+      "bn": "ক্রিসমাস দ্বীপ",
+      "en": "Christmas Island"
+    },
+    "continent": "Asia"
+  },
+  {
+    "id": "cy",
+    "label": {
+      "bn": "সাইপ্রাস",
+      "en": "Cyprus"
+    },
+    "continent": "Europe"
+  },
+  {
+    "id": "cz",
+    "label": {
+      "bn": "চেকিয়া",
+      "en": "Czechia"
+    },
+    "continent": "Europe"
+  },
+  {
+    "id": "de",
+    "label": {
+      "bn": "জার্মানি",
+      "en": "Germany"
+    },
+    "continent": "Europe"
+  },
+  {
+    "id": "dj",
+    "label": {
+      "bn": "জিবুতি",
+      "en": "Djibouti"
+    },
+    "continent": "Africa"
+  },
+  {
+    "id": "dk",
+    "label": {
+      "bn": "ডেনমার্ক",
+      "en": "Denmark"
+    },
+    "continent": "Europe"
+  },
+  {
+    "id": "dm",
+    "label": {
+      "bn": "ডোমিনিকা",
+      "en": "Dominica"
+    },
+    "continent": "North America"
+  },
+  {
+    "id": "do",
+    "label": {
+      "bn": "ডোমেনিকান প্রজাতন্ত্র",
+      "en": "Dominican Republic"
+    },
+    "continent": "North America"
+  },
+  {
+    "id": "dz",
+    "label": {
+      "bn": "আলজেরিয়া",
+      "en": "Algeria"
+    },
+    "continent": "Africa"
+  },
+  {
+    "id": "ec",
+    "label": {
+      "bn": "ইকুয়েডর",
+      "en": "Ecuador"
+    },
+    "continent": "South America"
+  },
+  {
+    "id": "ee",
+    "label": {
+      "bn": "এস্তোনিয়া",
+      "en": "Estonia"
+    },
+    "continent": "Europe"
+  },
+  {
+    "id": "eg",
+    "label": {
+      "bn": "মিশর",
+      "en": "Egypt"
+    },
+    "continent": "Africa"
+  },
+  {
+    "id": "eh",
+    "label": {
+      "bn": "পশ্চিম সাহারা",
+      "en": "Western Sahara"
+    },
+    "continent": "Africa"
+  },
+  {
+    "id": "er",
+    "label": {
+      "bn": "ইরিত্রিয়া",
+      "en": "Eritrea"
+    },
+    "continent": "Africa"
+  },
+  {
+    "id": "es",
+    "label": {
+      "bn": "স্পেন",
+      "en": "Spain"
+    },
+    "continent": "Europe"
+  },
+  {
+    "id": "et",
+    "label": {
+      "bn": "ইথিওপিয়া",
+      "en": "Ethiopia"
+    },
+    "continent": "Africa"
+  },
+  {
+    "id": "fi",
+    "label": {
+      "bn": "ফিনল্যান্ড",
+      "en": "Finland"
+    },
+    "continent": "Europe"
+  },
+  {
+    "id": "fj",
+    "label": {
+      "bn": "ফিজি",
+      "en": "Fiji"
+    },
+    "continent": "Oceania"
+  },
+  {
+    "id": "fk",
+    "label": {
+      "bn": "ফকল্যান্ড দ্বীপপুঞ্জ",
+      "en": "Falkland Islands"
+    },
+    "continent": "South America"
+  },
+  {
+    "id": "fm",
+    "label": {
+      "bn": "মাইক্রোনেশিয়া",
+      "en": "Micronesia"
+    },
+    "continent": "Oceania"
+  },
+  {
+    "id": "fo",
+    "label": {
+      "bn": "ফ্যারো দ্বীপপুঞ্জ",
+      "en": "Faroe Islands"
+    },
+    "continent": "Europe"
+  },
+  {
+    "id": "fr",
+    "label": {
+      "bn": "ফ্রান্স",
+      "en": "France"
+    },
+    "continent": "Europe"
+  },
+  {
+    "id": "ga",
+    "label": {
+      "bn": "গ্যাবন",
+      "en": "Gabon"
+    },
+    "continent": "Africa"
+  },
+  {
+    "id": "gb",
+    "label": {
+      "bn": "যুক্তরাজ্য",
+      "en": "United Kingdom"
+    },
+    "continent": "Europe"
+  },
+  {
+    "id": "gd",
+    "label": {
+      "bn": "গ্রেনাডা",
+      "en": "Grenada"
+    },
+    "continent": "North America"
+  },
+  {
+    "id": "ge",
+    "label": {
+      "bn": "জর্জিয়া",
+      "en": "Georgia"
+    },
+    "continent": "Asia"
+  },
+  {
+    "id": "gf",
+    "label": {
+      "bn": "ফরাসি গায়ানা",
+      "en": "French Guiana"
+    },
+    "continent": "South America"
+  },
+  {
+    "id": "gg",
+    "label": {
+      "bn": "গার্নসি",
+      "en": "Guernsey"
+    },
+    "continent": "Europe"
+  },
+  {
+    "id": "gh",
+    "label": {
+      "bn": "ঘানা",
+      "en": "Ghana"
+    },
+    "continent": "Africa"
+  },
+  {
+    "id": "gi",
+    "label": {
+      "bn": "জিব্রাল্টার",
+      "en": "Gibraltar"
+    },
+    "continent": "Europe"
+  },
+  {
+    "id": "gl",
+    "label": {
+      "bn": "গ্রীনল্যান্ড",
+      "en": "Greenland"
+    },
+    "continent": "North America"
+  },
+  {
+    "id": "gm",
+    "label": {
+      "bn": "গাম্বিয়া",
+      "en": "Gambia"
+    },
+    "continent": "Africa"
+  },
+  {
+    "id": "gn",
+    "label": {
+      "bn": "গিনি",
+      "en": "Guinea"
+    },
+    "continent": "Africa"
+  },
+  {
+    "id": "gp",
+    "label": {
+      "bn": "গুয়াদেলৌপ",
+      "en": "Guadeloupe"
+    },
+    "continent": "North America"
+  },
+  {
+    "id": "gq",
+    "label": {
+      "bn": "নিরক্ষীয় গিনি",
+      "en": "Equatorial Guinea"
+    },
+    "continent": "Africa"
+  },
+  {
+    "id": "gr",
+    "label": {
+      "bn": "গ্রিস",
+      "en": "Greece"
+    },
+    "continent": "Europe"
+  },
+  {
+    "id": "gs",
+    "label": {
+      "bn": "দক্ষিণ জর্জিয়া ও দক্ষিণ স্যান্ডউইচ দ্বীপপুঞ্জ",
+      "en": "South Georgia & South Sandwich Islands"
+    },
+    "continent": "Antarctica"
+  },
+  {
+    "id": "gt",
+    "label": {
+      "bn": "গুয়াতেমালা",
+      "en": "Guatemala"
+    },
+    "continent": "North America"
+  },
+  {
+    "id": "gu",
+    "label": {
+      "bn": "গুয়াম",
+      "en": "Guam"
+    },
+    "continent": "Oceania"
+  },
+  {
+    "id": "gw",
+    "label": {
+      "bn": "গিনি-বিসাউ",
+      "en": "Guinea-Bissau"
+    },
+    "continent": "Africa"
+  },
+  {
+    "id": "gy",
+    "label": {
+      "bn": "গায়ানা",
+      "en": "Guyana"
+    },
+    "continent": "South America"
+  },
+  {
+    "id": "hk",
+    "label": {
+      "bn": "হংকং এসএআর চীন",
+      "en": "Hong Kong SAR China"
+    },
+    "continent": "Asia"
+  },
+  {
+    "id": "hm",
+    "label": {
+      "bn": "হার্ড এবং ম্যাকডোনাল্ড দ্বীপপুঞ্জ",
+      "en": "Heard Island & McDonald Islands"
+    },
+    "continent": ""
+  },
+  {
+    "id": "hn",
+    "label": {
+      "bn": "হন্ডুরাস",
+      "en": "Honduras"
+    },
+    "continent": "North America"
+  },
+  {
+    "id": "hr",
+    "label": {
+      "bn": "ক্রোয়েশিয়া",
+      "en": "Croatia"
+    },
+    "continent": "Europe"
+  },
+  {
+    "id": "ht",
+    "label": {
+      "bn": "হাইতি",
+      "en": "Haiti"
+    },
+    "continent": "North America"
+  },
+  {
+    "id": "hu",
+    "label": {
+      "bn": "হাঙ্গেরি",
+      "en": "Hungary"
+    },
+    "continent": "Europe"
+  },
+  {
+    "id": "id",
+    "label": {
+      "bn": "ইন্দোনেশিয়া",
+      "en": "Indonesia"
+    },
+    "continent": "Asia"
+  },
+  {
+    "id": "ie",
+    "label": {
+      "bn": "আয়ারল্যান্ড",
+      "en": "Ireland"
+    },
+    "continent": "Europe"
+  },
+  {
+    "id": "il",
+    "label": {
+      "bn": "ইজরায়েল",
+      "en": "Israel"
+    },
+    "continent": "Asia"
+  },
+  {
+    "id": "im",
+    "label": {
+      "bn": "আইল অফ ম্যান",
+      "en": "Isle of Man"
+    },
+    "continent": "Europe"
+  },
+  {
+    "id": "in",
+    "label": {
+      "bn": "ভারত",
+      "en": "India"
+    },
+    "continent": "Asia"
+  },
+  {
+    "id": "io",
+    "label": {
+      "bn": "ব্রিটিশ ভারত মহাসাগরীয় অঞ্চল",
+      "en": "British Indian Ocean Territory"
+    },
+    "continent": "Asia"
+  },
+  {
+    "id": "iq",
+    "label": {
+      "bn": "ইরাক",
+      "en": "Iraq"
+    },
+    "continent": "Asia"
+  },
+  {
+    "id": "ir",
+    "label": {
+      "bn": "ইরান",
+      "en": "Iran"
+    },
+    "continent": "Asia"
+  },
+  {
+    "id": "is",
+    "label": {
+      "bn": "আইসল্যান্ড",
+      "en": "Iceland"
+    },
+    "continent": "Europe"
+  },
+  {
+    "id": "it",
+    "label": {
+      "bn": "ইতালি",
+      "en": "Italy"
+    },
+    "continent": "Europe"
+  },
+  {
+    "id": "je",
+    "label": {
+      "bn": "জার্সি",
+      "en": "Jersey"
+    },
+    "continent": "Europe"
+  },
+  {
+    "id": "jm",
+    "label": {
+      "bn": "জামাইকা",
+      "en": "Jamaica"
+    },
+    "continent": "North America"
+  },
+  {
+    "id": "jo",
+    "label": {
+      "bn": "জর্ডন",
+      "en": "Jordan"
+    },
+    "continent": "Asia"
+  },
+  {
+    "id": "jp",
+    "label": {
+      "bn": "জাপান",
+      "en": "Japan"
+    },
+    "continent": "Asia"
+  },
+  {
+    "id": "ke",
+    "label": {
+      "bn": "কেনিয়া",
+      "en": "Kenya"
+    },
+    "continent": "Africa"
+  },
+  {
+    "id": "kg",
+    "label": {
+      "bn": "কিরগিজস্তান",
+      "en": "Kyrgyzstan"
+    },
+    "continent": "Asia"
+  },
+  {
+    "id": "kh",
+    "label": {
+      "bn": "কম্বোডিয়া",
+      "en": "Cambodia"
+    },
+    "continent": "Asia"
+  },
+  {
+    "id": "ki",
+    "label": {
+      "bn": "কিরিবাতি",
+      "en": "Kiribati"
+    },
+    "continent": "Oceania"
+  },
+  {
+    "id": "km",
+    "label": {
+      "bn": "কমোরোস",
+      "en": "Comoros"
+    },
+    "continent": "Africa"
+  },
+  {
+    "id": "kn",
+    "label": {
+      "bn": "সেন্ট কিটস ও নেভিস",
+      "en": "St. Kitts & Nevis"
+    },
+    "continent": "North America"
+  },
+  {
+    "id": "kp",
+    "label": {
+      "bn": "উত্তর কোরিয়া",
+      "en": "North Korea"
+    },
+    "continent": "Asia"
+  },
+  {
+    "id": "kr",
+    "label": {
+      "bn": "দক্ষিণ কোরিয়া",
+      "en": "South Korea"
+    },
+    "continent": "Asia"
+  },
+  {
+    "id": "kw",
+    "label": {
+      "bn": "কুয়েত",
+      "en": "Kuwait"
+    },
+    "continent": "Asia"
+  },
+  {
+    "id": "ky",
+    "label": {
+      "bn": "কেম্যান দ্বীপপুঞ্জ",
+      "en": "Cayman Islands"
+    },
+    "continent": "North America"
+  },
+  {
+    "id": "kz",
+    "label": {
+      "bn": "কাজাখস্তান",
+      "en": "Kazakhstan"
+    },
+    "continent": "Asia"
+  },
+  {
+    "id": "la",
+    "label": {
+      "bn": "লাওস",
+      "en": "Laos"
+    },
+    "continent": "Asia"
+  },
+  {
+    "id": "lb",
+    "label": {
+      "bn": "লেবানন",
+      "en": "Lebanon"
+    },
+    "continent": "Asia"
+  },
+  {
+    "id": "lc",
+    "label": {
+      "bn": "সেন্ট লুসিয়া",
+      "en": "St. Lucia"
+    },
+    "continent": "North America"
+  },
+  {
+    "id": "li",
+    "label": {
+      "bn": "লিচেনস্টেইন",
+      "en": "Liechtenstein"
+    },
+    "continent": "Europe"
+  },
+  {
+    "id": "lk",
+    "label": {
+      "bn": "শ্রীলঙ্কা",
+      "en": "Sri Lanka"
+    },
+    "continent": "Asia"
+  },
+  {
+    "id": "lr",
+    "label": {
+      "bn": "লাইবেরিয়া",
+      "en": "Liberia"
+    },
+    "continent": "Africa"
+  },
+  {
+    "id": "ls",
+    "label": {
+      "bn": "লেসোথো",
+      "en": "Lesotho"
+    },
+    "continent": "Africa"
+  },
+  {
+    "id": "lt",
+    "label": {
+      "bn": "লিথুয়ানিয়া",
+      "en": "Lithuania"
+    },
+    "continent": "Europe"
+  },
+  {
+    "id": "lu",
+    "label": {
+      "bn": "লাক্সেমবার্গ",
+      "en": "Luxembourg"
+    },
+    "continent": "Europe"
+  },
+  {
+    "id": "lv",
+    "label": {
+      "bn": "লাটভিয়া",
+      "en": "Latvia"
+    },
+    "continent": "Europe"
+  },
+  {
+    "id": "ly",
+    "label": {
+      "bn": "লিবিয়া",
+      "en": "Libya"
+    },
+    "continent": "Africa"
+  },
+  {
+    "id": "ma",
+    "label": {
+      "bn": "মরক্কো",
+      "en": "Morocco"
+    },
+    "continent": "Africa"
+  },
+  {
+    "id": "mc",
+    "label": {
+      "bn": "মোনাকো",
+      "en": "Monaco"
+    },
+    "continent": "Europe"
+  },
+  {
+    "id": "md",
+    "label": {
+      "bn": "মলডোভা",
+      "en": "Moldova"
+    },
+    "continent": "Europe"
+  },
+  {
+    "id": "me",
+    "label": {
+      "bn": "মন্টিনিগ্রো",
+      "en": "Montenegro"
+    },
+    "continent": "Europe"
+  },
+  {
+    "id": "mf",
+    "label": {
+      "bn": "সেন্ট মার্টিন",
+      "en": "St. Martin"
+    },
+    "continent": "North America"
+  },
+  {
+    "id": "mg",
+    "label": {
+      "bn": "মাদাগাস্কার",
+      "en": "Madagascar"
+    },
+    "continent": "Africa"
+  },
+  {
+    "id": "mh",
+    "label": {
+      "bn": "মার্শাল দ্বীপপুঞ্জ",
+      "en": "Marshall Islands"
+    },
+    "continent": "Oceania"
+  },
+  {
+    "id": "mk",
+    "label": {
+      "bn": "উত্তর ম্যাসেডোনিয়া",
+      "en": "North Macedonia"
+    },
+    "continent": "Europe"
+  },
+  {
+    "id": "ml",
+    "label": {
+      "bn": "মালি",
+      "en": "Mali"
+    },
+    "continent": "Africa"
+  },
+  {
+    "id": "mm",
+    "label": {
+      "bn": "মায়ানমার (বার্মা)",
+      "en": "Myanmar (Burma)"
+    },
+    "continent": "Asia"
+  },
+  {
+    "id": "mn",
+    "label": {
+      "bn": "মঙ্গোলিয়া",
+      "en": "Mongolia"
+    },
+    "continent": "Asia"
+  },
+  {
+    "id": "mo",
+    "label": {
+      "bn": "ম্যাকাও এসএআর চীন",
+      "en": "Macao SAR China"
+    },
+    "continent": "Asia"
+  },
+  {
+    "id": "mp",
+    "label": {
+      "bn": "উত্তরাঞ্চলীয় মারিয়ানা দ্বীপপুঞ্জ",
+      "en": "Northern Mariana Islands"
+    },
+    "continent": "Oceania"
+  },
+  {
+    "id": "mq",
+    "label": {
+      "bn": "মার্টিনিক",
+      "en": "Martinique"
+    },
+    "continent": "North America"
+  },
+  {
+    "id": "mr",
+    "label": {
+      "bn": "মরিতানিয়া",
+      "en": "Mauritania"
+    },
+    "continent": "Africa"
+  },
+  {
+    "id": "ms",
+    "label": {
+      "bn": "মন্টসেরাট",
+      "en": "Montserrat"
+    },
+    "continent": "North America"
+  },
+  {
+    "id": "mt",
+    "label": {
+      "bn": "মাল্টা",
+      "en": "Malta"
+    },
+    "continent": "Europe"
+  },
+  {
+    "id": "mu",
+    "label": {
+      "bn": "মরিশাস",
+      "en": "Mauritius"
+    },
+    "continent": "Africa"
+  },
+  {
+    "id": "mv",
+    "label": {
+      "bn": "মালদ্বীপ",
+      "en": "Maldives"
+    },
+    "continent": "Asia"
+  },
+  {
+    "id": "mw",
+    "label": {
+      "bn": "মালাউই",
+      "en": "Malawi"
+    },
+    "continent": "Africa"
+  },
+  {
+    "id": "mx",
+    "label": {
+      "bn": "মেক্সিকো",
+      "en": "Mexico"
+    },
+    "continent": "North America"
+  },
+  {
+    "id": "my",
+    "label": {
+      "bn": "মালয়েশিয়া",
+      "en": "Malaysia"
+    },
+    "continent": "Asia"
+  },
+  {
+    "id": "mz",
+    "label": {
+      "bn": "মোজাম্বিক",
+      "en": "Mozambique"
+    },
+    "continent": "Africa"
+  },
+  {
+    "id": "na",
+    "label": {
+      "bn": "নামিবিয়া",
+      "en": "Namibia"
+    },
+    "continent": "Africa"
+  },
+  {
+    "id": "nc",
+    "label": {
+      "bn": "নিউ ক্যালেডোনিয়া",
+      "en": "New Caledonia"
+    },
+    "continent": "Oceania"
+  },
+  {
+    "id": "ne",
+    "label": {
+      "bn": "নাইজার",
+      "en": "Niger"
+    },
+    "continent": "Africa"
+  },
+  {
+    "id": "nf",
+    "label": {
+      "bn": "নরফোক দ্বীপ",
+      "en": "Norfolk Island"
+    },
+    "continent": "Oceania"
+  },
+  {
+    "id": "ng",
+    "label": {
+      "bn": "নাইজেরিয়া",
+      "en": "Nigeria"
+    },
+    "continent": "Africa"
+  },
+  {
+    "id": "ni",
+    "label": {
+      "bn": "নিকারাগুয়া",
+      "en": "Nicaragua"
+    },
+    "continent": "North America"
+  },
+  {
+    "id": "nl",
+    "label": {
+      "bn": "নেদারল্যান্ডস",
+      "en": "Netherlands"
+    },
+    "continent": "Europe"
+  },
+  {
+    "id": "no",
+    "label": {
+      "bn": "নরওয়ে",
+      "en": "Norway"
+    },
+    "continent": "Europe"
+  },
+  {
+    "id": "np",
+    "label": {
+      "bn": "নেপাল",
+      "en": "Nepal"
+    },
+    "continent": "Asia"
+  },
+  {
+    "id": "nr",
+    "label": {
+      "bn": "নাউরু",
+      "en": "Nauru"
+    },
+    "continent": "Oceania"
+  },
+  {
+    "id": "nu",
+    "label": {
+      "bn": "নিউয়ে",
+      "en": "Niue"
+    },
+    "continent": "Oceania"
+  },
+  {
+    "id": "nz",
+    "label": {
+      "bn": "নিউজিল্যান্ড",
+      "en": "New Zealand"
+    },
+    "continent": "Oceania"
+  },
+  {
+    "id": "om",
+    "label": {
+      "bn": "ওমান",
+      "en": "Oman"
+    },
+    "continent": "Asia"
+  },
+  {
+    "id": "pa",
+    "label": {
+      "bn": "পানামা",
+      "en": "Panama"
+    },
+    "continent": "North America"
+  },
+  {
+    "id": "pe",
+    "label": {
+      "bn": "পেরু",
+      "en": "Peru"
+    },
+    "continent": "South America"
+  },
+  {
+    "id": "pf",
+    "label": {
+      "bn": "ফরাসি পলিনেশিয়া",
+      "en": "French Polynesia"
+    },
+    "continent": "Oceania"
+  },
+  {
+    "id": "pg",
+    "label": {
+      "bn": "পাপুয়া নিউ গিনি",
+      "en": "Papua New Guinea"
+    },
+    "continent": "Oceania"
+  },
+  {
+    "id": "ph",
+    "label": {
+      "bn": "ফিলিপাইন",
+      "en": "Philippines"
+    },
+    "continent": "Asia"
+  },
+  {
+    "id": "pk",
+    "label": {
+      "bn": "পাকিস্তান",
+      "en": "Pakistan"
+    },
+    "continent": "Asia"
+  },
+  {
+    "id": "pl",
+    "label": {
+      "bn": "পোল্যান্ড",
+      "en": "Poland"
+    },
+    "continent": "Europe"
+  },
+  {
+    "id": "pm",
+    "label": {
+      "bn": "সেন্ট পিয়ের ও মিকুয়েলন",
+      "en": "St. Pierre & Miquelon"
+    },
+    "continent": "North America"
+  },
+  {
+    "id": "pn",
+    "label": {
+      "bn": "পিটকেয়ার্ন দ্বীপপুঞ্জ",
+      "en": "Pitcairn Islands"
+    },
+    "continent": "Oceania"
+  },
+  {
+    "id": "pr",
+    "label": {
+      "bn": "পুয়ের্তো রিকো",
+      "en": "Puerto Rico"
+    },
+    "continent": "North America"
+  },
+  {
+    "id": "ps",
+    "label": {
+      "bn": "ফিলিস্তিনি ভূখণ্ড",
+      "en": "Palestinian Territories"
+    },
+    "continent": "Asia"
+  },
+  {
+    "id": "pt",
+    "label": {
+      "bn": "পর্তুগাল",
+      "en": "Portugal"
+    },
+    "continent": "Europe"
+  },
+  {
+    "id": "pw",
+    "label": {
+      "bn": "পালাউ",
+      "en": "Palau"
+    },
+    "continent": "Oceania"
+  },
+  {
+    "id": "py",
+    "label": {
+      "bn": "প্যারাগুয়ে",
+      "en": "Paraguay"
+    },
+    "continent": "South America"
+  },
+  {
+    "id": "qa",
+    "label": {
+      "bn": "কাতার",
+      "en": "Qatar"
+    },
+    "continent": "Asia"
+  },
+  {
+    "id": "re",
+    "label": {
+      "bn": "রিইউনিয়ন",
+      "en": "Réunion"
+    },
+    "continent": "Africa"
+  },
+  {
+    "id": "ro",
+    "label": {
+      "bn": "রোমানিয়া",
+      "en": "Romania"
+    },
+    "continent": "Europe"
+  },
+  {
+    "id": "rs",
+    "label": {
+      "bn": "সার্বিয়া",
+      "en": "Serbia"
+    },
+    "continent": "Europe"
+  },
+  {
+    "id": "ru",
+    "label": {
+      "bn": "রাশিয়া",
+      "en": "Russia"
+    },
+    "continent": "Europe"
+  },
+  {
+    "id": "rw",
+    "label": {
+      "bn": "রুয়ান্ডা",
+      "en": "Rwanda"
+    },
+    "continent": "Africa"
+  },
+  {
+    "id": "sa",
+    "label": {
+      "bn": "সৌদি আরব",
+      "en": "Saudi Arabia"
+    },
+    "continent": "Asia"
+  },
+  {
+    "id": "sb",
+    "label": {
+      "bn": "সলোমন দ্বীপপুঞ্জ",
+      "en": "Solomon Islands"
+    },
+    "continent": "Oceania"
+  },
+  {
+    "id": "sc",
+    "label": {
+      "bn": "সিসিলি",
+      "en": "Seychelles"
+    },
+    "continent": "Africa"
+  },
+  {
+    "id": "sd",
+    "label": {
+      "bn": "সুদান",
+      "en": "Sudan"
+    },
+    "continent": "Africa"
+  },
+  {
+    "id": "se",
+    "label": {
+      "bn": "সুইডেন",
+      "en": "Sweden"
+    },
+    "continent": "Europe"
+  },
+  {
+    "id": "sg",
+    "label": {
+      "bn": "সিঙ্গাপুর",
+      "en": "Singapore"
+    },
+    "continent": "Asia"
+  },
+  {
+    "id": "sh",
+    "label": {
+      "bn": "সেন্ট হেলেনা",
+      "en": "St. Helena, Ascension & Tristan da Cunha"
+    },
+    "continent": "Africa"
+  },
+  {
+    "id": "si",
+    "label": {
+      "bn": "স্লোভেনিয়া",
+      "en": "Slovenia"
+    },
+    "continent": "Europe"
+  },
+  {
+    "id": "sj",
+    "label": {
+      "bn": "স্বালবার্ড ও জান মেয়েন",
+      "en": "Svalbard & Jan Mayen"
+    },
+    "continent": "Europe"
+  },
+  {
+    "id": "sk",
+    "label": {
+      "bn": "স্লোভাকিয়া",
+      "en": "Slovakia"
+    },
+    "continent": "Europe"
+  },
+  {
+    "id": "sl",
+    "label": {
+      "bn": "সিয়েরা লিওন",
+      "en": "Sierra Leone"
+    },
+    "continent": "Africa"
+  },
+  {
+    "id": "sm",
+    "label": {
+      "bn": "সান মারিনো",
+      "en": "San Marino"
+    },
+    "continent": "Europe"
+  },
+  {
+    "id": "sn",
+    "label": {
+      "bn": "সেনেগাল",
+      "en": "Senegal"
+    },
+    "continent": "Africa"
+  },
+  {
+    "id": "so",
+    "label": {
+      "bn": "সোমালিয়া",
+      "en": "Somalia"
+    },
+    "continent": "Africa"
+  },
+  {
+    "id": "sr",
+    "label": {
+      "bn": "সুরিনাম",
+      "en": "Suriname"
+    },
+    "continent": "South America"
+  },
+  {
+    "id": "ss",
+    "label": {
+      "bn": "দক্ষিণ সুদান",
+      "en": "South Sudan"
+    },
+    "continent": "Africa"
+  },
+  {
+    "id": "st",
+    "label": {
+      "bn": "সাওটোমা ও প্রিন্সিপি",
+      "en": "São Tomé & Príncipe"
+    },
+    "continent": "Africa"
+  },
+  {
+    "id": "sv",
+    "label": {
+      "bn": "এল সালভেদর",
+      "en": "El Salvador"
+    },
+    "continent": "North America"
+  },
+  {
+    "id": "sx",
+    "label": {
+      "bn": "সিন্ট মার্টেন",
+      "en": "Sint Maarten"
+    },
+    "continent": "North America"
+  },
+  {
+    "id": "sy",
+    "label": {
+      "bn": "সিরিয়া",
+      "en": "Syria"
+    },
+    "continent": "Asia"
+  },
+  {
+    "id": "sz",
+    "label": {
+      "bn": "ইসওয়াতিনি",
+      "en": "Eswatini"
+    },
+    "continent": "Africa"
+  },
+  {
+    "id": "tc",
+    "label": {
+      "bn": "তুর্কস ও কাইকোস দ্বীপপুঞ্জ",
+      "en": "Turks & Caicos Islands"
+    },
+    "continent": "North America"
+  },
+  {
+    "id": "td",
+    "label": {
+      "bn": "চাদ",
+      "en": "Chad"
+    },
+    "continent": "Africa"
+  },
+  {
+    "id": "tf",
+    "label": {
+      "bn": "ফরাসি দক্ষিণ এবং অ্যান্টার্কটিক ভূমি",
+      "en": "French Southern and Antarctic Lands"
+    },
+    "continent": "Africa"
+  },
+  {
+    "id": "tg",
+    "label": {
+      "bn": "টোগো",
+      "en": "Togo"
+    },
+    "continent": "Africa"
+  },
+  {
+    "id": "th",
+    "label": {
+      "bn": "থাইল্যান্ড",
+      "en": "Thailand"
+    },
+    "continent": "Asia"
+  },
+  {
+    "id": "tj",
+    "label": {
+      "bn": "তাজিকিস্তান",
+      "en": "Tajikistan"
+    },
+    "continent": "Asia"
+  },
+  {
+    "id": "tk",
+    "label": {
+      "bn": "টোকেলাউ",
+      "en": "Tokelau"
+    },
+    "continent": "Oceania"
+  },
+  {
+    "id": "tl",
+    "label": {
+      "bn": "তিমুর-লেস্তে",
+      "en": "Timor-Leste"
+    },
+    "continent": "Asia"
+  },
+  {
+    "id": "tm",
+    "label": {
+      "bn": "তুর্কমেনিস্তান",
+      "en": "Turkmenistan"
+    },
+    "continent": "Asia"
+  },
+  {
+    "id": "tn",
+    "label": {
+      "bn": "তিউনিসিয়া",
+      "en": "Tunisia"
+    },
+    "continent": "Africa"
+  },
+  {
+    "id": "to",
+    "label": {
+      "bn": "টোঙ্গা",
+      "en": "Tonga"
+    },
+    "continent": "Oceania"
+  },
+  {
+    "id": "tr",
+    "label": {
+      "bn": "তুরস্ক",
+      "en": "Türkiye"
+    },
+    "continent": "Asia"
+  },
+  {
+    "id": "tt",
+    "label": {
+      "bn": "ত্রিনিদাদ ও টোবাগো",
+      "en": "Trinidad & Tobago"
+    },
+    "continent": "South America"
+  },
+  {
+    "id": "tv",
+    "label": {
+      "bn": "টুভালু",
+      "en": "Tuvalu"
+    },
+    "continent": "Oceania"
+  },
+  {
+    "id": "tw",
+    "label": {
+      "bn": "তাইওয়ান",
+      "en": "Taiwan"
+    },
+    "continent": "Asia"
+  },
+  {
+    "id": "tz",
+    "label": {
+      "bn": "তাঞ্জানিয়া",
+      "en": "Tanzania"
+    },
+    "continent": "Africa"
+  },
+  {
+    "id": "ua",
+    "label": {
+      "bn": "ইউক্রেন",
+      "en": "Ukraine"
+    },
+    "continent": "Europe"
+  },
+  {
+    "id": "ug",
+    "label": {
+      "bn": "উগান্ডা",
+      "en": "Uganda"
+    },
+    "continent": "Africa"
+  },
+  {
+    "id": "um",
+    "label": {
+      "bn": "মার্কিন যুক্তরাষ্ট্রের পার্শ্ববর্তী দ্বীপপুঞ্জ",
+      "en": "U.S. Outlying Islands"
+    },
+    "continent": "North America"
+  },
+  {
+    "id": "us",
+    "label": {
+      "bn": "মার্কিন যুক্তরাষ্ট্র",
+      "en": "United States"
+    },
+    "continent": "North America"
+  },
+  {
+    "id": "uy",
+    "label": {
+      "bn": "উরুগুয়ে",
+      "en": "Uruguay"
+    },
+    "continent": "South America"
+  },
+  {
+    "id": "uz",
+    "label": {
+      "bn": "উজবেকিস্তান",
+      "en": "Uzbekistan"
+    },
+    "continent": "Asia"
+  },
+  {
+    "id": "va",
+    "label": {
+      "bn": "ভ্যাটিকান সিটি",
+      "en": "Vatican City"
+    },
+    "continent": "Europe"
+  },
+  {
+    "id": "vc",
+    "label": {
+      "bn": "সেন্ট ভিনসেন্ট ও গ্রেনাডিনস",
+      "en": "St. Vincent & Grenadines"
+    },
+    "continent": "North America"
+  },
+  {
+    "id": "ve",
+    "label": {
+      "bn": "ভেনেজুয়েলা",
+      "en": "Venezuela"
+    },
+    "continent": "South America"
+  },
+  {
+    "id": "vg",
+    "label": {
+      "bn": "ব্রিটিশ ভার্জিন দ্বীপপুঞ্জ",
+      "en": "British Virgin Islands"
+    },
+    "continent": "North America"
+  },
+  {
+    "id": "vi",
+    "label": {
+      "bn": "মার্কিন যুক্তরাষ্ট্রীয় ভার্জিন দ্বীপপুঞ্জ",
+      "en": "U.S. Virgin Islands"
+    },
+    "continent": "North America"
+  },
+  {
+    "id": "vn",
+    "label": {
+      "bn": "ভিয়েতনাম",
+      "en": "Vietnam"
+    },
+    "continent": "Asia"
+  },
+  {
+    "id": "vu",
+    "label": {
+      "bn": "ভানুয়াটু",
+      "en": "Vanuatu"
+    },
+    "continent": "Oceania"
+  },
+  {
+    "id": "wf",
+    "label": {
+      "bn": "ওয়ালিস ও ফুটুনা",
+      "en": "Wallis & Futuna"
+    },
+    "continent": "Oceania"
+  },
+  {
+    "id": "ws",
+    "label": {
+      "bn": "সামোয়া",
+      "en": "Samoa"
+    },
+    "continent": "Oceania"
+  },
+  {
+    "id": "ye",
+    "label": {
+      "bn": "ইয়েমেন",
+      "en": "Yemen"
+    },
+    "continent": "Asia"
+  },
+  {
+    "id": "yt",
+    "label": {
+      "bn": "মায়োত্তে",
+      "en": "Mayotte"
+    },
+    "continent": "Africa"
+  },
+  {
+    "id": "za",
+    "label": {
+      "bn": "দক্ষিণ আফ্রিকা",
+      "en": "South Africa"
+    },
+    "continent": "Africa"
+  },
+  {
+    "id": "zm",
+    "label": {
+      "bn": "জাম্বিয়া",
+      "en": "Zambia"
+    },
+    "continent": "Africa"
+  },
+  {
+    "id": "zw",
+    "label": {
+      "bn": "জিম্বাবোয়ে",
+      "en": "Zimbabwe"
+    },
+    "continent": "Africa"
+  }
+]

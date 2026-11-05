@@ -9,7 +9,12 @@
 	const modes = [
 		{ id: 'mixing', key: 'mode.mixing', href: '/mixing' },
 		{ id: 'matching', key: 'mode.matching', href: '/matching' },
-		{ id: 'numbers', key: 'mode.numbers', href: '/numbers' }
+		{ id: 'numbers', key: 'mode.numbers', href: '/numbers' },
+		{ id: 'football', key: 'mode.football', href: '/football' },
+		{ id: 'car', key: 'mode.car', href: '/car' },
+		{ id: 'flag', key: 'mode.flag', href: '/flag' },
+		{ id: 'bird', key: 'mode.bird', href: '/bird' },
+		{ id: 'holy-puzzle', key: 'mode.holy-puzzle', href: '/holy-puzzle' }
 	] as const;
 
 	const label = (key: string) =>
@@ -38,11 +43,37 @@
 					{:else if m.id === 'matching'}
 						<circle cx="40" cy="55" r="26" fill="var(--learn-green)" stroke="var(--text-primary)" stroke-width="4" />
 						<polygon points="120,22 129,46 154,46 134,61 141,86 120,71 99,86 106,61 86,46 111,46" fill="none" stroke="var(--text-primary)" stroke-width="4" stroke-dasharray="8 6" stroke-linejoin="round" />
-					{:else}
+					{:else if m.id === 'numbers'}
 						{#each [30, 80, 130] as x (x)}
 							<circle cx={x} cy="40" r="20" fill="var(--learn-blue)" stroke="var(--text-primary)" stroke-width="3" />
 						{/each}
 						<text x="80" y="104" text-anchor="middle" font-size="40" font-weight="700" fill="var(--text-primary)">৩</text>
+					{:else if m.id === 'football'}
+						<circle cx="80" cy="50" r="32" fill="var(--learn-orange)" stroke="var(--text-primary)" stroke-width="4" />
+						<polygon points="80,30 90,39 84,52 72,52 66,39" fill="var(--text-primary)" />
+						<path d="M49 78 L111 78" stroke="var(--text-primary)" stroke-width="4" stroke-linecap="round" />
+						<path d="M53 65 L42 82" stroke="var(--text-primary)" stroke-width="4" stroke-linecap="round" />
+						<path d="M107 65 L118 82" stroke="var(--text-primary)" stroke-width="4" stroke-linecap="round" />
+					{:else if m.id === 'car'}
+						<rect x="26" y="58" width="108" height="30" rx="8" fill="var(--learn-blue)" stroke="var(--text-primary)" stroke-width="4" />
+						<rect x="52" y="40" width="42" height="22" rx="5" fill="var(--bg-primary)" stroke="var(--text-primary)" stroke-width="4" />
+						<circle cx="48" cy="90" r="12" fill="var(--text-primary)" />
+						<circle cx="112" cy="90" r="12" fill="var(--text-primary)" />
+					{:else if m.id === 'flag'}
+						<rect x="78" y="28" width="6" height="64" fill="var(--text-primary)" rx="3" />
+						<path d="M84 30 L126 40 L84 52 Z" fill="var(--learn-red)" stroke="var(--text-primary)" stroke-width="3" stroke-linejoin="round" />
+						<circle cx="116" cy="40" r="6" fill="var(--learn-yellow)" stroke="var(--text-primary)" stroke-width="3" />
+					{:else if m.id === 'holy-puzzle'}
+						<path d="M22 84h116v8H22z" fill="var(--learn-green)" stroke="var(--text-primary)" stroke-width="3" />
+						<path d="M34 82V50l18-16 18 16v32M78 82V48l21-18 21 18v34" fill="var(--bg-secondary)" stroke="var(--text-primary)" stroke-width="4" stroke-linejoin="round" />
+						<path d="M28 52h48M72 50h54" stroke="var(--learn-green)" stroke-width="7" />
+						<path d="M90 62h20v20H90z" fill="var(--text-primary)" />
+						<path d="M94 67h12v4H94z" fill="var(--learn-yellow)" />
+					{:else}
+						<path d="M42 72 C48 56, 56 42, 68 42 C76 42, 82 48, 86 58 C92 70, 98 72, 104 68 C111 64, 118 54, 122 42 C126 30, 133 36, 138 46 L136 78 C130 70, 122 66, 116 68 C110 70, 105 76, 98 80 C92 84, 82 86, 76 80 C68 72, 60 70, 52 74 Z" fill="var(--learn-green)" stroke="var(--text-primary)" stroke-width="4" stroke-linejoin="round" />
+						<circle cx="78" cy="56" r="6" fill="var(--bg-primary)" stroke="var(--text-primary)" stroke-width="3" />
+						<path d="M94 48 L108 34" stroke="var(--text-primary)" stroke-width="4" stroke-linecap="round" />
+						<path d="M104 48 L118 34" stroke="var(--text-primary)" stroke-width="4" stroke-linecap="round" />
 					{/if}
 				</svg>
 				<span>{label(m.key)}</span>

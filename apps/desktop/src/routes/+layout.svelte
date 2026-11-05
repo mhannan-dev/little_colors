@@ -10,14 +10,17 @@
 
 	const tokens = `<style>:root{${toCssVariables('light')}}</style>`;
 
-	// DS-40 / OF-15: designed at 1280×800; scale up proportionally on larger windows (max 1.6×).
+	// DS-40 / OF-15: designed at 1280×800; scale proportionally from the minimum window to 4K.
 	const BASE_W = 1280;
 	const BASE_H = 800;
 	let scale = $state(1);
 	let viewportH = $state(800);
 	function fit() {
 		viewportH = window.innerHeight;
-		scale = Math.min(1.6, Math.max(1, Math.min(window.innerWidth / BASE_W, window.innerHeight / BASE_H)));
+		scale = Math.max(
+			0.1,
+			Math.min(1.6, window.innerWidth / BASE_W, window.innerHeight / BASE_H)
+		);
 	}
 
 	onMount(() => {
@@ -45,7 +48,9 @@
 <style>
 	main {
 		height: 100vh;
-		overflow: hidden;
+		min-height: 0;
+		overflow-x: hidden;
+		overflow-y: auto;
 		display: flex;
 		flex-direction: column;
 	}

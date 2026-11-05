@@ -97,7 +97,7 @@ test('lesson hub and planning board fit common viewports and reduced motion', as
 		if (width === 1280) await page.screenshot({ path: testInfo.outputPath('thinking-hub.png') });
 		await page.getByTestId('age-8-10').click(); await page.getByTestId('lesson-grid-path').click();
 		await expect(page.getByTestId('path-grid')).toBeInViewport();
-		const overflow = await page.locator('.thinking').evaluate((element) => element.scrollWidth > element.clientWidth);
+		const overflow = await page.getByTestId('thinking-scene').evaluate((element) => element.scrollWidth > element.clientWidth);
 		expect(overflow).toBe(false);
 		if (width === 1280) await page.screenshot({ path: testInfo.outputPath('thinking-path.png') });
 	}
