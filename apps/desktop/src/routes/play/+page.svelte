@@ -14,7 +14,8 @@
 		{ id: 'car', key: 'mode.car', href: '/car' },
 		{ id: 'flag', key: 'mode.flag', href: '/flag' },
 		{ id: 'bird', key: 'mode.bird', href: '/bird' },
-		{ id: 'holy-puzzle', key: 'mode.holy-puzzle', href: '/holy-puzzle' }
+		{ id: 'holy-puzzle', key: 'mode.holy-puzzle', href: '/holy-puzzle' },
+		{ id: 'fruit', key: 'mode.fruit', href: '/fruit' }
 	] as const;
 
 	const label = (key: string) =>
@@ -63,6 +64,9 @@
 						<rect x="78" y="28" width="6" height="64" fill="var(--text-primary)" rx="3" />
 						<path d="M84 30 L126 40 L84 52 Z" fill="var(--learn-red)" stroke="var(--text-primary)" stroke-width="3" stroke-linejoin="round" />
 						<circle cx="116" cy="40" r="6" fill="var(--learn-yellow)" stroke="var(--text-primary)" stroke-width="3" />
+					{:else if m.id === 'fruit'}
+						<path d="M67 38 Q43 19 28 43 Q15 66 35 94 Q51 111 67 100 Q84 112 99 94 Q119 66 106 43 Q91 20 67 38Z" fill="var(--learn-red)" stroke="var(--text-primary)" stroke-width="4" />
+						<path d="M67 38 Q65 19 77 9 M74 23 Q94 5 110 24 Q89 38 74 23Z" fill="var(--learn-green)" stroke="var(--text-primary)" stroke-width="4" />
 					{:else if m.id === 'holy-puzzle'}
 						<path d="M22 84h116v8H22z" fill="var(--learn-green)" stroke="var(--text-primary)" stroke-width="3" />
 						<path d="M34 82V50l18-16 18 16v32M78 82V48l21-18 21 18v34" fill="var(--bg-secondary)" stroke="var(--text-primary)" stroke-width="4" stroke-linejoin="round" />
