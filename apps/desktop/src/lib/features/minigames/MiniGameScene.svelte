@@ -25,7 +25,8 @@
 	import Mascot, { type MascotAnimation } from '#lib/components/mascot/Mascot.svelte';
 	import GameButton from '#lib/components/ui/GameButton.svelte';
 	import TopBar from '#lib/components/ui/TopBar.svelte';
-	import { instruct, replayInstruction, say, stopNarration } from '#lib/audio/narrator.ts';
+	import { instruct, leaveScreen, replayInstruction, say, setIdlePrompt, stopNarration } from '#lib/audio/narrator.ts';
+	import { firstTime, hideHand, showHand } from '#lib/game/hand.ts';
 	import { createScheduler, durations } from '#lib/game/scheduler.ts';
 	import { paused } from '#lib/stores/pause.ts';
 	import { settings } from '#lib/stores/settings.ts';
@@ -116,6 +117,7 @@
 				break;
 			case 'hint':
 				hintId = effect.optionId;
+				showHand([`[data-option-id="${effect.optionId}"]`]);
 				scheduler.after(2400, () => (hintId = null));
 				break;
 			case 'celebrate':
@@ -150,11 +152,15 @@
 				mState = s;
 				ctx = c;
 				if (s === 'CORRECT' && prev !== 'CORRECT') scheduler.after(d.resultMin, () => tryResultShown(m));
+				if (s === 'COMPLETE' && prev !== 'COMPLETE') setIdlePrompt('ui.tap-next');
+				if (s !== 'READY') hideHand();
 				prev = s;
 			}),
 			m.onEffect(runEffect)
 		];
 		instruct(activity.instructionKey);
+		// First visit: the ghost hand taps the right answer once to show how to play (PR-25).
+		if (firstTime(game)) scheduler.after(1400, () => showHand([`[data-option-id="${activity.answerId}"]`]));
 	}
 
 	function teardown() {
@@ -169,6 +175,7 @@
 	function next() {
 		if (index + 1 >= round.activities.length) {
 			roundDone = true;
+			setIdlePrompt(null);
 			mascot = 'celebrate';
 			say('feedback.completed', { interrupt: true });
 			return;
@@ -200,7 +207,8 @@
 	onDestroy(() => {
 		offPause();
 		teardown();
-		stopNarration();
+		hideHand();
+		leaveScreen();
 	});
 
 	const locked = $derived(mState !== 'READY');
@@ -272,8 +280,8 @@
 		<div class="done">
 			<Mascot state="celebrate" size={240} />
 			<div class="actions">
-				<GameButton label={t('replayRound', lang)} onclick={replayRound} />
-				<GameButton label={t('chooseGame', lang)} variant="secondary" onclick={() => goto('/play')} />
+				<GameButton action="replay" onclick={replayRound} />
+				<GameButton action="choose-game" onclick={() => goto('/play')} />
 			</div>
 		</div>
 	{:else if a && ctx}
@@ -344,11 +352,9 @@
 
 		<div class="bottom">
 			{#if mState === 'COMPLETE'}
-				<GameButton label={t('next', lang)} onclick={next}>
-					<svg viewBox="0 0 24 24" width="36" height="36" aria-hidden="true"><path d="M9 5 L16 12 L9 19" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" /></svg>
-				</GameButton>
+				<GameButton action="next" onclick={next} />
 			{:else if ctx.hintEnabled && mState === 'READY'}
-				<GameButton label={t('hint', lang)} variant="secondary" size="small" onclick={() => machine?.send({ type: 'HINT' })} />
+				<GameButton action="hint" size="small" onclick={() => machine?.send({ type: 'HINT' })} />
 			{/if}
 		</div>
 	{/if}

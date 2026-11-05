@@ -22,3 +22,13 @@ for (const [n, route, game] of [
 		await page.screenshot({ path: `${OUT}${n + 1}-${game}-done.png` });
 	});
 }
+
+test('ghost hand demo (first visit)', async ({ page }) => {
+	await page.setViewportSize({ width: 1280, height: 800 });
+	await page.goto('/football');
+	await expect(page.getByTestId('ghost-hand')).toHaveClass(/show/, { timeout: 5000 });
+	// Capture the moment the hand touches the answer (≈ 1 step after it appears).
+	await expect.poll(() => page.getByTestId('ghost-hand').evaluate((el) => Number(getComputedStyle(el).opacity)), { timeout: 5000 }).toBeGreaterThan(0.95);
+	await page.waitForTimeout(700);
+	await page.screenshot({ path: `${OUT}28-ghost-hand-demo.png` });
+});

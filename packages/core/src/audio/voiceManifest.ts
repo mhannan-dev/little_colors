@@ -98,7 +98,15 @@ export const VOICE_MANIFEST: readonly NarrationEntry[] = [
 		'আমরা শিখেছি!',
 		'We learned it!'
 	),
-	line('feedback.try-again', 'আবার চেষ্টা করি!', "Let's try again!")
+	line('feedback.try-again', 'আবার চেষ্টা করি!', "Let's try again!"),
+	// Spoken names of child-facing buttons (PR-26) and the idle nudge after success.
+	line('ui.play', 'খেলি!', "Let's play!"),
+	line('ui.next', 'পরেরটা', 'Next'),
+	line('ui.replay', 'আবার খেলি', 'Play again'),
+	line('ui.choose-game', 'অন্য খেলা', 'Another game'),
+	line('ui.hint', 'সাহায্য', 'Help'),
+	line('ui.reset', 'আবার শুরু', 'Start over'),
+	line('ui.tap-next', 'দারুণ! এবার সবুজ তীরে চাপ দাও!', 'Great! Now tap the green arrow!')
 ];
 
 // Lookups (getNarration / narrationText) live in ./catalog.ts, which merges these base lines

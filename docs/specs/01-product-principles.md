@@ -55,6 +55,16 @@ Children's comfort, accessibility, learning, privacy, and enjoyment take priorit
 | PR-23 | Progression MUST be child-initiated: a large Next button, never automatic advancement. |
 | PR-24 | Meaning MUST NOT rely on color alone; combine shape, outline, voice, or motion. |
 
+## Playable without reading
+
+Most 3–6-year-olds cannot read. Text on child screens is a helper for adults, never the only way to understand.
+
+| ID | Rule |
+|---|---|
+| PR-25 | A child MUST be able to finish every activity without reading: every instruction is spoken (recorded or TTS audio, not device speech alone), repeated after 8 s of inactivity (max twice), and shown as a picture where words alone would be ambiguous (e.g. color vs shape matching). First visits show a ghost-hand demonstration; help points with the hand. |
+| PR-26 | Every child-facing button MUST show a pictogram (play, next, replay, another game, help, start over) and speak its name on focus or mouse rest. "Go" actions (play, next) are always the green arrow. |
+| PR-27 | No answer choice may require reading, except in Advanced reading-practice activities. Text-label answers (e.g. country names) need a picture-based mode for Beginner/Explorer. |
+
 ## Difficulty levels
 
 Difficulty is set by a parent. The system MAY recommend a level but MUST NOT change it automatically (PR-30).

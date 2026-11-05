@@ -21,7 +21,8 @@
 	import PaintContainer from '#lib/components/paint/PaintContainer.svelte';
 	import GameButton from '#lib/components/ui/GameButton.svelte';
 	import TopBar from '#lib/components/ui/TopBar.svelte';
-	import { instruct, replayInstruction, say, stopNarration } from '#lib/audio/narrator.ts';
+	import { instruct, leaveScreen, replayInstruction, say, setIdlePrompt, stopNarration } from '#lib/audio/narrator.ts';
+	import { firstTime, hideHand, showHand } from '#lib/game/hand.ts';
 	import { createScheduler, durations } from '#lib/game/scheduler.ts';
 	import { paused } from '#lib/stores/pause.ts';
 	import { settings } from '#lib/stores/settings.ts';
@@ -162,11 +163,18 @@
 					};
 					scheduler.after(d.resultMin, tryAdvance);
 				}
+				if (s === 'COMPLETE' && prev !== 'COMPLETE') setIdlePrompt('ui.tap-next');
+				if (s !== 'READY' && s !== 'FIRST_COLOR_APPLIED') hideHand();
 				prev = s;
 			}),
 			m.onEffect(runEffect)
 		];
 		instruct(a.instructionKey);
+		// First visit: the ghost hand taps the two pots once to show what to do (PR-25).
+		if (firstTime('mixing')) {
+			const pots = (a.target ? a.offered.slice(0, 2) : a.offered).map((c) => `.paint[data-color="${c}"]`);
+			scheduler.after(1400, () => showHand(pots));
+		}
 	}
 
 	function teardown() {
@@ -220,7 +228,8 @@
 	onDestroy(() => {
 		offPause();
 		teardown();
-		stopNarration();
+		hideHand();
+		leaveScreen();
 	});
 </script>
 
@@ -231,8 +240,8 @@
 		<div class="done">
 			<Mascot state="celebrate" size={240} />
 			<div class="actions">
-				<GameButton label={t('replayRound', lang)} onclick={replayRound} />
-				<GameButton label={t('chooseGame', lang)} variant="secondary" onclick={() => goto('/play')} />
+				<GameButton action="replay" onclick={replayRound} />
+				<GameButton action="choose-game" onclick={() => goto('/play')} />
 			</div>
 		</div>
 	{:else if activity && ctx}
@@ -264,9 +273,7 @@
 
 		<div class="bottom">
 			{#if mState === 'COMPLETE'}
-				<GameButton label={t('next', lang)} onclick={next}>
-					<svg viewBox="0 0 24 24" width="36" height="36" aria-hidden="true"><path d="M9 5 L16 12 L9 19" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" /></svg>
-				</GameButton>
+				<GameButton action="next" onclick={next} />
 			{:else}
 				<div class="paints">
 					{#each ctx.offered as c (c)}
@@ -282,7 +289,7 @@
 					{/each}
 				</div>
 				{#if ctx.first && !locked}
-					<GameButton label={t('reset', lang)} variant="secondary" size="small" onclick={reset} />
+					<GameButton action="reset" size="small" onclick={reset} />
 				{/if}
 			{/if}
 		</div>

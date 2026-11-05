@@ -4,6 +4,7 @@
 	import { toCssVariables } from '@little-colors/design-tokens';
 	import { onMount } from 'svelte';
 	import { installDesktopBehavior } from '#lib/desktop.ts';
+	import GhostHand from '#lib/components/GhostHand.svelte';
 	import type { LayoutProps } from './$types';
 
 	let { children }: LayoutProps = $props();
@@ -44,6 +45,9 @@
 <main style:zoom={scale} style:height="{viewportH / scale}px">
 	{@render children()}
 </main>
+
+<!-- Outside <main> so it uses unzoomed viewport coordinates. -->
+<GhostHand />
 
 <style>
 	main {

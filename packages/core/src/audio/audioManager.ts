@@ -31,7 +31,8 @@ export type NarrateMode = 'interrupt' | 'queue';
 
 export interface AudioManager {
 	/** Resolves when the line finished, was skipped, or was cancelled. */
-	narrate(key: string, opts?: { mode?: NarrateMode }): Promise<void>;
+	/** caption: false speaks without replacing the on-screen instruction (e.g. button names). */
+	narrate(key: string, opts?: { mode?: NarrateMode; caption?: boolean }): Promise<void>;
 	/** Narrates the key and remembers it for replayInstruction (AU-07). */
 	instruct(key: string): Promise<void>;
 	replayInstruction(): Promise<void>;
@@ -41,6 +42,7 @@ export interface AudioManager {
 
 interface Item {
 	key: string;
+	caption: boolean;
 	done: () => void;
 }
 
@@ -51,11 +53,11 @@ export function createAudioManager(deps: AudioManagerDeps): AudioManager {
 	let generation = 0;
 	let lastInstruction: string | null = null;
 
-	async function playLine(key: string, gen: number): Promise<PlaybackResult | 'skipped'> {
+	async function playLine(key: string, gen: number, caption = true): Promise<PlaybackResult | 'skipped'> {
 		const s = deps.getSettings();
 		const text = narrationText(key, s.locale, s.islamicExpressionsEnabled);
 		if (!text) return 'skipped';
-		deps.onCaption(text);
+		if (caption) deps.onCaption(text);
 		if (!s.soundEnabled) return 'skipped';
 
 		// Audio must match the caption: neutral recording when Islamic expressions are off.
@@ -88,7 +90,7 @@ export function createAudioManager(deps: AudioManagerDeps): AudioManager {
 		current = next;
 		const gen = generation;
 		try {
-			await playLine(next.key, gen);
+			await playLine(next.key, gen, next.caption);
 		} finally {
 			next.done();
 			if (current === next) current = null;
@@ -114,12 +116,13 @@ export function createAudioManager(deps: AudioManagerDeps): AudioManager {
 		}
 	}
 
-	function narrate(key: string, opts: { mode?: NarrateMode } = {}): Promise<void> {
+	function narrate(key: string, opts: { mode?: NarrateMode; caption?: boolean } = {}): Promise<void> {
 		if ((opts.mode ?? 'queue') === 'interrupt') stopAll();
 		return new Promise<void>((resolve) => {
 			let settled = false;
 			queue.push({
 				key,
+				caption: opts.caption ?? true,
 				done: () => {
 					if (!settled) {
 						settled = true;

@@ -3,8 +3,6 @@
 	import Mascot from '#lib/components/mascot/Mascot.svelte';
 	import GameButton from '#lib/components/ui/GameButton.svelte';
 	import { say } from '#lib/audio/narrator.ts';
-	import { settings } from '#lib/stores/settings.ts';
-	import { t } from '#lib/i18n.ts';
 
 	// SC-02: the Play tap is the first user gesture, so narration may start after it.
 	function play() {
@@ -20,9 +18,7 @@
 	</h1>
 	<p class="sub">Little Colors</p>
 	<Mascot state="wave" size={260} />
-	<GameButton label={t('play', $settings.language)} onclick={play}>
-		<svg viewBox="0 0 24 24" width="36" height="36" aria-hidden="true"><path d="M7 4 L20 12 L7 20 Z" fill="currentColor" /></svg>
-	</GameButton>
+	<GameButton action="play" onclick={play} />
 </section>
 
 <style>

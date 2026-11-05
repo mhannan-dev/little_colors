@@ -23,6 +23,7 @@
 <!-- CM-20/22/23: tap or keyboard; color + written name so color is never the only cue. -->
 <button
 	class="paint"
+	data-color={color}
 	class:used
 	class:wiggle
 	class:pouring

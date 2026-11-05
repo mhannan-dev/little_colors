@@ -22,7 +22,8 @@
 	import Shape from '#lib/components/shapes/Shape.svelte';
 	import GameButton from '#lib/components/ui/GameButton.svelte';
 	import TopBar from '#lib/components/ui/TopBar.svelte';
-	import { instruct, replayInstruction, say, stopNarration } from '#lib/audio/narrator.ts';
+	import { instruct, leaveScreen, replayInstruction, say, setIdlePrompt, stopNarration } from '#lib/audio/narrator.ts';
+	import { firstTime, hideHand, showHand } from '#lib/game/hand.ts';
 	import { createScheduler, durations } from '#lib/game/scheduler.ts';
 	import { paused } from '#lib/stores/pause.ts';
 	import { settings } from '#lib/stores/settings.ts';
@@ -116,6 +117,7 @@
 			case 'hint':
 				hintTarget = effect.targetId;
 				hintItem = effect.itemId;
+				showHand([`[data-item-id="${effect.itemId}"]`, `[data-target-id="${effect.targetId}"]`], { drag: true });
 				scheduler.after(2400, () => {
 					hintTarget = hintItem = null;
 				});
@@ -146,14 +148,26 @@
 		clearVisuals();
 		const m = createMatchingMachine(a);
 		machine = m;
+		let prev: MatchingState | null = null;
 		unsubscribers = [
 			m.subscribe((s, c) => {
 				mState = s;
 				ctx = c;
+				if (s === 'COMPLETE' && prev !== 'COMPLETE') setIdlePrompt('ui.tap-next');
+				if (s === 'DRAGGING' || s === 'SOURCE_SELECTED') hideHand();
+				prev = s;
 			}),
 			m.onEffect(runEffect)
 		];
 		instruct(a.instructionKey);
+		// First visit: the ghost hand drags the item to its place once (PR-25).
+		if (firstTime('matching')) scheduler.after(1400, () => demoMatch(a));
+	}
+
+	function demoMatch(a: MatchingActivity) {
+		const src = a.sources.find((s) => !ctx?.matchedIds.includes(s.id));
+		const target = src && a.targets.find((t) => t.shape === src.shape && t.color === src.color);
+		if (src && target) showHand([`[data-item-id="${src.id}"]`, `[data-target-id="${target.id}"]`], { drag: true });
 	}
 
 	function teardown() {
@@ -251,6 +265,7 @@
 	function next() {
 		if (index + 1 >= round.activities.length) {
 			roundDone = true;
+			setIdlePrompt(null);
 			mascot = 'celebrate';
 			say('feedback.completed', { interrupt: true });
 			return;
@@ -287,7 +302,8 @@
 	onDestroy(() => {
 		offPause();
 		teardown();
-		stopNarration();
+		hideHand();
+		leaveScreen();
 		if (typeof window !== 'undefined') window.removeEventListener('resize', onResize);
 	});
 </script>
@@ -299,8 +315,8 @@
 		<div class="done">
 			<Mascot state="celebrate" size={240} />
 			<div class="actions">
-				<GameButton label={t('replayRound', lang)} onclick={replayRound} />
-				<GameButton label={t('chooseGame', lang)} variant="secondary" onclick={() => goto('/play')} />
+				<GameButton action="replay" onclick={replayRound} />
+				<GameButton action="choose-game" onclick={() => goto('/play')} />
 			</div>
 		</div>
 	{:else if activity && ctx}
@@ -308,6 +324,25 @@
 			{#each round.activities as a, i (a.id)}
 				<span class="dot" class:filled={i < index || (i === index && mState === 'COMPLETE')}></span>
 			{/each}
+		</div>
+
+		<!-- Picture of WHAT to match, so a non-reader knows color vs shape (PR-25). -->
+		<div class="mode-badge" data-testid="match-mode-badge" data-mode={activity.matchMode} aria-hidden="true">
+			{#if activity.matchMode !== 'shape'}
+				<svg viewBox="0 0 72 32" width="90" height="40">
+					<circle cx="14" cy="16" r="11" fill="var(--learn-red)" stroke="var(--text-primary)" stroke-width="2.5" />
+					<circle cx="36" cy="16" r="11" fill="var(--learn-yellow)" stroke="var(--text-primary)" stroke-width="2.5" />
+					<circle cx="58" cy="16" r="11" fill="var(--learn-blue)" stroke="var(--text-primary)" stroke-width="2.5" />
+				</svg>
+			{/if}
+			{#if activity.matchMode === 'both'}<span class="plus">+</span>{/if}
+			{#if activity.matchMode !== 'color'}
+				<svg viewBox="0 0 72 32" width="90" height="40">
+					<circle cx="13" cy="16" r="10" fill="none" stroke="var(--text-primary)" stroke-width="3" />
+					<rect x="27" y="6" width="19" height="20" rx="3" fill="none" stroke="var(--text-primary)" stroke-width="3" />
+					<polygon points="60,5 70,27 50,27" fill="none" stroke="var(--text-primary)" stroke-width="3" stroke-linejoin="round" />
+				</svg>
+			{/if}
 		</div>
 
 		<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
@@ -319,6 +354,7 @@
 					{#if !ctx.matchedIds.includes(item.id)}
 						<button
 							class="source"
+							data-item-id={item.id}
 							class:selected={ctx.selectedId === item.id && mState === 'SOURCE_SELECTED'}
 							class:dragging={dragId === item.id}
 							class:returning={returning === item.id}
@@ -361,11 +397,9 @@
 
 		<div class="bottom">
 			{#if mState === 'COMPLETE'}
-				<GameButton label={t('next', lang)} onclick={next}>
-					<svg viewBox="0 0 24 24" width="36" height="36" aria-hidden="true"><path d="M9 5 L16 12 L9 19" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" /></svg>
-				</GameButton>
+				<GameButton action="next" onclick={next} />
 			{:else if ctx.hintEnabled && mState === 'IDLE'}
-				<GameButton label={t('hint', lang)} variant="secondary" size="small" onclick={() => machine?.send({ type: 'HINT' })} />
+				<GameButton action="hint" size="small" onclick={() => machine?.send({ type: 'HINT' })} />
 			{/if}
 		</div>
 	{/if}
@@ -383,6 +417,20 @@
 	}
 	.paused :global(*) {
 		animation-play-state: paused !important;
+	}
+	.mode-badge {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		padding: 6px 16px;
+		margin-top: 8px;
+		border-radius: var(--radius-lg);
+		background: var(--surface);
+		border: 3px solid var(--border-soft);
+	}
+	.mode-badge .plus {
+		font-size: 28px;
+		font-weight: 700;
 	}
 	.progress {
 		display: flex;
