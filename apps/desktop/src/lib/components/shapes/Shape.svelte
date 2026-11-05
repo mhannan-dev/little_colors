@@ -11,7 +11,12 @@
 		color,
 		variant = 'solid',
 		size = 96
-	}: { shape: ShapeKey; color: Color; variant?: 'solid' | 'outline'; size?: number } = $props();
+	}: {
+		shape: ShapeKey | 'paint-drop';
+		color: Color;
+		variant?: 'solid' | 'outline';
+		size?: number;
+	} = $props();
 
 	const solid = $derived(variant === 'solid');
 	const fill = $derived(`var(--learn-${color})`);
@@ -46,6 +51,8 @@
 			<path d="M50 8 C82 26 88 62 50 92 C12 62 18 26 50 8 Z" />
 		{:else if shape === 'apple'}
 			<path d="M50 30 C30 16 9 31 13 56 C17 81 36 93 50 86 C64 93 83 81 87 56 C91 31 70 16 50 30 Z" />
+		{:else if shape === 'paint-drop'}
+			<path d="M50 8 C50 8 18 46 18 64 A32 32 0 0 0 82 64 C82 46 50 8 50 8 Z" />
 		{/if}
 	</g>
 

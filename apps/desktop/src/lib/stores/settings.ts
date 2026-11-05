@@ -1,5 +1,5 @@
 import { writable } from 'svelte/store';
-import type { Difficulty, Locale } from '@little-colors/core';
+import type { Difficulty, Locale, NumeralStyle } from '@little-colors/core';
 
 /**
  * PLACEHOLDER (spec 10): in-memory settings with spec defaults.
@@ -11,6 +11,7 @@ export interface Settings {
 	soundEnabled: boolean;
 	islamicExpressionsEnabled: boolean;
 	volume: number;
+	numeralStyle: NumeralStyle;
 }
 
 export const settings = writable<Settings>({
@@ -18,5 +19,6 @@ export const settings = writable<Settings>({
 	difficulty: 'beginner',
 	soundEnabled: true,
 	islamicExpressionsEnabled: true,
-	volume: 0.8
+	volume: 0.8,
+	numeralStyle: 'bengali'
 });

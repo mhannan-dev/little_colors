@@ -4,6 +4,7 @@
  */
 import { expect, test, type Page } from '@playwright/test';
 import { fileURLToPath } from 'node:url';
+import { field, solve } from '../helpers/numbers.ts';
 
 const OUT = fileURLToPath(new URL('../../../../docs/ui/', import.meta.url));
 const shot = (page: Page, name: string) => page.screenshot({ path: `${OUT}${name}.png` });
@@ -66,11 +67,6 @@ test('main flow at 1280×800', async ({ page }) => {
 	await settle(page, 2000);
 	await shot(page, '09-round-complete');
 
-	await page.getByRole('button', { name: 'অন্য খেলা' }).click();
-	await page.getByRole('button', { name: 'সংখ্যা গোনা' }).click();
-	await expect(page.getByText('এই খেলাটা শীঘ্রই আসছে!').last()).toBeVisible();
-	await settle(page, 600);
-	await shot(page, '10-coming-soon-placeholder');
 });
 
 test('shape matching at 1280×800', async ({ page }) => {
@@ -106,6 +102,26 @@ test('shape matching at 1280×800', async ({ page }) => {
 	await expect(page.getByRole('button', { name: 'পরেরটা' })).toBeVisible({ timeout: 8000 });
 	await settle(page, 400);
 	await shot(page, '17-matching-next');
+});
+
+test('numbers at 1280×800', async ({ page }) => {
+	await page.setViewportSize({ width: 1280, height: 800 });
+	await page.goto('/play');
+	await page.getByRole('button', { name: 'সংখ্যা গোনা' }).click();
+	// Beginner round: count, numeral-to-quantity, compare, count, pattern.
+	const names = ['18-numbers-count', '19-numbers-numeral-to-quantity', '20-numbers-compare', '', '21-numbers-pattern'];
+	for (const name of names) {
+		await expect(field(page)).toBeVisible();
+		await settle(page, 800);
+		if (name) await shot(page, name);
+		await solve(page);
+		if (name === '18-numbers-count') {
+			await settle(page, 900);
+			await shot(page, '18b-numbers-counted');
+		}
+		await expect(page.getByRole('button', { name: 'পরেরটা' })).toBeVisible({ timeout: 15000 });
+		await page.getByRole('button', { name: 'পরেরটা' }).click();
+	}
 });
 
 test('small window 800×600', async ({ page }) => {

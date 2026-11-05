@@ -6,3 +6,5 @@ export * from './questionGenerator.ts';
 export * from './countingMachine.ts';
 export * from './rounds.ts';
 export * from './narration.ts';
+export * from './lessons/thinkingLessons.ts';
+export * from './lessons/narration.ts';

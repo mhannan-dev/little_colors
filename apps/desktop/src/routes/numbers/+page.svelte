@@ -1,5 +1,5 @@
 <script lang="ts">
-	import ComingSoon from '#lib/components/ComingSoon.svelte';
+	import NumbersScene from '#lib/features/numbers/NumbersScene.svelte';
 </script>
 
-<ComingSoon />
+<NumbersScene />

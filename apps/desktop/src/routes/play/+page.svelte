@@ -49,9 +49,16 @@
 			</button>
 		{/each}
 	</div>
+	<button class="thinking-link" onclick={() => { say('thinking.title', { interrupt: true }); goto('/thinking'); }}>
+		<span>{label('thinking.title')}</span>
+		<small>{$settings.language === 'bn-BD' ? '৫–১০ বছরের জন্য চারটি নতুন পাঠ' : 'Four new lessons for ages 5–10'}</small>
+		<span aria-hidden="true">→</span>
+	</button>
 </section>
 
 <style>
+	.thinking-link { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 14px; padding: 16px 28px; min-height: 76px; border: 3px solid var(--border-soft); border-radius: var(--radius-lg); background: var(--bg-secondary); cursor: pointer; font-size: 26px; font-weight: 700; }
+	.thinking-link small { font-size: 20px; font-weight: 400; }
 	section {
 		flex: 1;
 		display: flex;
@@ -76,7 +83,7 @@
 		flex-direction: column;
 		align-items: center;
 		gap: 12px;
-		width: 260px;
+		width: clamp(160px, 24vw, 260px);
 		padding: 28px 20px 24px;
 		border: 4px solid var(--border-soft);
 		border-radius: var(--radius-xl);
@@ -89,5 +96,12 @@
 	.card:hover {
 		transform: translateY(-6px);
 		border-color: var(--text-secondary);
+	}
+	@media (max-height: 700px) {
+		section { gap: 14px; padding-bottom: 20px; }
+		h2 { font-size: 30px; }
+		.card { padding: 14px; font-size: 24px; }
+		.card svg { width: 140px; height: 90px; }
+		.thinking-link { padding: 8px 20px; min-height: 64px; }
 	}
 </style>
