@@ -49,6 +49,7 @@ Anything not listed: ask the user before editing.
 | X-02 | Codex | Settings service, progress service, session timer, parent-gate question generator (core only) | 10, 11, 12 | in progress, see [codex-task-02.md](codex-task-02.md) |
 | C-06 | Claude | Parent gate + settings screen + rest screen UI; IndexedDB adapter; wiring X-02 | 10, 11, 12 | blocked by X-02, see [claude-task-C-06.md](claude-task-C-06.md) |
 | C-07 | Claude | Audio manager + desktop audio adapters, asset manifest, placeholder report, narration script, large-screen scaling | 08, 14, 02 | done, see [claude-report-c07-c08.md](claude-report-c07-c08.md) |
+| C-09 | Claude | Football, Garage, Birds mini-games (core + UI) and finishing Copilot's flag-game rewrite | — | done, see [claude-report-C-09.md](claude-report-C-09.md) |
 | C-08 | Claude | QA pass and Windows installer | 13, 15 | in progress, see [claude-task-C-08.md](claude-task-C-08.md) |
 
 Rule of thumb: **Codex builds pure logic in `packages/core` (rules, machines, services, tests). Claude builds everything the child sees (`apps/desktop`) and integrates Codex's modules.**

@@ -10,7 +10,7 @@ pnpm --filter desktop ui:shots
 
 Source: [apps/desktop/tests/gallery/gallery.spec.ts](../../apps/desktop/tests/gallery/gallery.spec.ts)
 
-> Mascot art, audio, and the Numbers screen are **placeholders** (spec 14). These images show the app as built, not final art.
+> Mascot art and audio are **placeholders** (spec 14). These images show the app as built, not final art.
 
 ## Main flow (1280 × 800)
 
@@ -20,7 +20,7 @@ Source: [apps/desktop/tests/gallery/gallery.spec.ts](../../apps/desktop/tests/ga
 | **03 Color Mixing: ready** ![](03-mixing-ready.png) | **04 Pouring red** ![](04-mixing-pouring-red.png) |
 | **05 Red applied** ![](05-mixing-red-applied.png) | **06 Mixing swirl** ![](06-mixing-swirl.png) |
 | **07 Result: orange** ![](07-mixing-result-orange.png) | **08 Goal + Next** ![](08-mixing-goal-next.png) |
-| **09 Round complete** ![](09-round-complete.png) | **10 Coming soon (placeholder)** ![](10-coming-soon-placeholder.png) |
+| **09 Round complete** ![](09-round-complete.png) | |
 
 ## Shape Matching (1280 × 800)
 
@@ -31,6 +31,14 @@ Source: [apps/desktop/tests/gallery/gallery.spec.ts](../../apps/desktop/tests/ga
 | **17 Activity done + Next** ![](17-matching-next.png) | |
 
 Rounds are random, so the shapes and colors differ on each regeneration.
+
+## Football, Garage, Birds (1280 × 800)
+
+| | |
+|---|---|
+| **22 Football: ready** ![](22-football-ready.png) | **23 Football: goal** ![](23-football-done.png) |
+| **24 Garage: ready** ![](24-garage-ready.png) | **25 Garage: parked** ![](25-garage-done.png) |
+| **26 Birds: ready** ![](26-birds-ready.png) | **27 Birds: counted** ![](27-birds-done.png) |
 
 ## Window sizes
 

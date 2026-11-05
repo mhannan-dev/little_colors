@@ -12,6 +12,8 @@ export interface Settings {
 	islamicExpressionsEnabled: boolean;
 	volume: number;
 	numeralStyle: NumeralStyle;
+	/** Spec 10: defaults to the OS "reduce motion" preference (DS-26). */
+	reducedMotion: boolean;
 }
 
 export const settings = writable<Settings>({
@@ -20,5 +22,7 @@ export const settings = writable<Settings>({
 	soundEnabled: true,
 	islamicExpressionsEnabled: true,
 	volume: 0.8,
-	numeralStyle: 'bengali'
+	numeralStyle: 'bengali',
+	reducedMotion:
+		typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
 });

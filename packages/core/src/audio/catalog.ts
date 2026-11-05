@@ -1,6 +1,7 @@
 import type { Locale } from '../types/colors.ts';
 import { MATCHING_NARRATION } from '../shape-matching/narration.ts';
 import { NUMBERS_NARRATION } from '../numbers/narration.ts';
+import { MINIGAME_NARRATION } from '../minigames/narration.ts';
 import { VOICE_MANIFEST, type NarrationEntry } from './voiceManifest.ts';
 
 /**
@@ -10,7 +11,8 @@ import { VOICE_MANIFEST, type NarrationEntry } from './voiceManifest.ts';
 export const NARRATION_CATALOG: readonly NarrationEntry[] = [
 	...VOICE_MANIFEST,
 	...MATCHING_NARRATION,
-	...NUMBERS_NARRATION
+	...NUMBERS_NARRATION,
+	...MINIGAME_NARRATION
 ];
 
 const BY_KEY = new Map<string, NarrationEntry>();

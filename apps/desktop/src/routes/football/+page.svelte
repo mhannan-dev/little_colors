@@ -1,5 +1,5 @@
 <script lang="ts">
-	import ComingSoon from '#lib/components/ComingSoon.svelte';
+	import MiniGameScene from '#lib/features/minigames/MiniGameScene.svelte';
 </script>
 
-<ComingSoon />
+<MiniGameScene game="football" />

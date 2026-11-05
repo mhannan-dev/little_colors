@@ -4,6 +4,8 @@ import { defineConfig } from '@playwright/test';
 export default defineConfig({
 	testDir: 'tests',
 	timeout: 60_000,
+	// Cold dev-server loads (e.g. the flag page imports 249 SVGs) can exceed the 5 s default.
+	expect: { timeout: 15_000 },
 	use: {
 		baseURL: 'http://localhost:5173',
 		channel: 'msedge',
