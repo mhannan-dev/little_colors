@@ -17,7 +17,7 @@ function getManager(): AudioManager | null {
 		manager = createAudioManager({
 			player: createHtmlAudioPlayer(),
 			speech: createSpeechFallback(),
-			resolveFile: (key, locale) => bundledAudioUrl(audioPathFor(key, locale)),
+			resolveFile: (key, locale, neutral) => bundledAudioUrl(audioPathFor(key, locale, neutral)),
 			getSettings: () => {
 				const s = get(settings);
 				return {

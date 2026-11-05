@@ -1,6 +1,6 @@
 import type { Locale } from '../types/colors.ts';
 import type { AudioPlayer, PlaybackResult, SpeechFallback } from './types.ts';
-import { narrationText } from './catalog.ts';
+import { getNarration, narrationText } from './catalog.ts';
 
 /**
  * Spec 08 — narration manager.
@@ -18,8 +18,11 @@ export interface AudioSettings {
 export interface AudioManagerDeps {
 	player: AudioPlayer;
 	speech: SpeechFallback;
-	/** Returns a playable file for the key, or null when no recording exists yet. */
-	resolveFile: (key: string, locale: Locale) => string | null;
+	/**
+	 * Returns a playable file for the key, or null when no recording exists yet.
+	 * `neutral` is true when the neutral variant of an Islamic line must play (AU-30).
+	 */
+	resolveFile: (key: string, locale: Locale, neutral: boolean) => string | null;
 	getSettings: () => AudioSettings;
 	onCaption: (text: string) => void;
 }
@@ -55,7 +58,9 @@ export function createAudioManager(deps: AudioManagerDeps): AudioManager {
 		deps.onCaption(text);
 		if (!s.soundEnabled) return 'skipped';
 
-		const file = deps.resolveFile(key, s.locale);
+		// Audio must match the caption: neutral recording when Islamic expressions are off.
+		const neutral = !s.islamicExpressionsEnabled && getNarration(key)?.islamic === true;
+		const file = deps.resolveFile(key, s.locale, neutral);
 		if (file) {
 			try {
 				const r = await deps.player.play(file, { volume: s.volume });

@@ -42,7 +42,8 @@ function setup(over: Partial<AudioSettings> = {}, opts: { files?: boolean; voice
 	const manager = createAudioManager({
 		player,
 		speech,
-		resolveFile: (key) => (opts.files ? `audio/${key}.mp3` : null),
+		resolveFile: (key, _locale, neutral) =>
+			opts.files ? `audio/${key}${neutral ? '-neutral' : ''}.mp3` : null,
 		getSettings: () => settings,
 		onCaption: (t) => captions.push(t)
 	});
@@ -123,6 +124,23 @@ describe('audio manager (spec 08)', () => {
 		const { manager, captions } = setup({ soundEnabled: false, islamicExpressionsEnabled: false });
 		await manager.narrate('feedback.celebrate');
 		expect(captions).toEqual(['খুব সুন্দর!']);
+	});
+
+	it('plays the neutral recording when Islamic expressions are off (AU-30)', async () => {
+		const off = setup({ islamicExpressionsEnabled: false }, { files: true });
+		const p = off.manager.narrate('feedback.celebrate');
+		await flush();
+		expect(off.log).toEqual(['play:audio/feedback.celebrate-neutral.mp3']);
+		expect(off.captions).toEqual(['খুব সুন্দর!']);
+		await off.finish();
+		await p;
+
+		const on = setup({}, { files: true });
+		const q = on.manager.narrate('feedback.celebrate');
+		await flush();
+		expect(on.log).toEqual(['play:audio/feedback.celebrate.mp3']);
+		await on.finish();
+		await q;
 	});
 
 	it('replays the last instruction (AU-07)', async () => {

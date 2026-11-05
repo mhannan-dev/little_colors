@@ -13,9 +13,12 @@ export interface AssetEntry {
 
 const LOCALES: Locale[] = ['bn-BD', 'en-US'];
 
-/** Recording location for a narration key, e.g. "mix.result.red-yellow" → audio/bn-BD/mix-result-red-yellow.mp3 */
-export function audioPathFor(key: string, locale: Locale): string {
-	return `audio/${locale}/${key.replace(/\./g, '-')}.mp3`;
+/**
+ * Recording location for a narration key, e.g. "mix.result.red-yellow" →
+ * audio/bn-BD/mix-result-red-yellow.mp3 (neutral variant: …-neutral.mp3).
+ */
+export function audioPathFor(key: string, locale: Locale, neutral = false): string {
+	return `audio/${locale}/${key.replace(/\./g, '-')}${neutral ? '-neutral' : ''}.mp3`;
 }
 
 const VISUALS: AssetEntry[] = [

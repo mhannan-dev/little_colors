@@ -10,6 +10,7 @@
     "test": "pnpm -r test",
     "typecheck": "pnpm -r typecheck",
     "assets:report": "node scripts/assets-report.ts",
-    "narration:script": "node scripts/generate-narration-script.ts"
+    "narration:script": "node scripts/generate-narration-script.ts",
+    "tts:generate": "node --env-file-if-exists=.env scripts/generate-tts.ts"
   }
 }
