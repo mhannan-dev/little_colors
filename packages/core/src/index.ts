@@ -12,6 +12,7 @@ export * from './audio/types.ts';
 export * from './audio/voiceManifest.ts';
 export * from './audio/catalog.ts';
 export * from './audio/audioManager.ts';
+export * from './audio/segments.ts';
 export * from './assets/manifest.ts';
 // Game modes implemented by Codex (X-01); wired here by Claude (C-04).
 export * from './shape-matching/index.ts';

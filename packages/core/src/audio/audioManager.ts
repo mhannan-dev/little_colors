@@ -19,10 +19,11 @@ export interface AudioManagerDeps {
 	player: AudioPlayer;
 	speech: SpeechFallback;
 	/**
-	 * Returns a playable file for the key, or null when no recording exists yet.
+	 * Returns a playable file for the key, a list of clip files to play in order
+	 * (a line composed from recorded clips), or null when no recording exists yet.
 	 * `neutral` is true when the neutral variant of an Islamic line must play (AU-30).
 	 */
-	resolveFile: (key: string, locale: Locale, neutral: boolean) => string | null;
+	resolveFile: (key: string, locale: Locale, neutral: boolean) => string | string[] | null;
 	getSettings: () => AudioSettings;
 	onCaption: (text: string) => void;
 }
@@ -62,10 +63,15 @@ export function createAudioManager(deps: AudioManagerDeps): AudioManager {
 
 		// Audio must match the caption: neutral recording when Islamic expressions are off.
 		const neutral = !s.islamicExpressionsEnabled && getNarration(key)?.islamic === true;
-		const file = deps.resolveFile(key, s.locale, neutral);
-		if (file) {
+		const resolved = deps.resolveFile(key, s.locale, neutral);
+		const files = resolved === null ? [] : Array.isArray(resolved) ? resolved : [resolved];
+		if (files.length > 0) {
 			try {
-				const r = await deps.player.play(file, { volume: s.volume });
+				let r: PlaybackResult = 'ended';
+				for (const file of files) {
+					r = await deps.player.play(file, { volume: s.volume });
+					if (r !== 'ended' || gen !== generation) break;
+				}
 				if (r !== 'failed' || gen !== generation) return r;
 			} catch {
 				/* fall through to speech */

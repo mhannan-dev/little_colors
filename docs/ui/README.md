@@ -39,7 +39,7 @@ Rounds are random, so the shapes and colors differ on each regeneration.
 | **22 Football: ready** ![](22-football-ready.png) | **23 Football: goal** ![](23-football-done.png) |
 | **24 Garage: ready** ![](24-garage-ready.png) | **25 Garage: parked** ![](25-garage-done.png) |
 | **26 Birds: ready** ![](26-birds-ready.png) | **27 Birds: counted** ![](27-birds-done.png) |
-| **28 Ghost-hand demo (first visit, PR-25)** ![](28-ghost-hand-demo.png) | |
+| **28 Ghost-hand demo (first visit, PR-25)** ![](28-ghost-hand-demo.png) | **29 Voice recording studio (/record, dev only)** ![](29-record-studio.png) |
 
 ## Window sizes
 

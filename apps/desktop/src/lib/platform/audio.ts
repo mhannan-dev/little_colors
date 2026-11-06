@@ -2,17 +2,27 @@ import type { AudioPlayer, Locale, PlaybackResult, SpeechFallback } from '@littl
 
 /**
  * Desktop platform adapters for the core AudioManager (spec 04, AR-08).
- * Recordings placed in src/lib/assets/audio/<locale>/<name>.mp3 are bundled automatically.
+ * Files in src/lib/assets/audio/<locale>/<name>.{wav,mp3} are bundled automatically:
+ * .wav = human recordings (from /record), .mp3 = TTS placeholders (pnpm tts:generate).
  */
-const FILES = import.meta.glob('../assets/audio/**/*.mp3', {
+const FILES = import.meta.glob('../assets/audio/**/*.{wav,mp3}', {
 	eager: true,
 	query: '?url',
 	import: 'default'
 }) as Record<string, string>;
 
-/** core path "audio/bn-BD/x.mp3" → bundled URL, or null when not recorded yet. */
+/**
+ * core path "audio/bn-BD/x.mp3" → bundled URL, or null when not recorded yet.
+ * A human recording (.wav) always wins over a TTS placeholder (.mp3).
+ */
 export function bundledAudioUrl(corePath: string): string | null {
-	return FILES[`../assets/${corePath}`] ?? null;
+	const base = `../assets/${corePath.replace(/\.mp3$/, '')}`;
+	return FILES[`${base}.wav`] ?? FILES[`${base}.mp3`] ?? null;
+}
+
+/** True when a human recording (.wav) exists for this core path. */
+export function hasRecording(corePath: string): boolean {
+	return `../assets/${corePath.replace(/\.mp3$/, '')}.wav` in FILES;
 }
 
 export function createHtmlAudioPlayer(): AudioPlayer {

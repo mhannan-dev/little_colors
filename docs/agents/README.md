@@ -51,6 +51,7 @@ Anything not listed: ask the user before editing.
 | C-07 | Claude | Audio manager + desktop audio adapters, asset manifest, placeholder report, narration script, large-screen scaling | 08, 14, 02 | done, see [claude-report-c07-c08.md](claude-report-c07-c08.md) |
 | C-09 | Claude | Football, Garage, Birds mini-games (core + UI) and finishing Copilot's flag-game rewrite | — | done, see [claude-report-C-09.md](claude-report-C-09.md) |
 | C-10 | Claude | Playable without reading: action pictograms, spoken button names, idle prompt, ghost-hand demo/help, matching mode badge (PR-25, PR-26) | 01 | done |
+| C-11 | Claude | Human voice recording: /record studio (dev only), clip compositions, WAV preferred over TTS; guide in docs/recording-guide.md | 08, 14 | done |
 | C-08 | Claude | QA pass and Windows installer | 13, 15 | in progress, see [claude-task-C-08.md](claude-task-C-08.md) |
 
 Rule of thumb: **Codex builds pure logic in `packages/core` (rules, machines, services, tests). Claude builds everything the child sees (`apps/desktop`) and integrates Codex's modules.**

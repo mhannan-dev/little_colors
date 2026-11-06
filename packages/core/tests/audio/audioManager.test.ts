@@ -178,3 +178,37 @@ describe('audio manager (spec 08)', () => {
 		expect(log).toContain('speech.stop');
 	});
 });
+
+describe('clip sequences', () => {
+	it('plays a composed line as its clips in order, falling back to speech if one fails', async () => {
+		const log: string[] = [];
+		const results: Record<string, 'ended' | 'failed'> = { 'a.wav': 'ended', 'b.wav': 'ended' };
+		const { createAudioManager } = await import('../../src/audio/audioManager.ts');
+		const m = createAudioManager({
+			player: {
+				async play(src) {
+					log.push(`play:${src}`);
+					return results[src] ?? 'failed';
+				},
+				stopAll() {},
+				setMuted() {}
+			},
+			speech: {
+				isAvailable: async () => true,
+				async speak(text) {
+					log.push(`speak:${text}`);
+					return 'ended';
+				},
+				stop() {}
+			},
+			resolveFile: (key) => (key === 'color.red' ? ['a.wav', 'b.wav'] : ['a.wav', 'missing.wav']),
+			getSettings: () => ({ locale: 'bn-BD', soundEnabled: true, islamicExpressionsEnabled: true, volume: 1 }),
+			onCaption: () => {}
+		});
+		await m.narrate('color.red');
+		expect(log).toEqual(['play:a.wav', 'play:b.wav']);
+		log.length = 0;
+		await m.narrate('color.blue');
+		expect(log).toEqual(['play:a.wav', 'play:missing.wav', 'speak:এটা নীল রং!']);
+	});
+});

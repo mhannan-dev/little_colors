@@ -1,5 +1,5 @@
 import { get, writable } from 'svelte/store';
-import { audioPathFor, createAudioManager, type AudioManager } from '@little-colors/core';
+import { audioPathFor, composeLine, createAudioManager, type AudioManager, type Locale } from '@little-colors/core';
 import { settings } from '../stores/settings.ts';
 import { bundledAudioUrl, createHtmlAudioPlayer, createSpeechFallback } from '../platform/audio.ts';
 
@@ -11,13 +11,27 @@ export const caption = writable('');
 
 let manager: AudioManager | null = null;
 
+/**
+ * Whole-line recording first; otherwise, for templated Bengali lines, the recorded clips
+ * in order ("এটা" + "লাল" + "তারা"); otherwise nothing (speech fallback / caption).
+ */
+export function resolveAudio(key: string, locale: Locale, neutral = false): string | string[] | null {
+	const whole = bundledAudioUrl(audioPathFor(key, locale, neutral));
+	if (whole) return whole;
+	if (locale !== 'bn-BD' || neutral) return null;
+	const clips = composeLine(key);
+	if (!clips) return null;
+	const urls = clips.map((c) => bundledAudioUrl(audioPathFor(c, locale)));
+	return urls.every((u): u is string => u !== null) ? urls : null;
+}
+
 function getManager(): AudioManager | null {
 	if (typeof window === 'undefined') return null;
 	if (!manager) {
 		manager = createAudioManager({
 			player: createHtmlAudioPlayer(),
 			speech: createSpeechFallback(),
-			resolveFile: (key, locale, neutral) => bundledAudioUrl(audioPathFor(key, locale, neutral)),
+			resolveFile: resolveAudio,
 			getSettings: () => {
 				const s = get(settings);
 				return {
