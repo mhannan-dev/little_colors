@@ -19,3 +19,5 @@ export * from './shape-matching/index.ts';
 export * from './numbers/index.ts';
 // Football, Garage, Birds mini-games (Claude).
 export * from './minigames/index.ts';
+// Flag game picture mode (Claude).
+export * from './flags/pictureFlags.ts';

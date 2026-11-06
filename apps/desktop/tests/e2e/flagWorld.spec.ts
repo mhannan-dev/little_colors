@@ -1,5 +1,5 @@
 import {expect,test,type Page} from '@playwright/test';
-async function open(page:Page){await page.goto('/flag');await expect(page.getByTestId('flag-panel')).toBeVisible();}
+async function open(page:Page){await page.goto('/flag');await page.getByTestId('flag-quiz-tab').click();await expect(page.getByTestId('flag-panel')).toBeVisible();}
 test('all 249 bundled flags load locally, are searchable and can start a quiz',async({page},info)=>{
 	const errors:string[]=[];page.on('pageerror',error=>errors.push(error.message));await open(page);await page.getByTestId('flag-learn-tab').click();await expect(page.locator('[data-gallery-country]')).toHaveCount(249);
 	const sources=await page.locator('[data-gallery-country] img').evaluateAll(elements=>elements.map(element=>(element as HTMLImageElement).src));

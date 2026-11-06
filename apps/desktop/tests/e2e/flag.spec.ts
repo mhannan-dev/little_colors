@@ -7,6 +7,7 @@ test('flag quiz fits the minimum desktop size and default viewport', async ({ pa
 	]) {
 		await page.setViewportSize(viewport);
 		await page.goto('/flag');
+		await page.getByTestId('flag-quiz-tab').click(); // picture mode is the default now
 
 		await expect(page.getByRole('heading', { name: 'দেশের পতাকা চিনো' })).toBeInViewport();
 		await expect(page.locator('.flag-panel')).toBeInViewport();

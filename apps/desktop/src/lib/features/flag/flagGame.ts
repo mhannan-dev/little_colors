@@ -1,4 +1,4 @@
-import { createRng, shuffle } from '@little-colors/core';
+import { PICTURE_FLAGS, createRng, shuffle } from '@little-colors/core';
 import data from './countries.json';
 
 export interface FlagCountry { id: string; label: { bn: string; en: string }; continent: string }
@@ -35,11 +35,15 @@ export function flagChoices(state: FlagQuizState): FlagCountry[] {
 	return shuffle([flagCountry(current), ...others], rng);
 }
 
-export function flagQuizReducer(state: FlagQuizState, action: FlagQuizAction): FlagQuizState {
+export function flagQuizReducer(
+	state: FlagQuizState,
+	action: FlagQuizAction,
+	choices: (state: FlagQuizState) => FlagCountry[] = flagChoices
+): FlagQuizState {
 	if (state.phase === 'finished') return state;
 	if (action.type === 'HINT') return state.phase === 'play' && !state.hint ? { ...state, hint: true } : state;
 	if (action.type === 'ANSWER') {
-		if (state.phase !== 'play' || !flagChoices(state).some(country => country.id === action.id)) return state;
+		if (state.phase !== 'play' || !choices(state).some(country => country.id === action.id)) return state;
 		const current = state.deck[state.index]!;
 		if (action.id !== current) {
 			const attempts = state.attempts + 1;
@@ -57,4 +61,24 @@ export function searchFlags(query: string, region = 'all'): FlagCountry[] {
 	const needle = query.trim().toLocaleLowerCase();
 	return FLAG_COUNTRIES.filter(country => (region === 'all' || country.continent === region) &&
 		(!needle || [country.id, country.label.en, country.label.bn].some(value => value.toLocaleLowerCase().includes(needle))));
+}
+
+// ── Picture mode (PR-27): hear a country, pick its flag from three pictures ─────────────
+// Uses the short familiar list from core (PICTURE_FLAGS) so a 3–6-year-old can succeed.
+export const PICTURE_ROUND_LENGTH = 8;
+const PICTURE_IDS: readonly string[] = PICTURE_FLAGS.map((f) => f.id);
+
+/** A round of familiar flags, Bangladesh first, no repeats. */
+export function createPictureQuiz(seed: number, recognized: readonly string[] = []): FlagQuizState {
+	const rest = shuffle(PICTURE_IDS.filter((id) => id !== 'bd'), createRng(seed));
+	const deck = ['bd', ...rest].slice(0, PICTURE_ROUND_LENGTH);
+	return { ...createFlagQuiz(seed, 'all', 'bd', recognized), region: 'pictures', deck };
+}
+
+/** Three flag pictures from the familiar list, never two from the same look-alike family. */
+export function pictureChoices(state: FlagQuizState): FlagCountry[] {
+	const current = state.deck[state.index]!;
+	const rng = createRng((state.seed + state.index * 2654435761) >>> 0);
+	const others = shuffle(PICTURE_IDS.filter((id) => flagFamily(id) !== flagFamily(current)), rng).slice(0, 2);
+	return shuffle([current, ...others], rng).map(flagCountry);
 }

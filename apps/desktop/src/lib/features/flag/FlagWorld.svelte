@@ -9,10 +9,12 @@
 	import { t } from '#lib/i18n.ts';
 	import { FLAG_COUNTRIES, FLAG_REGIONS, createFlagQuiz, flagChoices, flagCountry, flagQuizReducer, searchFlags, type FlagQuizAction, type FlagCountry } from './flagGame.ts';
 	import { flagUrl } from './flagAssets.ts';
+	import FlagPictures from './FlagPictures.svelte';
 	import flagLicense from './licenses/flag-icons-LICENSE.txt?raw';
 	import cldrLicense from './licenses/CLDR-LICENSE.txt?raw';
 	let quiz = $state(untrack(() => createFlagQuiz(Date.now() >>> 0)));
-	let mode = $state<'quiz' | 'learn'>('quiz');
+	// Picture mode first: young children hear a country and pick its flag, no reading (PR-27).
+	let mode = $state<'pictures' | 'quiz' | 'learn'>('pictures');
 	let region = $state('all');
 	let query = $state('');
 	let previewId = $state('bd');
@@ -34,9 +36,10 @@
 	function dispatch(action: FlagQuizAction) { if ($paused) return; const next = flagQuizReducer(quiz,action); if(next===quiz)return;quiz=next;if(action.type==='NEXT'||action.type==='SKIP')focusTop(); }
 	function changeRegion(value: string) { if($paused)return;region=value;query='';quiz=createFlagQuiz((quiz.seed+1)>>>0,value,undefined,quiz.recognized);const first=searchFlags('',value)[0];if(first)previewId=first.id;focusTop(); }
 	function practice(id: string) { if($paused)return;quiz=createFlagQuiz((quiz.seed+1)>>>0,region,id,quiz.recognized);mode='quiz';focusTop(); }
-	function switchMode(value:'quiz'|'learn') { if($paused)return;mode=value;focusTop(); }
-	$effect(() => caption.set(status));
-	onMount(() => stopNarration());
+	function switchMode(value:'pictures'|'quiz'|'learn') { if($paused)return;mode=value;focusTop(); }
+	// Picture mode speaks and captions its own questions; don't overwrite them.
+	$effect(() => { if (mode !== 'pictures') caption.set(status); });
+	onMount(() => { if (mode !== 'pictures') stopNarration(); });
 	onDestroy(() => { stopNarration(); caption.set(''); });
 </script>
 
@@ -44,9 +47,11 @@
 	<TopBar backTo="/play" />
 	<div class="flag-content" bind:this={scroller} data-testid="flag-game">
 		<section class="flag-game">
-			<div class="header"><h2 tabindex="-1">{ui('দেশের পতাকা চিনো','Guess the country flag')}</h2><p>{ui('দেশ ও অঞ্চল','Countries & territories')}: {n(FLAG_COUNTRIES.length)} · {ui('চেনা পতাকা','Flags recognized')}: <span data-testid="flag-recognized">{n(quiz.recognized.length)}</span></p></div>
-			<div class="toolbar"><div class="tabs" role="group" aria-label={ui('পতাকা শেখা ও খেলা','Flag learning and play')}><button data-testid="flag-quiz-tab" aria-pressed={mode==='quiz'} disabled={$paused} onclick={()=>switchMode('quiz')}>{ui('পতাকা খেলা','Play')}</button><button data-testid="flag-learn-tab" aria-pressed={mode==='learn'} disabled={$paused} onclick={()=>switchMode('learn')}>{ui('সব পতাকা দেখি','Explore all flags')}</button></div><label class="region"><span>{ui('মহাদেশ','Continent')}</span><select data-testid="flag-region" disabled={$paused} value={region} onchange={(event)=>changeRegion(event.currentTarget.value)}><option value="all">{ui('সব মহাদেশ','All continents')}</option>{#each FLAG_REGIONS as value}<option {value}>{regionName(value)}</option>{/each}</select></label></div>
-			{#if mode==='quiz'}
+			<div class="header"><h2 tabindex="-1">{ui('দেশের পতাকা চিনো','Guess the country flag')}</h2>{#if mode!=='pictures'}<p>{ui('দেশ ও অঞ্চল','Countries & territories')}: {n(FLAG_COUNTRIES.length)} · {ui('চেনা পতাকা','Flags recognized')}: <span data-testid="flag-recognized">{n(quiz.recognized.length)}</span></p>{/if}</div>
+			<div class="toolbar"><div class="tabs" role="group" aria-label={ui('পতাকা শেখা ও খেলা','Flag learning and play')}><button data-testid="flag-pictures-tab" aria-pressed={mode==='pictures'} disabled={$paused} onclick={()=>switchMode('pictures')}><span aria-hidden="true">🏳️ </span>{ui('পতাকা খুঁজি','Find the flag')}</button><button data-testid="flag-quiz-tab" aria-pressed={mode==='quiz'} disabled={$paused} onclick={()=>switchMode('quiz')}>{ui('পতাকা খেলা','Play')}</button><button data-testid="flag-learn-tab" aria-pressed={mode==='learn'} disabled={$paused} onclick={()=>switchMode('learn')}>{ui('সব পতাকা দেখি','Explore all flags')}</button></div>{#if mode!=='pictures'}<label class="region"><span>{ui('মহাদেশ','Continent')}</span><select data-testid="flag-region" disabled={$paused} value={region} onchange={(event)=>changeRegion(event.currentTarget.value)}><option value="all">{ui('সব মহাদেশ','All continents')}</option>{#each FLAG_REGIONS as value}<option {value}>{regionName(value)}</option>{/each}</select></label>{/if}</div>
+			{#if mode==='pictures'}
+				<FlagPictures />
+			{:else if mode==='quiz'}
 				{#if quiz.phase==='finished'}<div class="finished" data-testid="flag-finished"><p>{status}</p><button class="primary" disabled={$paused} onclick={()=>practice(quiz.deck[0]!)}>{ui('আবার খেলি','Play again')}</button></div>
 				{:else}
 					<div class="flag-panel" data-testid="flag-panel" data-country={current.id}><img src={flagUrl(current.id)} alt={quiz.phase==='correct'?label(current):ui('দেশ বা অঞ্চল চিনতে পতাকাটি দেখো','Flag to identify')} draggable="false" /></div>
