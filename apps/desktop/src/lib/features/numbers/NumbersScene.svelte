@@ -22,7 +22,7 @@
 	import Shape from '#lib/components/shapes/Shape.svelte';
 	import GameButton from '#lib/components/ui/GameButton.svelte';
 	import TopBar from '#lib/components/ui/TopBar.svelte';
-	import { instruct, leaveScreen, replayInstruction, say, setIdlePrompt, stopNarration } from '#lib/audio/narrator.ts';
+	import { holdIdle, instruct, leaveScreen, replayInstruction, say, setIdlePrompt, stopNarration } from '#lib/audio/narrator.ts';
 	import { firstTime, hideHand, showHand } from '#lib/game/hand.ts';
 	import { createScheduler, durations } from '#lib/game/scheduler.ts';
 	import { paused } from '#lib/stores/pause.ts';
@@ -65,23 +65,30 @@
 		wiggling = null;
 		total = null;
 		explaining = false;
+		if (stepsBusy) holdIdle(false); // a cancelled count must not leave the idle prompt held
 		stepsBusy = false;
 	}
 
 	/** Count steps aloud with highlight (hint / explanation), then call done. */
-	function playSteps(steps: CountingStep[], done: () => void) {
+	/**
+	 * Count objects one by one with a highlight and number badge (NC-13).
+	 * `voice: false` keeps it visual so a result sentence already speaking isn't cut off.
+	 */
+	function playSteps(steps: CountingStep[], done: () => void, opts: { voice: boolean }) {
 		stepsBusy = true;
+		holdIdle(true); // the child can't act during the count; don't nag over it
 		numbers = {};
 		steps.forEach((step, i) => {
 			scheduler.after(i * STEP_MS, () => {
 				activeObject = step.objectId;
 				numbers = { ...numbers, [step.objectId]: step.number };
-				say(step.key, { interrupt: true });
+				if (opts.voice) say(step.key, { interrupt: true });
 			});
 		});
 		scheduler.after(steps.length * STEP_MS + 200, () => {
 			activeObject = null;
 			stepsBusy = false;
+			holdIdle(false);
 			done();
 		});
 	}
@@ -123,15 +130,24 @@
 			case 'explain':
 				explaining = true;
 				mascot = 'celebrate';
-				playSteps(effect.steps, () => {});
+				// Visual count only: the result sentence ("দুই আর তিন মিলে পাঁচ!") is narrated
+				// right after this effect and must be heard in full.
+				playSteps(effect.steps, () => {}, { voice: false });
 				break;
-			case 'hint':
+			case 'hint': {
 				mascot = 'thinking';
-				playSteps(effect.steps, () => {
-					mascot = 'idle';
-					m.send({ type: 'HINT_DONE' });
-				});
+				const before = numbers; // the child's own count, restored after the demo
+				playSteps(
+					effect.steps,
+					() => {
+						numbers = before;
+						mascot = 'idle';
+						m.send({ type: 'HINT_DONE' });
+					},
+					{ voice: true }
+				);
 				break;
+			}
 			case 'narrate':
 				say(effect.key);
 				if (m.state === 'TRY_AGAIN') {

@@ -15,8 +15,9 @@ const FILES = import.meta.glob('../assets/audio/**/*.{wav,mp3}', {
  * core path "audio/bn-BD/x.mp3" → bundled URL, or null when not recorded yet.
  * A human recording (.wav) always wins over a TTS placeholder (.mp3).
  */
-export function bundledAudioUrl(corePath: string): string | null {
+export function bundledAudioUrl(corePath: string, only?: 'wav' | 'mp3'): string | null {
 	const base = `../assets/${corePath.replace(/\.mp3$/, '')}`;
+	if (only) return FILES[`${base}.${only}`] ?? null;
 	return FILES[`${base}.wav`] ?? FILES[`${base}.mp3`] ?? null;
 }
 

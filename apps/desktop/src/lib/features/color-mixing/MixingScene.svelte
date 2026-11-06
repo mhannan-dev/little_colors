@@ -9,6 +9,7 @@
 		COLOR_NAMES,
 		createMixingMachine,
 		createMixingRound,
+		recipeForResult,
 		type Color,
 		type MixingActivity,
 		type MixingContext,
@@ -56,6 +57,7 @@
 	let wrongColor = $state<Color | null>(null);
 	let wiggleColor = $state<Color | null>(null);
 	let kicked = $state(false);
+	let cancelWrongResult: (() => void) | null = null;
 
 	const activity = $derived<MixingActivity | undefined>(round.activities[index]);
 	const locked = $derived(LOCKED.includes(mState));
@@ -92,6 +94,10 @@
 		if (!m) return;
 		switch (effect.type) {
 			case 'pour':
+				// A new pour ends any wrong-result display, so the ball shows the poured colour.
+				cancelWrongResult?.();
+				cancelWrongResult = null;
+				wrongColor = null;
 				pouring = effect.color;
 				mascot = 'thinking';
 				scheduler.after(d.pour, () => {
@@ -116,7 +122,8 @@
 			case 'showWrongResult':
 				wrongColor = effect.color;
 				mascot = 'encourage';
-				scheduler.after(d.wrongResult, () => {
+				cancelWrongResult = scheduler.after(d.wrongResult, () => {
+					cancelWrongResult = null;
 					wrongColor = null;
 					mascot = 'idle';
 				});
@@ -172,7 +179,9 @@
 		instruct(a.instructionKey);
 		// First visit: the ghost hand taps the two pots once to show what to do (PR-25).
 		if (firstTime('mixing')) {
-			const pots = (a.target ? a.offered.slice(0, 2) : a.offered).map((c) => `.paint[data-color="${c}"]`);
+			// On Advanced three pots are offered: demonstrate the recipe for the target, not two random pots.
+			const pair = a.target ? (recipeForResult(a.target)?.inputs ?? a.offered.slice(0, 2)) : a.offered;
+			const pots = pair.map((c) => `.paint[data-color="${c}"]`);
 			scheduler.after(1400, () => showHand(pots));
 		}
 	}
@@ -191,6 +200,7 @@
 	function next() {
 		if (index + 1 >= round.activities.length) {
 			roundDone = true;
+			setIdlePrompt(null); // no green arrow on the round-complete screen
 			mascot = 'celebrate';
 			say('feedback.completed', { interrupt: true });
 			return;

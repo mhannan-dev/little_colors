@@ -1,11 +1,18 @@
 <script lang="ts">
 	/** Renders the ghost-hand demonstration (see lib/game/hand.ts). Never intercepts input. */
 	import { hand, hideHand, type HandPath } from '#lib/game/hand.ts';
+	import { paused } from '#lib/stores/pause.ts';
 
 	const STEP_MS = 1400;
 	let el = $state<HTMLDivElement | null>(null);
 	let current = $state<HandPath | null>(null);
 	let animation: Animation | null = null;
+
+	// Freeze the demo while the game is paused (window hidden/unfocused), resume after.
+	$effect(() => {
+		if ($paused) animation?.pause();
+		else if (animation?.playState === 'paused') animation.play();
+	});
 
 	const reduced = () =>
 		typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;

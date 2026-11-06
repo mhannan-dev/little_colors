@@ -37,6 +37,13 @@
 	let meterCtx: AudioContext | null = null;
 	let meterRaf = 0;
 	let player: HTMLAudioElement | null = null;
+	/** File the current take belongs to (fixed when recording starts). */
+	let takePath: string | null = null;
+	/** Bumped on every new take / teardown so late processing results are ignored. */
+	let takeGen = 0;
+	let destroyed = false;
+	const HEADERS = { 'x-little-colors-record': '1' };
+	const busy = () => phase === 'recording' || phase === 'processing' || phase === 'saving';
 
 	const visible = $derived(
 		plan.filter((i) => (group === 'all' || i.group === group) && (!onlyMissing || !recorded.has(fileOf(i))))
@@ -102,11 +109,12 @@
 		if (takeUrl) URL.revokeObjectURL(takeUrl);
 		takeUrl = null;
 		take = null;
+		takePath = null;
 		phase = 'idle';
 	}
 
 	function go(delta: number) {
-		if (phase === 'recording' || phase === 'saving') return;
+		if (busy()) return; // never move while a take is in flight (it would be saved under the wrong line)
 		discardTake();
 		stopPlayback();
 		message = '';
@@ -123,6 +131,7 @@
 	}
 
 	function startMeter(s: MediaStream) {
+		stopMeter(); // never leak a previous meter context / rAF loop
 		meterCtx = new AudioContext();
 		const analyser = meterCtx.createAnalyser();
 		analyser.fftSize = 1024;
@@ -146,8 +155,10 @@
 	}
 
 	async function startRecording() {
-		if (!item || phase === 'recording' || phase === 'saving') return;
+		if (!item || busy()) return;
 		discardTake();
+		const path = fileOf(item);
+		const gen = ++takeGen;
 		stopPlayback();
 		message = '';
 		try {
@@ -155,7 +166,7 @@
 			chunks = [];
 			recorder = new MediaRecorder(s);
 			recorder.ondataavailable = (e) => e.data.size && chunks.push(e.data);
-			recorder.onstop = () => void finishTake();
+			recorder.onstop = () => void finishTake(gen, path);
 			recorder.start();
 			startMeter(s);
 			phase = 'recording';
@@ -172,10 +183,13 @@
 		recorder?.stop();
 	}
 
-	async function finishTake() {
+	async function finishTake(gen: number, path: string) {
 		try {
-			take = await processTake(new Blob(chunks, { type: recorder?.mimeType || 'audio/webm' }));
-			takeUrl = URL.createObjectURL(take.wav);
+			const processed = await processTake(new Blob(chunks, { type: recorder?.mimeType || 'audio/webm' }));
+			if (destroyed || gen !== takeGen) return; // page left or a newer take started
+			take = processed;
+			takePath = path;
+			takeUrl = URL.createObjectURL(processed.wav);
 			phase = 'review';
 			message = take.tooQuiet
 				? '⚠️ আওয়াজ খুব কম। মাইকের আরেকটু কাছে এসে আবার বলুন।'
@@ -184,6 +198,7 @@
 					: '';
 			play(takeUrl);
 		} catch (e) {
+			if (destroyed || gen !== takeGen) return;
 			message = `রেকর্ডিং প্রক্রিয়া করা যায়নি: ${(e as Error).message}`;
 			phase = 'idle';
 		}
@@ -224,11 +239,11 @@
 	}
 
 	async function save() {
-		if (!item || !take || phase !== 'review') return;
+		if (!item || !take || !takePath || phase !== 'review') return;
 		phase = 'saving';
-		const path = fileOf(item);
+		const path = takePath; // the line this take was recorded for
 		try {
-			const res = await fetch(`/__record/save?path=${encodeURIComponent(path)}`, { method: 'POST', body: take.wav });
+			const res = await fetch(`/__record/save?path=${encodeURIComponent(path)}`, { method: 'POST', headers: HEADERS, body: take.wav });
 			if (!res.ok) throw new Error((await res.json()).error ?? `HTTP ${res.status}`);
 			recorded = new Set([...recorded, path]);
 			discardTake();
@@ -244,7 +259,11 @@
 
 	async function remove() {
 		if (!item || !isRecorded || !confirm(`"${item.bn}" এর রেকর্ডিং মুছে ফেলবেন?`)) return;
-		await fetch(`/__record/delete?path=${encodeURIComponent(fileOf(item))}`, { method: 'DELETE' });
+		const res = await fetch(`/__record/delete?path=${encodeURIComponent(fileOf(item))}`, { method: 'DELETE', headers: HEADERS }).catch(() => null);
+		if (!res?.ok) {
+			message = `মুছে ফেলা যায়নি (${res ? 'HTTP ' + res.status : 'সার্ভার নেই'})`;
+			return;
+		}
 		const next = new Set(recorded);
 		next.delete(fileOf(item));
 		recorded = next;
@@ -274,6 +293,12 @@
 	});
 
 	onDestroy(() => {
+		destroyed = true;
+		takeGen++;
+		if (recorder && recorder.state !== 'inactive') {
+			recorder.onstop = null;
+			recorder.stop();
+		}
 		if (typeof window !== 'undefined') window.removeEventListener('keydown', onKey);
 		stopMeter();
 		stopPlayback();

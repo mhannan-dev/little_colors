@@ -180,6 +180,9 @@
 	// ── Input ────────────────────────────────────────────────
 	function onSourcePointerDown(e: PointerEvent, item: MatchItem) {
 		if (pointer || !ctx || ctx.matchedIds.includes(item.id)) return; // SM-32, SM-41
+		// A fresh press is a new gesture: never let a previous drag swallow this tap
+		// (after a drop the dragged button may be gone, and touch drags emit no click).
+		suppressClick = false;
 		pointer = { id: e.pointerId, itemId: item.id, x0: e.clientX, y0: e.clientY, moved: false };
 		(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
 	}
@@ -204,20 +207,23 @@
 		}
 	}
 
+	/**
+	 * Target under the drop point (SM-23). A drop inside a target always wins; otherwise the
+	 * nearest target within the tolerance. Neighbours' tolerance zones overlap across the gap,
+	 * so taking the first match in DOM order would send edge drops to the wrong target.
+	 */
 	function targetAt(x: number, y: number): string | null {
+		const zoom = Number(getComputedStyle(document.querySelector('main')!).zoom) || 1;
+		const tolerance = DROP_TOLERANCE * zoom; // rects are in screen px
+		let best: { id: string; dist: number } | null = null;
 		for (const el of document.querySelectorAll<HTMLElement>('[data-target-id]')) {
-			const id = el.dataset.targetId!;
 			const r = el.getBoundingClientRect();
-			if (
-				x >= r.left - DROP_TOLERANCE &&
-				x <= r.right + DROP_TOLERANCE &&
-				y >= r.top - DROP_TOLERANCE &&
-				y <= r.bottom + DROP_TOLERANCE
-			) {
-				return id;
-			}
+			const dx = Math.max(r.left - x, 0, x - r.right);
+			const dy = Math.max(r.top - y, 0, y - r.bottom);
+			const dist = Math.hypot(dx, dy); // 0 when inside
+			if (dist <= tolerance && (!best || dist < best.dist)) best = { id: el.dataset.targetId!, dist };
 		}
-		return null;
+		return best?.id ?? null;
 	}
 
 	function onSourcePointerUp(e: PointerEvent) {

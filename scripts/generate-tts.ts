@@ -35,7 +35,12 @@ const args = new Map(
 const DRY = args.has('dry-run');
 const FORCE = args.has('force');
 const ONLY = args.get('only');
-const LOCALES: Locale[] = args.has('locale') ? [args.get('locale') as Locale] : ['bn-BD', 'en-US'];
+const ALL_LOCALES: Locale[] = ['bn-BD', 'en-US'];
+const LOCALES: Locale[] = args.has('locale') ? [args.get('locale') as Locale] : ALL_LOCALES;
+if (!LOCALES.every((l) => ALL_LOCALES.includes(l))) {
+	console.error(`Unknown --locale=${args.get('locale')}. Use one of: ${ALL_LOCALES.join(', ')}`);
+	process.exit(1);
+}
 
 interface Job {
 	path: string;
@@ -109,16 +114,26 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 async function synthesize(body: string): Promise<Buffer> {
 	for (let attempt = 1; ; attempt++) {
-		const res = await fetch(`${BASE}/cognitiveservices/v1`, {
-			method: 'POST',
-			headers: {
-				'Ocp-Apim-Subscription-Key': KEY!,
-				'Content-Type': 'application/ssml+xml',
-				'X-Microsoft-OutputFormat': 'audio-24khz-48kbitrate-mono-mp3',
-				'User-Agent': 'little-colors-tts'
-			},
-			body
-		});
+		let res: Response;
+		try {
+			res = await fetch(`${BASE}/cognitiveservices/v1`, {
+				method: 'POST',
+				headers: {
+					'Ocp-Apim-Subscription-Key': KEY!,
+					'Content-Type': 'application/ssml+xml',
+					'X-Microsoft-OutputFormat': 'audio-24khz-48kbitrate-mono-mp3',
+					'User-Agent': 'little-colors-tts'
+				},
+				body
+			});
+		} catch (e) {
+			// Network drop / DNS / reset: retry like a 5xx instead of aborting the whole run.
+			if (attempt >= 6) throw e;
+			const wait = 1000 * 2 ** attempt;
+			console.log(`  network error (${(e as Error).message}), retrying in ${wait / 1000} s…`);
+			await sleep(wait);
+			continue;
+		}
 		if (res.ok) return Buffer.from(await res.arrayBuffer());
 		if ((res.status === 429 || res.status >= 500) && attempt < 6) {
 			const wait = Number(res.headers.get('retry-after')) * 1000 || 1000 * 2 ** attempt;
@@ -152,10 +167,9 @@ for (const job of jobs) {
 	writeFileSync(out, audio);
 	cache[job.path] = hash;
 	made++;
-	if (made % 20 === 0) {
-		writeFileSync(CACHE_FILE, JSON.stringify(cache, null, 2) + '\n');
-		console.log(`  ${made} generated…`);
-	}
+	// Save after every file: an aborted run must not pay for the same lines again.
+	writeFileSync(CACHE_FILE, JSON.stringify(cache, null, 2) + '\n');
+	if (made % 20 === 0) console.log(`  ${made} generated…`);
 	await sleep(120); // stay well inside F0 request limits
 }
 writeFileSync(CACHE_FILE, JSON.stringify(cache, null, 2) + '\n');

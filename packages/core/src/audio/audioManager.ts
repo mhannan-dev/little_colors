@@ -68,10 +68,14 @@ export function createAudioManager(deps: AudioManagerDeps): AudioManager {
 		if (files.length > 0) {
 			try {
 				let r: PlaybackResult = 'ended';
+				let played = 0;
 				for (const file of files) {
 					r = await deps.player.play(file, { volume: s.volume });
 					if (r !== 'ended' || gen !== generation) break;
+					played++;
 				}
+				// A clip failing mid-sentence must not restart the whole line in another voice.
+				if (r === 'failed' && played > 0) return 'ended';
 				if (r !== 'failed' || gen !== generation) return r;
 			} catch {
 				/* fall through to speech */

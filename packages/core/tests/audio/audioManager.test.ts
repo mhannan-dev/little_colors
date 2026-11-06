@@ -180,7 +180,7 @@ describe('audio manager (spec 08)', () => {
 });
 
 describe('clip sequences', () => {
-	it('plays a composed line as its clips in order, falling back to speech if one fails', async () => {
+	it('plays a composed line as its clips in order; speech only if the first clip fails', async () => {
 		const log: string[] = [];
 		const results: Record<string, 'ended' | 'failed'> = { 'a.wav': 'ended', 'b.wav': 'ended' };
 		const { createAudioManager } = await import('../../src/audio/audioManager.ts');
@@ -201,14 +201,20 @@ describe('clip sequences', () => {
 				},
 				stop() {}
 			},
-			resolveFile: (key) => (key === 'color.red' ? ['a.wav', 'b.wav'] : ['a.wav', 'missing.wav']),
+			resolveFile: (key) =>
+				key === 'color.red' ? ['a.wav', 'b.wav'] : key === 'color.blue' ? ['a.wav', 'missing.wav'] : ['missing.wav', 'a.wav'],
 			getSettings: () => ({ locale: 'bn-BD', soundEnabled: true, islamicExpressionsEnabled: true, volume: 1 }),
 			onCaption: () => {}
 		});
 		await m.narrate('color.red');
 		expect(log).toEqual(['play:a.wav', 'play:b.wav']);
 		log.length = 0;
+		// A later clip failing ends the sentence; it must not restart in another voice.
 		await m.narrate('color.blue');
-		expect(log).toEqual(['play:a.wav', 'play:missing.wav', 'speak:এটা নীল রং!']);
+		expect(log).toEqual(['play:a.wav', 'play:missing.wav']);
+		log.length = 0;
+		// Only when nothing could play does speech take over.
+		await m.narrate('color.green');
+		expect(log).toEqual(['play:missing.wav', 'speak:এটা সবুজ রং!']);
 	});
 });

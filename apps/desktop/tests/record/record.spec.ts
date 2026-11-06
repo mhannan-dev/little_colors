@@ -1,11 +1,12 @@
 import { expect, test } from '@playwright/test';
 
 const created: string[] = [];
+const HEADERS = { 'x-little-colors-record': '1' };
 
 test.afterEach(async ({ request }) => {
 	// Never leave test recordings in the app's assets.
 	for (const path of created.splice(0)) {
-		await request.delete(`/__record/delete?path=${encodeURIComponent(path)}`);
+		await request.delete(`/__record/delete?path=${encodeURIComponent(path)}`, { headers: HEADERS });
 	}
 });
 
@@ -39,9 +40,36 @@ test('record → process → save writes a WAV into the app assets', async ({ pa
 
 test('the save endpoint refuses paths outside the audio folder', async ({ request }) => {
 	for (const bad of ['../../../evil.wav', 'audio/bn-BD/../x.wav', 'audio/xx/x.wav', 'audio/bn-BD/X.mp3']) {
-		const res = await request.post(`/__record/save?path=${encodeURIComponent(bad)}`, { data: Buffer.from('RIFFxxxx') });
+		const res = await request.post(`/__record/save?path=${encodeURIComponent(bad)}`, { headers: HEADERS, data: Buffer.from('RIFFxxxx') });
 		expect(res.status(), bad).toBe(400);
 	}
+});
+
+test('writes are refused without the studio header or from another site', async ({ request }) => {
+	const path = encodeURIComponent('audio/bn-BD/clip-color-red.wav');
+	const noHeader = await request.post(`/__record/save?path=${path}`, { data: Buffer.from('RIFFxxxx') });
+	expect(noHeader.status()).toBe(403);
+	const evil = await request.post(`/__record/save?path=${path}`, {
+		headers: { ...HEADERS, origin: 'https://evil.example' },
+		data: Buffer.from('RIFFxxxx')
+	});
+	expect(evil.status()).toBe(403);
+	const del = await request.delete(`/__record/delete?path=${path}`);
+	expect(del.status()).toBe(403);
+});
+
+test('camelCase narration keys can be saved (letters.nextLetter)', async ({ request }) => {
+	const path = 'audio/bn-BD/letters-nextLetter.wav';
+	const before: string[] = await (await request.get('/__record/list')).json();
+	test.skip(before.includes(path), 'already recorded by a person');
+	created.push(path);
+	// minimal valid WAV header + 2 samples
+	const wav = Buffer.alloc(48);
+	wav.write('RIFF', 0); wav.writeUInt32LE(40, 4); wav.write('WAVEfmt ', 8); wav.writeUInt32LE(16, 16);
+	wav.writeUInt16LE(1, 20); wav.writeUInt16LE(1, 22); wav.writeUInt32LE(22050, 24); wav.writeUInt32LE(44100, 28);
+	wav.writeUInt16LE(2, 32); wav.writeUInt16LE(16, 34); wav.write('data', 36); wav.writeUInt32LE(4, 40);
+	const res = await request.post(`/__record/save?path=${encodeURIComponent(path)}`, { headers: HEADERS, data: wav });
+	expect(res.status()).toBe(200);
 });
 
 test('groups show progress and the studio is keyboard-driven', async ({ page }) => {

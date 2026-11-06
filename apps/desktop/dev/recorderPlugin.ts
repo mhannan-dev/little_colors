@@ -14,8 +14,12 @@ import { fileURLToPath } from 'node:url';
 import type { Plugin } from 'vite';
 
 const ASSETS = fileURLToPath(new URL('../src/lib/assets/', import.meta.url));
-const SAFE_PATH = /^audio\/(bn-BD|en-US)\/[a-z0-9-]+\.wav$/;
+// Narration keys may contain capitals (e.g. "letters.nextLetter"); no dots/slashes, so no traversal.
+const SAFE_PATH = /^audio\/(bn-BD|en-US)\/[A-Za-z0-9-]+\.wav$/;
 const MAX_BYTES = 5 * 1024 * 1024;
+/** The /record page sends this; a custom header forces a CORS preflight for other sites. */
+export const RECORD_HEADER = 'x-little-colors-record';
+const LOCAL_ORIGIN = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/;
 
 function listRecordings(): string[] {
 	const out: string[] = [];
@@ -42,29 +46,57 @@ export function recorderPlugin(): Plugin {
 
 				if (req.method === 'GET' && url.pathname === '/list') return send(200, listRecordings());
 
+				// Writes only from the dev app itself: a page on another site must not be able to
+				// replace the child-facing recordings while the dev server runs.
+				const origin = req.headers.origin;
+				if ((origin && !LOCAL_ORIGIN.test(origin)) || req.headers[RECORD_HEADER] !== '1') {
+					return send(403, { error: 'forbidden' });
+				}
+
 				const rel = url.searchParams.get('path') ?? '';
 				if (!SAFE_PATH.test(rel)) return send(400, { error: 'invalid path' });
 				const file = join(ASSETS, rel);
 
 				if (req.method === 'DELETE' && url.pathname === '/delete') {
-					if (existsSync(file)) unlinkSync(file);
-					return send(200, { ok: true });
+					try {
+						if (existsSync(file)) unlinkSync(file);
+						return send(200, { ok: true });
+					} catch (e) {
+						return send(500, { error: (e as Error).message });
+					}
 				}
 
 				if (req.method === 'POST' && url.pathname === '/save') {
 					const chunks: Buffer[] = [];
 					let size = 0;
+					let done = false;
+					const finish = (status: number, body: unknown) => {
+						if (done) return;
+						done = true;
+						send(status, body);
+					};
 					req.on('data', (c: Buffer) => {
 						size += c.length;
-						if (size <= MAX_BYTES) chunks.push(c);
+						if (size > MAX_BYTES) {
+							finish(413, { error: 'too large' });
+							req.destroy(); // stop reading an oversized body
+							return;
+						}
+						chunks.push(c);
 					});
+					req.on('error', (e) => finish(400, { error: e.message }));
 					req.on('end', () => {
+						if (done) return;
 						const body = Buffer.concat(chunks);
-						if (size > MAX_BYTES) return send(413, { error: 'too large' });
-						if (body.subarray(0, 4).toString('ascii') !== 'RIFF') return send(400, { error: 'not a WAV file' });
-						mkdirSync(dirname(file), { recursive: true });
-						writeFileSync(file, body);
-						send(200, { ok: true, path: rel, bytes: body.length });
+						if (body.subarray(0, 4).toString('ascii') !== 'RIFF') return finish(400, { error: 'not a WAV file' });
+						// Errors here (e.g. file locked on Windows) must not crash the dev server.
+						try {
+							mkdirSync(dirname(file), { recursive: true });
+							writeFileSync(file, body);
+							finish(200, { ok: true, path: rel, bytes: body.length });
+						} catch (e) {
+							finish(500, { error: (e as Error).message });
+						}
 					});
 					return;
 				}
