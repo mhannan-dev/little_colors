@@ -139,7 +139,7 @@
 
 <TopBar onreplay={() => { if (!$paused) say(replayKey, { interrupt: true }); }} />
 
-<section class="detective" aria-labelledby="animal-title">
+<section class="detective" class:playing={!!mode} aria-labelledby="animal-title">
 	<h1 id="animal-title"><span aria-hidden="true">🔎</span> {text('mode.animals')}</h1>
 	<div class="modes" role="group" aria-label={text('mode.animals')}>
 		<button aria-pressed={mode === 'name'} disabled={$paused} onclick={() => start('name')}>
@@ -207,7 +207,11 @@
 </section>
 
 <style>
-	.detective { flex: 1; min-height: 0; overflow: auto; padding: 12px 16px 24px; text-align: center; }
+	/* A size container, so the photo grid can grow with the space actually available. */
+	.detective { flex: 1; min-height: 0; overflow: auto; padding: 8px 16px 16px; text-align: center; container-type: size; }
+	/* While playing, the title shrinks so the photos get the room. */
+	.detective.playing h1 { font-size: clamp(20px, 2.4vw, 28px); margin: 0 0 4px; }
+	.detective.playing .modes { margin: 4px 0; }
 	h1 { font-size: clamp(30px, 4vw, 48px); margin: 0 0 10px; }
 	h2 { font-size: clamp(20px, 3vw, 30px); margin: 8px 0; }
 	.modes, .numbers { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 8px 0; }
@@ -218,10 +222,16 @@
 	.progress { display: flex; justify-content: center; gap: 10px; margin: 8px 0; }
 	.pdot { width: 18px; height: 18px; border-radius: 50%; border: 3px solid var(--text-secondary); }
 	.pdot.filled { background: var(--text-secondary); }
-	.photos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; max-width: 640px; margin: 10px auto; }
-	.photos.counting { grid-template-columns: repeat(4, minmax(0, 1fr)); max-width: 540px; }
+	/*
+	 * Grid width = whatever fits both ways: the container width, and the height left after
+	 * the title/buttons/feedback (~300 px), turned into width via the 4:3 tiles.
+	 * Find: 1 row of 3 tiles  → width ≈ (free height) × 4/3 × 3 = × 4.
+	 * Count: 2 rows of 4 tiles → width ≈ (free height) / 2 × 4/3 × 4 ≈ × 2.67.
+	 */
+	.photos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 8px auto; width: max(300px, min(100cqw - 32px, 1080px, (100cqh - 300px) * 4)); }
+	.photos.counting { grid-template-columns: repeat(4, minmax(0, 1fr)); width: max(300px, min(100cqw - 32px, 1080px, (100cqh - 330px) * 2.67)); }
 	.photo { position: relative; overflow: hidden; padding: 0; aspect-ratio: 4 / 3; }
-	.photo img { display: block; width: 100%; height: 100%; object-fit: contain; }
+	.photo img { display: block; width: 100%; height: 100%; object-fit: contain; background: var(--bg-secondary); }
 	.check { position: absolute; top: 3px; right: 3px; padding: 0 6px; border-radius: 50%; background: var(--surface); color: var(--text-primary); font-weight: 800; }
 	.match { outline: 3px solid var(--text-primary); outline-offset: 2px; }
 	.hinted { outline: 4px dashed var(--learn-green); outline-offset: 2px; animation: pulse 1.2s ease-in-out 3; }
@@ -240,5 +250,8 @@
 	}
 	@keyframes pulse { 50% { outline-offset: 6px; } }
 	@media (prefers-reduced-motion: reduce) { .reward, .hinted { animation: none; } }
-	@media (max-width: 440px) { .photos.counting { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 280px; } }
+	@media (max-width: 440px) {
+		.photos { grid-template-columns: repeat(2, minmax(0, 1fr)); width: calc(100cqw - 24px); }
+		.photos.counting { grid-template-columns: repeat(2, minmax(0, 1fr)); width: calc(100cqw - 24px); }
+	}
 </style>
