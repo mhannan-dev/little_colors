@@ -1,12 +1,13 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { formatNumeral } from '@little-colors/core';
 	import GameButton from '#lib/components/ui/GameButton.svelte';
 	import TopBar from '#lib/components/ui/TopBar.svelte';
 	import { settings } from '#lib/stores/settings.ts';
 	import { t } from '#lib/i18n.ts';
 
 	type PuzzlePicture = {
-		id: 'mosque' | 'kaaba';
+		id: 'mosque' | 'kaaba' | 'sixty-dome' | 'star-mosque' | 'baitul-mukarram' | 'nabawi';
 		label: { bn: string; en: string };
 		image: string;
 	};
@@ -56,6 +57,105 @@
 				<path d="M218 362v93l46 22v-93zM338 397v80l60-29v-80z" fill="#39302a"/>
 				<path d="M0 524h600v76H0z" fill="#c7b28d"/>
 				<path d="M85 520q215-46 430 0" fill="none" stroke="#fff5df" stroke-width="10" opacity=".8"/>
+			</svg>`)
+		},
+		// Original, simplified drawings of well-known mosques (Bangladesh first). Respectful
+		// depiction only: pieces are gently placed, never thrown or hit (PR-13). Needs content
+		// review before release (SM-02, AU-42).
+		{
+			id: 'sixty-dome',
+			label: { bn: 'ষাট গম্বুজ মসজিদ', en: 'Sixty Dome Mosque' },
+			image: svgImage(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600">
+				<defs><linearGradient id="s" x2="0" y2="1"><stop stop-color="#cfeefa"/><stop offset="1" stop-color="#fdf1dc"/></linearGradient></defs>
+				<rect width="600" height="600" fill="url(#s)"/>
+				<circle cx="90" cy="96" r="38" fill="#ffd66b"/>
+				<path d="M0 470Q300 440 600 470v130H0" fill="#8bcf9c"/>
+				<g fill="#b9563b" stroke="#6b2f22" stroke-width="5">
+					${Array.from({ length: 11 }, (_, i) => `<path d="M${70 + i * 46} 262a23 23 0 0 1 46 0z"/>`).join('')}
+				</g>
+				<g fill="#c9643f" stroke="#6b2f22" stroke-width="5">
+					${Array.from({ length: 10 }, (_, i) => `<path d="M${93 + i * 46} 286a23 23 0 0 1 46 0z"/>`).join('')}
+				</g>
+				<path d="M60 286Q300 270 540 286V478H60z" fill="#c4623f" stroke="#6b2f22" stroke-width="8"/>
+				<path d="M60 300Q300 284 540 300" fill="none" stroke="#8f3f2b" stroke-width="6"/>
+				<g fill="#5a2a1f">
+					${Array.from({ length: 7 }, (_, i) => `<path d="M${118 + i * 58} 478v-80a20 22 0 0 1 40 0v80z"/>`).join('')}
+				</g>
+				<g fill="#b9563b" stroke="#6b2f22" stroke-width="6">
+					<path d="M28 478V270h44v208zM528 478V270h44v208z"/>
+					<path d="M28 270a22 24 0 0 1 44 0zM528 270a22 24 0 0 1 44 0z"/>
+				</g>
+				<path d="M32 330h36M32 390h36M532 330h36M532 390h36" stroke="#8f3f2b" stroke-width="5"/>
+				<path d="M40 478h520" stroke="#6b2f22" stroke-width="10" stroke-linecap="round"/>
+			</svg>`)
+		},
+		{
+			id: 'star-mosque',
+			label: { bn: 'তারা মসজিদ', en: 'Star Mosque' },
+			image: svgImage(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600">
+				<defs><linearGradient id="t" x2="0" y2="1"><stop stop-color="#bfe3ff"/><stop offset="1" stop-color="#f4f9ff"/></linearGradient>
+				<pattern id="st" width="34" height="34" patternUnits="userSpaceOnUse"><rect width="34" height="34" fill="#ffffff"/><path d="M17 5l3.5 8 8.5.7-6.5 5.6 2 8.4L17 23.3 9.5 27.7l2-8.4L5 13.7l8.5-.7z" fill="#2f6fd1"/></pattern></defs>
+				<rect width="600" height="600" fill="url(#t)"/>
+				<path d="M0 480h600v120H0z" fill="#9fd3a4"/>
+				<g stroke="#2a3f5c" stroke-width="7">
+					<path d="M150 300a40 46 0 0 1 80 0z" fill="url(#st)"/>
+					<path d="M370 300a40 46 0 0 1 80 0z" fill="url(#st)"/>
+					<path d="M220 300a80 92 0 0 1 160 0z" fill="url(#st)"/>
+					<path d="M70 320a30 34 0 0 1 60 0zM470 320a30 34 0 0 1 60 0z" fill="url(#st)"/>
+				</g>
+				<path d="M300 208v-34" stroke="#2a3f5c" stroke-width="6"/><circle cx="300" cy="168" r="8" fill="#ffd66b" stroke="#2a3f5c" stroke-width="4"/>
+				<path d="M60 300h480v180H60z" fill="url(#st)" stroke="#2a3f5c" stroke-width="8"/>
+				<path d="M60 318h480" stroke="#2f6fd1" stroke-width="8"/>
+				<g fill="#24365a">
+					<path d="M268 480v-82a32 34 0 0 1 64 0v82z"/>
+					<path d="M150 480v-62a22 24 0 0 1 44 0v62zM406 480v-62a22 24 0 0 1 44 0v62z"/>
+				</g>
+				<g fill="#ffffff" stroke="#2a3f5c" stroke-width="6">
+					<path d="M44 480V250h28v230zM528 480V250h28v230z"/>
+				</g>
+				<path d="M44 250l14-26 14 26zM528 250l14-26 14 26z" fill="#2f6fd1" stroke="#2a3f5c" stroke-width="5"/>
+			</svg>`)
+		},
+		{
+			id: 'baitul-mukarram',
+			label: { bn: 'বায়তুল মোকাররম', en: 'Baitul Mukarram' },
+			image: svgImage(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600">
+				<defs><linearGradient id="b" x2="0" y2="1"><stop stop-color="#c8ecf7"/><stop offset="1" stop-color="#fff8e6"/></linearGradient></defs>
+				<rect width="600" height="600" fill="url(#b)"/>
+				<path d="M0 500h600v100H0z" fill="#8bcf9c"/>
+				<path d="M60 500h480l-30-24H90zM100 476h400l-26-22H126zM140 454h320l-22-20H162z" fill="#e7dcc6" stroke="#7a6a55" stroke-width="5"/>
+				<path d="M170 434V180h260v254z" fill="#fbfaf6" stroke="#5f5a52" stroke-width="9"/>
+				<path d="M170 210h260" stroke="#5f5a52" stroke-width="7"/>
+				<g fill="#7fb7d6" stroke="#5f5a52" stroke-width="4">
+					${[0, 1, 2, 3].flatMap((r) => [0, 1, 2, 3, 4].map((c) => `<rect x="${190 + c * 46}" y="${232 + r * 46}" width="30" height="32" rx="4"/>`)).join('')}
+				</g>
+				<path d="M280 434v-46a20 20 0 0 1 40 0v46z" fill="#5f5a52"/>
+				<path d="M486 434V200h26v234z" fill="#fbfaf6" stroke="#5f5a52" stroke-width="6"/>
+				<path d="M486 200l13-24 13 24z" fill="#3d9a7d" stroke="#5f5a52" stroke-width="4"/>
+				<ellipse cx="110" cy="440" rx="46" ry="12" fill="#a9dcef" stroke="#7a6a55" stroke-width="4"/>
+				<path d="M110 440v-30" stroke="#a9dcef" stroke-width="6" stroke-linecap="round"/>
+			</svg>`)
+		},
+		{
+			id: 'nabawi',
+			label: { bn: 'মসজিদে নববী', en: 'Masjid an-Nabawi' },
+			image: svgImage(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600">
+				<defs><linearGradient id="n" x2="0" y2="1"><stop stop-color="#bfe6f5"/><stop offset="1" stop-color="#fff4dc"/></linearGradient></defs>
+				<rect width="600" height="600" fill="url(#n)"/>
+				<path d="M0 490h600v110H0z" fill="#e8dcc0"/>
+				<g fill="#f6efe2" stroke="#7d6a52" stroke-width="6">
+					<path d="M86 490V170h30v320zM484 490V170h30v320z"/>
+				</g>
+				<path d="M80 236h42M80 300h42M478 236h42M478 300h42" stroke="#7d6a52" stroke-width="6"/>
+				<path d="M86 170l15-40 15 40zM484 170l15-40 15 40z" fill="#d9c39a" stroke="#7d6a52" stroke-width="5"/>
+				<path d="M130 490V330h340v160z" fill="#f6efe2" stroke="#7d6a52" stroke-width="8"/>
+				<g fill="#c9b58e">
+					${Array.from({ length: 7 }, (_, i) => `<path d="M${146 + i * 46} 490v-80a17 22 0 0 1 34 0v80z"/>`).join('')}
+				</g>
+				<path d="M250 330a50 58 0 0 1 100 0z" fill="#3aa070" stroke="#24563f" stroke-width="7"/>
+				<path d="M246 330h108" stroke="#24563f" stroke-width="8"/>
+				<path d="M300 272v-22" stroke="#b9902f" stroke-width="6"/><circle cx="300" cy="244" r="7" fill="#e3bd52"/>
+				<path d="M160 330a26 28 0 0 1 52 0zM388 330a26 28 0 0 1 52 0z" fill="#e9dcc3" stroke="#7d6a52" stroke-width="5"/>
 			</svg>`)
 		}
 	];
@@ -135,7 +235,11 @@
 				type="button"
 				aria-pressed={pictureId === item.id}
 				onclick={() => choosePicture(item.id)}
-			>{lang === 'bn-BD' ? item.label.bn : item.label.en}</button>
+			>
+				<!-- Picture first, so a child who can't read can still choose (PR-25). -->
+				<span class="thumb" style={`background-image:${item.image}`} aria-hidden="true"></span>
+				<span class="choice-label">{lang === 'bn-BD' ? item.label.bn : item.label.en}</span>
+			</button>
 		{/each}
 	</div>
 
@@ -148,6 +252,9 @@
 		</button>
 	</div>
 
+	<div class="board-row">
+	<!-- The finished picture to aim for. -->
+	<div class="target-preview" style={`background-image:${picture.image}`} aria-hidden="true" data-testid="puzzle-preview"></div>
 	<div
 		class="puzzle-board"
 		class:complete={solved}
@@ -173,12 +280,13 @@
 			></button>
 		{/each}
 	</div>
+	</div>
 
 	<div class="status" aria-live="polite">
 		{#if solved}
 			<strong>{lang === 'bn-BD' ? 'দারুণ! পাজলটি মিলে গেছে!' : 'Wonderful! Puzzle complete!'}</strong>
 		{:else}
-			<span>{lang === 'bn-BD' ? `চাল: ${moves}` : `Moves: ${moves}`}</span>
+			<span>{lang === 'bn-BD' ? `চাল: ${formatNumeral(moves, $settings.numeralStyle)}` : `Moves: ${formatNumeral(moves, $settings.numeralStyle)}`}</span>
 			<span>{lang === 'bn-BD' ? 'একটি টুকরো বেছে নিয়ে, তারপর অন্যটিতে ট্যাপ করো' : 'Select one tile, then tap another to swap'}</span>
 		{/if}
 	</div>
@@ -243,6 +351,53 @@
 		font-weight: 600;
 		cursor: pointer;
 	}
+	/* Six pictures: one scrollable row so the board always stays on screen. */
+	.picture-picker {
+		flex-wrap: nowrap;
+		justify-content: flex-start;
+		max-width: 100%;
+		overflow-x: auto;
+		overflow-y: hidden;
+		padding: 6px 6px 8px; /* room for the active border; overflow-x would clip it */
+		scrollbar-width: thin;
+	}
+	.picture-choice {
+		flex: 0 0 auto;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 2px;
+		padding: 4px 8px;
+		min-width: 76px;
+	}
+	.thumb {
+		width: 56px;
+		height: 56px;
+		border-radius: 10px;
+		background-size: cover;
+		background-position: center;
+		box-shadow: inset 0 0 0 1px rgb(0 0 0 / 10%);
+	}
+	.choice-label {
+		font-size: clamp(12px, 1.3vw, 15px);
+		line-height: 1.15;
+		white-space: nowrap;
+	}
+	.board-row {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 16px;
+	}
+	.target-preview {
+		width: clamp(70px, 12vh, 120px);
+		aspect-ratio: 1;
+		flex: 0 0 auto;
+		border: 3px solid var(--surface);
+		border-radius: 12px;
+		background-size: cover;
+		box-shadow: 0 3px 10px rgb(0 0 0 / 12%);
+	}
 	.picture-choice.active,
 	.level-picker button.active {
 		border-color: var(--learn-green);
@@ -301,6 +456,11 @@
 		}
 		.puzzle-board {
 			width: min(38vh, 340px, 78vw);
+		}
+	}
+	@media (max-width: 600px) {
+		.target-preview {
+			display: none; /* the board needs the width on phones */
 		}
 	}
 	@media (max-width: 420px) {
