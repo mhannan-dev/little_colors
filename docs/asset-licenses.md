@@ -21,15 +21,15 @@ Narration MP3s in `apps/desktop/src/lib/assets/audio/` are generated with **Azur
 
 | File | Animal | Source (from file name) | License | Status |
 |---|---|---|---|---|
-| `pexels-724211268-33585487.webp`, `pexels-724211268-34345889.webp` | cat | Pexels, photographer id 724211268 | Pexels License | **verify source URL** |
-| `pexels-altaf-shah-3143825-6438048.webp` | pigeon | Pexels, Altaf Shah | Pexels License | **verify source URL** |
-| `pexels-christina99999-27009654.webp` | cow | Pexels, christina99999 | Pexels License | **verify source URL** |
-| `pexels-christina99999-28607441.webp` | goat | Pexels, christina99999 | Pexels License | **verify source URL** |
-| `pexels-gabriele-brancati-32566116-14138716.webp` | deer | Pexels, Gabriele Brancati | Pexels License | **verify source URL** |
-| `pexels-miguel-cuenca-67882473-18291217.webp` | deer | Pexels, Miguel Cuenca | Pexels License | **verify source URL** |
-| `pexels-jay-brand-1763356224-32196368.webp` | lion | Pexels, Jay Brand | Pexels License | **verify source URL** |
-| `pexels-raghavendra-narayan-2160151307-36530920.webp` | tiger | Pexels, Raghavendra Narayan | Pexels License | **verify source URL** |
-| `pexels-sunny67-38146597.webp` | tiger | Pexels, sunny67 | Pexels License | **verify source URL** |
-| `mohish-20211115090834.webp` | buffalo | **unknown** | **unknown** | **BLOCKS RELEASE until the source and license are confirmed or the photo is replaced** |
+| `pexels-724211268-33585487.webp`, `pexels-724211268-34345889.webp` | cat | Pexels, photographer id 724211268 | Pexels License | Free to use (confirmed by the product owner, 2026-11-06) |
+| `pexels-altaf-shah-3143825-6438048.webp` | pigeon | Pexels, Altaf Shah | Pexels License | Free to use (confirmed by the product owner, 2026-11-06) |
+| `pexels-christina99999-27009654.webp` | cow | Pexels, christina99999 | Pexels License | Free to use (confirmed by the product owner, 2026-11-06) |
+| `pexels-christina99999-28607441.webp` | goat | Pexels, christina99999 | Pexels License | Free to use (confirmed by the product owner, 2026-11-06) |
+| `pexels-gabriele-brancati-32566116-14138716.webp` | deer | Pexels, Gabriele Brancati | Pexels License | Free to use (confirmed by the product owner, 2026-11-06) |
+| `pexels-miguel-cuenca-67882473-18291217.webp` | deer | Pexels, Miguel Cuenca | Pexels License | Free to use (confirmed by the product owner, 2026-11-06) |
+| `pexels-jay-brand-1763356224-32196368.webp` | lion | Pexels, Jay Brand | Pexels License | Free to use (confirmed by the product owner, 2026-11-06) |
+| `pexels-raghavendra-narayan-2160151307-36530920.webp` | tiger | Pexels, Raghavendra Narayan | Pexels License | Free to use (confirmed by the product owner, 2026-11-06) |
+| `pexels-sunny67-38146597.webp` | tiger | Pexels, sunny67 | Pexels License | Free to use (confirmed by the product owner, 2026-11-06) |
+| `mohish-20211115090834.webp` | buffalo | Provided by the product owner | Free to use (confirmed by the product owner, 2026-11-06) | Source URL not recorded |
 
-The Pexels License allows free use and modification in an app without attribution. It does not allow selling unaltered copies or implying endorsement. Record each photo's page URL here before release.
+The Pexels License allows free use and modification in an app without attribution. It does not allow selling unaltered copies or implying endorsement. The product owner confirmed on 2026-11-06 that all photos are free to use. Adding each photo's page URL is still recommended, so the source can be shown if anyone asks.
