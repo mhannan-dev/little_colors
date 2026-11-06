@@ -9,6 +9,7 @@
 		type ThinkingAgeBand, type ThinkingKind, type ThinkingLesson, type ThinkingProgress, type ThinkingAction, type ThinkingToken, type GridDirection
 	} from '@little-colors/core';
 	import TopBar from '#lib/components/ui/TopBar.svelte';
+	import { t } from '#lib/i18n.ts';
 	import ThinkingTokenView from './ThinkingToken.svelte';
 	import PicnicScene from './PicnicScene.svelte';
 	import CreativePlayground from './CreativePlayground.svelte';
@@ -134,7 +135,7 @@
 		<CreativePlayground bind:model={creation} bind:activity={creativeMode} {ageBand} onexit={closePlayground} />
 	{:else if !lesson}
 		<section class="hub">
-			<div class="eyebrow">Little Colors · Think & Play</div>
+			<div class="eyebrow">{t('appName', $settings.language)} · Think & Play</div>
 			<h1 tabindex="-1">{text('thinking.title')}</h1>
 			<p class="subtitle">{text('thinking.subtitle')}</p>
 			<div class="age-bands" role="group" aria-label={$settings.language === 'bn-BD' ? 'পাঠের স্তর' : 'Lesson level'}>

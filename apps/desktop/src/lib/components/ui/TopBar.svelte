@@ -3,6 +3,7 @@
 	import { settings } from '#lib/stores/settings.ts';
 	import { caption } from '#lib/audio/narrator.ts';
 	import { t } from '#lib/i18n.ts';
+	import LanguageSwitcher from './LanguageSwitcher.svelte';
 
 	let { onreplay, backTo = '/play' }: { onreplay?: () => void; backTo?: string } = $props();
 
@@ -17,6 +18,7 @@
 	<p class="caption" aria-live="polite">{$caption}</p>
 
 	<div class="right">
+		<LanguageSwitcher onchange={onreplay} />
 		{#if onreplay}
 			<button class="icon" onclick={onreplay} aria-label={t('replayInstruction', $settings.language)}>
 				<svg viewBox="0 0 24 24" width="32" height="32" aria-hidden="true"><path d="M4 12 a8 8 0 1 0 3 -6.2 M4 4 v5 h5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" /></svg>

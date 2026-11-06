@@ -5,10 +5,12 @@
 	import { onMount } from 'svelte';
 	import { installDesktopBehavior } from '#lib/desktop.ts';
 	import GhostHand from '#lib/components/GhostHand.svelte';
+	import { restoreLanguage, settings } from '#lib/stores/settings.ts';
 	import type { LayoutProps } from './$types';
 
 	let { children }: LayoutProps = $props();
 
+	restoreLanguage();
 	const tokens = `<style>:root{${toCssVariables('light')}}</style>`;
 
 	// DS-40 / OF-15: designed at 1280×800; scale proportionally from the minimum window to 4K.
@@ -33,11 +35,14 @@
 			off();
 		};
 	});
+
+	$effect(() => {
+		document.documentElement.lang = $settings.language;
+	});
 </script>
 
 <svelte:head>
 	<link rel="icon" href={favicon} />
-	<title>Little Colors</title>
 	<!-- eslint-disable-next-line svelte/no-at-html-tags -- static tokens from design-tokens -->
 	{@html tokens}
 </svelte:head>

@@ -2,7 +2,12 @@
 	import { goto } from '$app/navigation';
 	import Mascot from '#lib/components/mascot/Mascot.svelte';
 	import GameButton from '#lib/components/ui/GameButton.svelte';
+	import LanguageSwitcher from '#lib/components/ui/LanguageSwitcher.svelte';
 	import { say } from '#lib/audio/narrator.ts';
+	import { t } from '#lib/i18n.ts';
+	import { settings } from '#lib/stores/settings.ts';
+
+	const secondaryLanguage = $derived($settings.language === 'bn-BD' ? 'en-US' : 'bn-BD');
 
 	// SC-02: the Play tap is the first user gesture, so narration may start after it.
 	function play() {
@@ -12,11 +17,9 @@
 </script>
 
 <section class="welcome">
-	<h1>
-		<span style:color="var(--learn-red)">ছো</span><span style:color="var(--learn-yellow)">ট্ট</span>
-		<span style:color="var(--learn-blue)">রং</span>
-	</h1>
-	<p class="sub">Little Colors</p>
+	<LanguageSwitcher />
+	<h1 lang={$settings.language}>{t('appName', $settings.language)}</h1>
+	<p class="sub" lang={secondaryLanguage}>{t('appName', secondaryLanguage)}</p>
 	<Mascot state="wave" size={260} />
 	<GameButton action="play" onclick={play} />
 </section>
@@ -33,8 +36,11 @@
 	}
 	h1 {
 		margin: 0;
-		font-size: clamp(56px, 8vw, 96px);
-		line-height: 1;
+		max-width: 95%;
+		font-size: clamp(48px, 7vw, 88px);
+		line-height: 1.2;
+		text-align: center;
+		color: var(--learn-blue);
 		-webkit-text-stroke: 2px var(--text-primary);
 	}
 	.sub {

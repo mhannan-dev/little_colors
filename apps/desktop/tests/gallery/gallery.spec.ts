@@ -5,9 +5,10 @@
 import { expect, test, type Page } from '@playwright/test';
 import { fileURLToPath } from 'node:url';
 import { field, solve } from '../helpers/numbers.ts';
+import { saveWebpScreenshot } from './webpScreenshot.ts';
 
 const OUT = fileURLToPath(new URL('../../../../docs/ui/', import.meta.url));
-const shot = (page: Page, name: string) => page.screenshot({ path: `${OUT}${name}.png` });
+const shot = (page: Page, name: string) => saveWebpScreenshot(page, `${OUT}${name}.webp`);
 const settle = (page: Page, ms = 1200) => page.waitForTimeout(ms);
 
 test.describe.configure({ mode: 'serial' });

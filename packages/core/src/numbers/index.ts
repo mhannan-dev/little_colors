@@ -24,3 +24,5 @@ export * from './lessons/arithmeticRally.ts';
 export * from './lessons/rallyNarration.ts';
 export * from './lessons/fruitLearning.ts';
 export * from './lessons/fruitNarration.ts';
+export * from './lessons/flowerNarration.ts';
+export * from './lessons/animalNarration.ts';

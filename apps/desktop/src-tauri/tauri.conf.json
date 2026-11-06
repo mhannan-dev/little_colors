@@ -1,6 +1,6 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "Little Colors",
+  "productName": "Rumi Learning Adventures",
   "version": "0.1.0",
   "identifier": "com.littlecolors.app",
   "build": {
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "Little Colors",
+        "title": "Rumi Learning Adventures",
         "width": 1280,
         "height": 800,
         "minWidth": 800,
@@ -29,6 +29,8 @@
   "bundle": {
     "active": true,
     "targets": ["nsis"],
+    "shortDescription": "Bengali and English learning games for ages 5–10",
+    "longDescription": "Offline learning games for ages 5–10. Explore letters, numbers, flags, fruits, and puzzles with Rumi in Bengali and English.",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",

@@ -1,7 +1,7 @@
 [package]
 name = "little-colors"
 version = "0.1.0"
-description = "Little Colors — offline educational game for young children"
+description = "Rumi Learning Adventures — offline learning games for ages 5–10 in Bengali and English"
 authors = ["Little Colors"]
 license = ""
 repository = ""

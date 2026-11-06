@@ -15,7 +15,9 @@
 		{ id: 'flag', key: 'mode.flag', href: '/flag' },
 		{ id: 'bird', key: 'mode.bird', href: '/bird' },
 		{ id: 'holy-puzzle', key: 'mode.holy-puzzle', href: '/holy-puzzle' },
-		{ id: 'fruit', key: 'mode.fruit', href: '/fruit' }
+		{ id: 'fruit', key: 'mode.fruit', href: '/fruit' },
+		{ id: 'flower', key: 'mode.flower', href: '/flower' },
+		{ id: 'animals', key: 'mode.animals', href: '/animals' }
 	] as const;
 
 	const label = (key: string) =>
@@ -64,6 +66,19 @@
 						<rect x="78" y="28" width="6" height="64" fill="var(--text-primary)" rx="3" />
 						<path d="M84 30 L126 40 L84 52 Z" fill="var(--learn-red)" stroke="var(--text-primary)" stroke-width="3" stroke-linejoin="round" />
 						<circle cx="116" cy="40" r="6" fill="var(--learn-yellow)" stroke="var(--text-primary)" stroke-width="3" />
+					{:else if m.id === 'animals'}
+						<path d="M98 74l28 26" stroke="var(--text-primary)" stroke-width="12" stroke-linecap="round" />
+						<circle cx="70" cy="49" r="35" fill="var(--learn-yellow)" stroke="var(--text-primary)" stroke-width="5" />
+						<path d="M59 62 Q55 55 63 49 Q70 41 77 49 Q85 55 81 62 Q78 67 70 63 Q62 67 59 62Z" fill="var(--text-primary)" />
+						{#each [55, 65, 76, 85] as x, i}
+							<ellipse cx={x} cy={i === 0 || i === 3 ? 43 : 36} rx="4" ry="6" fill="var(--text-primary)" />
+						{/each}
+					{:else if m.id === 'flower'}
+						<path d="M80 58v44 M80 88 Q45 92 46 71 Q73 68 80 88Z" fill="var(--learn-green)" stroke="var(--text-primary)" stroke-width="4" />
+						{#each [0, 72, 144, 216, 288] as angle}
+							<ellipse cx="80" cy="24" rx="14" ry="19" transform="rotate({angle} 80 45)" fill="var(--learn-orange)" stroke="var(--text-primary)" stroke-width="3" />
+						{/each}
+						<circle cx="80" cy="45" r="12" fill="var(--learn-yellow)" stroke="var(--text-primary)" stroke-width="3" />
 					{:else if m.id === 'fruit'}
 						<path d="M67 38 Q43 19 28 43 Q15 66 35 94 Q51 111 67 100 Q84 112 99 94 Q119 66 106 43 Q91 20 67 38Z" fill="var(--learn-red)" stroke="var(--text-primary)" stroke-width="4" />
 						<path d="M67 38 Q65 19 77 9 M74 23 Q94 5 110 24 Q89 38 74 23Z" fill="var(--learn-green)" stroke="var(--text-primary)" stroke-width="4" />

@@ -12,7 +12,7 @@ const UI = {
 	replayRound: { bn: 'আবার খেলি', en: 'Play again' },
 	chooseGame: { bn: 'অন্য খেলা', en: 'Another game' },
 	chooseMode: { bn: 'কোন খেলা খেলবে?', en: 'Which game?' },
-	appName: { bn: 'ছোট্ট রং', en: 'Little Colors' },
+	appName: { bn: 'রুমির শেখার অভিযান', en: 'Rumi Learning Adventures' },
 	hint: { bn: 'সাহায্য', en: 'Help me' },
 	place: { bn: 'জায়গা', en: 'Place' }
 } as const;

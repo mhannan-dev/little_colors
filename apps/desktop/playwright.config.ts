@@ -1,5 +1,7 @@
 import { defineConfig } from '@playwright/test';
 
+const baseURL = 'http://127.0.0.1:5179';
+
 // E2E runs the desktop UI in Edge (same Chromium engine as WebView2 inside Tauri).
 export default defineConfig({
 	testDir: 'tests',
@@ -7,7 +9,9 @@ export default defineConfig({
 	// Cold dev-server loads (e.g. the flag page imports 249 SVGs) can exceed the 5 s default.
 	expect: { timeout: 15_000 },
 	use: {
-		baseURL: 'http://127.0.0.1:5179',
+		baseURL,
+		// Existing gameplay and gallery tests exercise Bengali labels.
+		storageState: { cookies: [], origins: [{ origin: baseURL, localStorage: [{ name: 'rumi-language', value: 'bn-BD' }] }] },
 		channel: 'msedge',
 		viewport: { width: 1280, height: 800 }
 	},
@@ -15,7 +19,7 @@ export default defineConfig({
 	// started on 5173 (stale code, broken HMR socket → false console errors).
 	webServer: {
 		command: 'node node_modules/vite/bin/vite.js dev --host 127.0.0.1 --port 5179 --strictPort',
-		url: 'http://127.0.0.1:5179',
+		url: baseURL,
 		reuseExistingServer: false,
 		timeout: 120_000
 	}
