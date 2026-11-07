@@ -21,3 +21,5 @@ export * from './numbers/index.ts';
 export * from './minigames/index.ts';
 // Flag game picture mode (Claude).
 export * from './flags/pictureFlags.ts';
+// 3D ABC & 123 blocks and toy car (Claude).
+export * from './play3d/symbols.ts';

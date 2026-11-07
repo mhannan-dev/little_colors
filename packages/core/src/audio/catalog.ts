@@ -3,6 +3,7 @@ import { MATCHING_NARRATION } from '../shape-matching/narration.ts';
 import { NUMBERS_NARRATION } from '../numbers/narration.ts';
 import { MINIGAME_NARRATION } from '../minigames/narration.ts';
 import { FLAG_NARRATION } from '../flags/pictureFlags.ts';
+import { PLAY3D_NARRATION } from '../play3d/symbols.ts';
 import { VOICE_MANIFEST, type NarrationEntry } from './voiceManifest.ts';
 
 /**
@@ -14,7 +15,8 @@ export const NARRATION_CATALOG: readonly NarrationEntry[] = [
 	...MATCHING_NARRATION,
 	...NUMBERS_NARRATION,
 	...MINIGAME_NARRATION,
-	...FLAG_NARRATION
+	...FLAG_NARRATION,
+	...PLAY3D_NARRATION
 ];
 
 const BY_KEY = new Map<string, NarrationEntry>();
