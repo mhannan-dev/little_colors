@@ -38,11 +38,11 @@ pnpm test / typecheck # all packages
 
 | ID | Requirement |
 |---|---|
-| OF-01 | All UI, fonts, images, and audio are bundled in the app; no network is used at any time. |
+| OF-01 | All UI, fonts, images, and audio are bundled in the app. The only network use is the optional update check (OF-05); no game ever uses the network. |
 | OF-02 | Content Security Policy allows only `'self'`, `data:`, `blob:`, and Tauri IPC; no remote origins. |
 | OF-03 | No gameplay feature depends on a remote API (AR-11). |
 | OF-04 | Tauri capabilities stay minimal (`core:default`); any added plugin needs a reason recorded in `docs/decisions/`. |
-| OF-05 | No auto-updater in the MVP; new versions ship as new installers. |
+| OF-05 | In-app updates (decision 0001): at most one quiet check per 20 h, skipped offline, errors ignored silently; installing needs a grown-up press-and-hold on the home screen; updates are signature-checked. |
 | OF-06 | No "you are offline" messages anywhere. |
 
 ### Desktop behavior

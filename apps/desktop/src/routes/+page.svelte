@@ -3,6 +3,7 @@
 	import Mascot from '#lib/components/mascot/Mascot.svelte';
 	import GameButton from '#lib/components/ui/GameButton.svelte';
 	import LanguageSwitcher from '#lib/components/ui/LanguageSwitcher.svelte';
+	import UpdateNotice from '#lib/components/update/UpdateNotice.svelte';
 	import { say } from '#lib/audio/narrator.ts';
 	import { t } from '#lib/i18n.ts';
 	import { settings } from '#lib/stores/settings.ts';
@@ -22,6 +23,7 @@
 	<p class="sub" lang={secondaryLanguage}>{t('appName', secondaryLanguage)}</p>
 	<Mascot state="wave" size={260} />
 	<GameButton action="play" onclick={play} />
+	<UpdateNotice />
 </section>
 
 <style>

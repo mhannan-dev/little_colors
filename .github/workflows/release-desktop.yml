@@ -1,0 +1,57 @@
+# Builds the signed Windows installer and publishes it where installed apps look for updates.
+# Trigger: push a tag like v0.2.0 (it must match "version" in apps/desktop/src-tauri/tauri.conf.json).
+# Setup (once): see docs/releasing.md. Needs these repository secrets:
+#   TAURI_SIGNING_PRIVATE_KEY, TAURI_SIGNING_PRIVATE_KEY_PASSWORD  (from `tauri signer generate`)
+#   RELEASES_TOKEN  (fine-grained token with "Contents: read and write" on the public releases repo)
+name: Release desktop app
+
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Tag must match the app version
+        shell: pwsh
+        run: |
+          $version = (Get-Content apps/desktop/src-tauri/tauri.conf.json -Raw | ConvertFrom-Json).version
+          if ("v$version" -ne "${{ github.ref_name }}") { throw "Tag ${{ github.ref_name }} does not match tauri.conf.json version $version" }
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: apps/desktop/src-tauri
+
+      - run: pnpm install --frozen-lockfile
+      - name: Tests must pass before shipping
+        run: |
+          pnpm --filter @little-colors/core test
+          pnpm --filter ./apps/desktop typecheck
+
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASES_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          projectPath: apps/desktop
+          args: --config src-tauri/tauri.release.conf.json
+          # Published to a PUBLIC repo: installed apps download updates without any login.
+          owner: mhannan-dev
+          repo: rumi-learning-releases
+          tagName: ${{ github.ref_name }}
+          releaseName: Rumi Learning Adventures ${{ github.ref_name }}
+          releaseBody: নতুন খেলা আর উন্নতি। New games and improvements.
+          releaseDraft: false
+          includeUpdaterJson: true

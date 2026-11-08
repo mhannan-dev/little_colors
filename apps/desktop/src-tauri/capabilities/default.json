@@ -1,11 +1,15 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Minimal permissions: core defaults plus fullscreen toggle (OF-04, OF-12).",
-  "windows": ["main"],
+  "description": "Minimal permissions: core defaults, fullscreen toggle (OF-04, OF-12), and in-app updates (docs/decisions/0001-in-app-updates.md).",
+  "windows": [
+    "main"
+  ],
   "permissions": [
     "core:default",
     "core:window:allow-set-fullscreen",
-    "core:window:allow-is-fullscreen"
+    "core:window:allow-is-fullscreen",
+    "updater:default",
+    "process:allow-restart"
   ]
 }

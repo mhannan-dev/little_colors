@@ -28,7 +28,9 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["nsis"],
+    "targets": [
+      "nsis"
+    ],
     "shortDescription": "Bengali and English learning games for ages 5–10",
     "longDescription": "Offline learning games for ages 5–10. Explore letters, numbers, flags, fruits, and puzzles with Rumi in Bengali and English.",
     "icon": [
@@ -38,5 +40,16 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ]
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "REPLACE_WITH_UPDATER_PUBLIC_KEY",
+      "endpoints": [
+        "https://github.com/mhannan-dev/rumi-learning-releases/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
   }
 }
