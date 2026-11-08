@@ -7,7 +7,7 @@ describe('saved block designs',()=>{
 		const valid={x:1,y:0,z:2,color:PALETTE[0].hex};
 		expect(readBuild('{broken')).toEqual([]);
 		expect(readBuild('{"blocks":[]}')).toEqual([]);
-		expect(readBuild(JSON.stringify([valid,valid,null,{...valid,x:-1},{...valid,y:8},{...valid,z:0.5},{...valid,color:'url(unsafe)'}]))).toEqual([valid]);
+		expect(readBuild(JSON.stringify([valid,valid,null,{...valid,x:-1},{...valid,y:5},{...valid,x:8},{...valid,z:0.5},{...valid,color:'url(unsafe)'}]))).toEqual([valid]);
 	});
 	it('keeps the next block above a column, including a column with a gap',()=>{
 		expect(columnTop([],3,3)).toBe(0);

@@ -75,7 +75,10 @@
 	function point(event: PointerEvent, apply = false) {
 		if (unavailable || (apply && event.button!==0)) return;
 		const hit = locate(event); if (!hit) return;
-		const cell = tool==='erase' ? hit.cell : {x:hit.cell.x+hit.normal.x,y:hit.cell.y+hit.normal.y,z:hit.cell.z+hit.normal.z};
+		// Young children cannot aim at a thin roof: tapping anywhere on a column (floor tile,
+		// side or top of a block) stacks onto that column; erase takes its top block.
+		const top = columnTop(blocks,hit.cell.x,hit.cell.z);
+		const cell = {x:hit.cell.x,y:tool==='erase' ? top-1 : top,z:hit.cell.z};
 		cursor = {x:cell.x,y:cell.y,z:cell.z};
 		if (apply) { board.focus({preventScroll:true}); edit(cell); }
 	}
@@ -169,7 +172,7 @@
 		</div>
 	</div>
 	<div class="bottom-bar">
-		<div id="building-help"><strong>{bn ? 'একটি ঘর বা ব্লকের গায়ে ট্যাপ করি' : 'Tap a tile or the face of a block'}</strong><small>{bn ? 'কিবোর্ড: তীর দিয়ে ঘর বাছি • Enter বসায় • Backspace সরায়' : 'Keyboard: arrows choose a tile · Enter adds · Backspace removes'}</small></div>
+		<div id="building-help"><strong>{bn ? 'ঘরে বা ব্লকে ট্যাপ করি, নতুন ব্লক উপরে বসবে' : 'Tap a tile or a block: the new block goes on top'}</strong><small>{bn ? 'কিবোর্ড: তীর দিয়ে ঘর বাছি • Enter বসায় • Backspace সরায়' : 'Keyboard: arrows choose a tile · Enter adds · Backspace removes'}</small></div>
 		<div class="history">
 			<button aria-label={bn ? 'আগের ধাপে যাই' : 'Undo'} disabled={!undoStack.length} onclick={undo}>↶ {bn ? 'আগের ধাপ' : 'Undo'}</button>
 			<button aria-label={bn ? 'পরের ধাপে যাই' : 'Redo'} disabled={!redoStack.length} onclick={redo}>↷ {bn ? 'পরের ধাপ' : 'Redo'}</button>
@@ -184,15 +187,15 @@
 	.heading { display:flex; align-items:center; justify-content:space-between; gap:16px; }
 	h1 { margin:0; font-size:34px; line-height:1.2; } .eyebrow { margin:0 0 4px; font-size:14px; color:var(--text-secondary); letter-spacing:0.1em; }
 	.saved { margin:0; padding:8px 14px; border-radius:12px; background:#e6eddf; color:#506d51; font-size:17px; }
-	.workspace { display:flex; gap:20px; flex:1; min-height:380px; }
+	.workspace { display:flex; gap:20px; flex:1; min-height:0; }
 	aside { display:flex; flex-direction:column; width:232px; flex-shrink:0; gap:10px; padding:12px; border:2px solid var(--border-soft); border-radius:24px; background:var(--surface); overflow-y:auto; min-height:0; line-height:1.2; }
 	h2 { margin:0 0 9px; font-size:20px; } button { border:2px solid var(--border-soft); border-radius:13px; background:var(--surface); min-height:48px; padding:7px 12px; cursor:pointer; font-weight:600; font-size:18px; }
 	button:hover { background:#edf1e6; } button:disabled { opacity:0.4; cursor:default; } button[aria-pressed='true'] { border-color:#526e63; background:#e9efe1; }
 	.palette { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; } .swatch { padding:3px; min-height:38px; height:38px; border-radius:11px; background:var(--swatch); box-shadow:inset 0 0 0 3px #ffffff80; } .swatch[aria-pressed='true'] { background:var(--swatch); outline:2px solid #526e63; outline-offset:2px; } .swatch span { font-size:22px; color:#304c4a; }
 	.selected-color { margin:6px 0 0; font-size:14px; color:var(--text-secondary); } .tools { display:flex; gap:7px; } .tools button { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; font-size:15px; padding:5px; min-height:64px; } .tools button span { font-size:25px; }
 	.presets { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; } .presets h2 { grid-column:1/-1; margin-bottom:2px; } .presets button { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; font-size:13px; padding:5px 3px; min-height:70px; } .preset-icon { font-size:27px; color:#9b765b; } .go { display:none; } .help { margin-top:auto; font-size:16px; min-height:44px; }
-	.stage { display:flex; flex:1; min-width:0; flex-direction:column; gap:8px; } .board { position:relative; flex:1; min-height:320px; overflow:hidden; border:2px solid #b7cdba; border-radius:24px; background:#dfedec; touch-action:manipulation; cursor:crosshair; } canvas { position:absolute; display:block; width:100%; height:100%; } .board-label { position:absolute; top:16px; left:18px; border-radius:10px; padding:5px 11px; background:#fffcf0d9; font-size:15px; font-weight:600; pointer-events:none; color:#567465; }
+	.stage { display:flex; flex:1; min-width:0; flex-direction:column; gap:8px; } .board { position:relative; flex:1; min-height:220px; overflow:hidden; border:2px solid #b7cdba; border-radius:24px; background:#dfedec; touch-action:manipulation; cursor:crosshair; } canvas { position:absolute; display:block; width:100%; height:100%; } .board-label { position:absolute; top:16px; left:18px; border-radius:10px; padding:5px 11px; background:#fffcf0d9; font-size:15px; font-weight:600; pointer-events:none; color:#567465; }
 	.view-tools { display:flex; align-items:center; justify-content:center; gap:9px; } .view-tools button { min-width:48px; font-size:24px; } .view-tools span { font-size:16px; color:var(--text-secondary); } .divider { width:1px; height:25px; background:var(--border-soft); margin:0 8px; }
 	.bottom-bar { display:flex; align-items:center; justify-content:space-between; gap:14px; } #building-help { display:flex; flex-direction:column; } strong { font-size:21px; } small { font-size:16px; color:var(--text-secondary); } .history { display:flex; gap:8px; } .feedback { margin:0; font-size:17px; text-align:center; color:var(--text-secondary); min-height:25px; } .unavailable { position:absolute; inset:0; display:grid; place-items:center; background:#fff8e8e8; padding:30px; text-align:center; }
-	@media(max-height:720px) { .builder { gap:8px; } .eyebrow { display:none; } h1 { font-size:28px; } aside { gap:9px; padding:12px; } .workspace { min-height:350px; } }
+	@media(max-height:720px) { .builder { gap:8px; } .eyebrow { display:none; } h1 { font-size:28px; } aside { gap:9px; padding:12px; } .workspace { min-height:0; } }
 </style>
