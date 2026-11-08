@@ -6,7 +6,7 @@ export const ENGLISH_ALPHABET: readonly AlphabetEntry[] = [
 	['A','Apple','🍎'],['B','Ball','⚽'],['C','Cat','🐱'],['D','Dog','🐶'],['E','Elephant','🐘'],
 	['F','Fish','🐟'],['G','Grapes','🍇'],['H','Hat','🎩'],['I','Ice cream','🍦'],['J','Juice','🧃'],
 	['K','Kite','🪁'],['L','Lion','🦁'],['M','Moon','🌙'],['N','Nest','🪺'],['O','Owl','🦉'],
-	['P','Penguin','🐧'],['Q','Queen','👸'],['R','Rainbow','🌈'],['S','Sun','☀️'],['T','Turtle','🐢'],
+	['P','Penguin','🐧'],['Q','Queen','👸'],['R','Rabbit','🐰'],['S','Sun','☀️'],['T','Turtle','🐢'],
 	['U','Umbrella','☂️'],['V','Violin','🎻'],['W','Whale','🐳'],['X','Xylophone','xylophone'],
 	['Y','Yo-yo','yo-yo'],['Z','Zebra','🦓']
 ].map(([letter, word, picture]) => ({ letter: letter!, word: word!, picture: picture! }));

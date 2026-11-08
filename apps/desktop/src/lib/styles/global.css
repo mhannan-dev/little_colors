@@ -20,14 +20,25 @@ body {
 	font-size: 20px;
 	color: var(--text-primary);
 	background: var(--bg-primary);
-	-webkit-user-select: none;
-	user-select: none;
+	-webkit-user-select: text;
+	user-select: text;
 	-webkit-tap-highlight-color: transparent;
 }
 
 button {
 	font: inherit;
 	color: inherit;
+}
+
+/* Keep play gestures from selecting artwork or control labels. */
+button,
+[role='button'],
+[role='application'],
+[draggable='true'],
+canvas,
+svg {
+	-webkit-user-select: none;
+	user-select: none;
 }
 
 :focus-visible {

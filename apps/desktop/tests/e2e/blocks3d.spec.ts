@@ -50,7 +50,7 @@ test('build, undo, erase, save, and reopen a colorful 3D design',async({page})=>
 	expect(await saved(page)).toHaveLength(0);
 	await page.getByRole('button',{name:/Color tower/}).click();
 	expect((await saved(page)).length).toBeGreaterThan(50);
-	await page.getByRole('button',{name:/Rainbow steps/}).click();
+	await page.getByRole('button',{name:/Colorful steps|Rainbow steps/}).click();
 	expect((await saved(page)).length).toBeGreaterThan(50);
 	await page.getByRole('button',{name:'বাংলা',exact:true}).click();
 	await expect(page.getByRole('heading',{name:'থ্রিডি ব্লক বিল্ডিং'})).toBeVisible();
@@ -141,7 +141,7 @@ test('save a build, find it in My builds, open it again, and delete it with a se
 	await page.reload();
 	const save = page.getByTestId('save-build');
 	await expect(save).toBeDisabled(); // nothing to save on an empty mat
-	await page.getByRole('button', { name: /Rainbow steps/ }).click();
+	await page.getByRole('button', { name: /Colorful steps|Rainbow steps/ }).click();
 	const rainbow = await saved(page);
 	await save.click();
 	await expect(page.locator('.feedback')).toContainText('Saved! It is in My builds.');

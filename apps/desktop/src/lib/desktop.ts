@@ -28,7 +28,9 @@ export function installDesktopBehavior(): () => void {
 		}
 	};
 	const onContextMenu = (e: MouseEvent) => {
-		if (!import.meta.env.DEV) e.preventDefault();
+		const selectedText = window.getSelection()?.toString().trim();
+		const editable = e.target instanceof Element && e.target.closest('input, textarea, [contenteditable]:not([contenteditable="false"])');
+		if (!import.meta.env.DEV && !selectedText && !editable) e.preventDefault();
 	};
 	window.addEventListener('keydown', onKey);
 	window.addEventListener('contextmenu', onContextMenu);
