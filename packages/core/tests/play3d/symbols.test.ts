@@ -13,7 +13,7 @@ import {
 } from '../../src/index.ts';
 
 const SETS: SymbolSet[] = ['abc', 'bangla', '123'];
-const GAMES: Play3DGame[] = ['abc3d', 'car3d'];
+const GAMES: Play3DGame[] = ['abc3d', 'car3d', 'race3d'];
 const DIFFS: Difficulty[] = ['beginner', 'explorer', 'advanced'];
 
 describe('3D symbol sets', () => {

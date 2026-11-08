@@ -60,14 +60,14 @@ export function symbolPool(set: SymbolSet, difficulty: Difficulty): readonly Sym
 	return all.slice(0, size);
 }
 
-export type Play3DGame = 'abc3d' | 'car3d';
+export type Play3DGame = 'abc3d' | 'car3d' | 'race3d';
 export type Play3DData = { set: SymbolSet };
 
 export const PLAY3D_ROUND_LENGTH = 5;
 
-/** Blocks: more blocks at higher difficulty. Car: always three lanes. */
+/** Blocks: more blocks at higher difficulty. Car and race: always three lanes. */
 export const optionCountFor = (game: Play3DGame, d: Difficulty) =>
-	game === 'car3d' ? 3 : { beginner: 3, explorer: 4, advanced: 5 }[d];
+	game !== 'abc3d' ? 3 : { beginner: 3, explorer: 4, advanced: 5 }[d];
 
 export interface Play3DRound {
 	game: Play3DGame;
@@ -77,7 +77,7 @@ export interface Play3DRound {
 	activities: ChoiceActivity<Play3DData>[];
 }
 
-const verb = (game: Play3DGame) => (game === 'abc3d' ? 'find' : 'catch');
+const PREFIX: Record<Play3DGame, string> = { abc3d: 'abc3d.find', car3d: 'drive.catch', race3d: 'race.boost' };
 
 export function createPlay3DRound(game: Play3DGame, set: SymbolSet, difficulty: Difficulty, seed: number): Play3DRound {
 	const rng: Rng = createRng(seed);
@@ -92,7 +92,7 @@ export function createPlay3DRound(game: Play3DGame, set: SymbolSet, difficulty: 
 			id: `${game}.${set}.${difficulty}.${seed}.${index}`,
 			game,
 			difficulty,
-			instructionKey: `${game === 'abc3d' ? 'abc3d' : 'drive'}.${verb(game)}.${set}.${target.id}`,
+			instructionKey: `${PREFIX[game]}.${set}.${target.id}`,
 			correctKey: `abc3d.correct.${set}.${target.id}`,
 			options,
 			answerId: `${set}-${target.id}`,
@@ -112,10 +112,15 @@ export const PLAY3D_NARRATION: NarrationEntry[] = [
 	line('play3d.set.123', 'সংখ্যা', 'Numbers'),
 	line('drive.left', 'বাঁয়ে', 'Left'),
 	line('drive.right', 'ডানে', 'Right'),
+	// Race with friends: nobody ever loses; everyone finishes together.
+	line('mode.race3d', 'বন্ধুদের সাথে রেস', 'Race with Friends'),
+	line('race.start', 'চলো, বন্ধুদের সাথে রেস করি! রেডি, স্টেডি, গো!', "Let's race with our friends! Ready, steady, go!"),
+	line('race.finish', 'সবাই একসাথে পৌঁছে গেছি! দারুণ রেস!', 'We all made it together! What a race!'),
 	...(Object.keys(SYMBOLS) as SymbolSet[]).flatMap((set) =>
 		SYMBOLS[set].flatMap((s) => [
 			line(`abc3d.find.${set}.${s.id}`, `${s.bn} কোনটা?`, `Where is ${s.en}?`),
 			line(`drive.catch.${set}.${s.id}`, `গাড়ি চালিয়ে ${s.bn} ধরো!`, `Drive to catch ${s.en}!`),
+				line(`race.boost.${set}.${s.id}`, `${s.bn}-এর উপর দিয়ে চালাও!`, `Drive over ${s.en}!`),
 			line(`abc3d.correct.${set}.${s.id}`, `ঠিক! এটা ${s.bn}!`, `Yes! This is ${s.en}!`)
 		])
 	)

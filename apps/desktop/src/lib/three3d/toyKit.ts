@@ -144,12 +144,12 @@ export function toyBlock(glyph: string, color: string, size = 1.6): THREE.Mesh {
 }
 
 /** Rumi's toy car: chunky body, cabin, four wheels, and a little tiger head peeking out. */
-export function toyCar(color = '#3478D4'): THREE.Group {
+export function toyCar(color = '#3478D4', furColor = '#E3B48A'): THREE.Group {
 	const car = new THREE.Group();
 	const paint = new THREE.MeshStandardMaterial({ color, roughness: 0.45 });
 	const dark = new THREE.MeshStandardMaterial({ color: '#263238', roughness: 0.8 });
 	const glass = new THREE.MeshStandardMaterial({ color: '#cfe8f7', roughness: 0.2 });
-	const fur = new THREE.MeshStandardMaterial({ color: '#E3B48A', roughness: 0.8 });
+	const fur = new THREE.MeshStandardMaterial({ color: furColor, roughness: 0.8 });
 
 	const body = new THREE.Mesh(new RoundedBoxGeometry(1.6, 0.55, 2.6, 4, 0.2), paint);
 	body.position.y = 0.55;

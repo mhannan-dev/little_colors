@@ -7,7 +7,7 @@ import type { Color, Difficulty } from '../types/colors.ts';
  * The child picks one option; the app animates it; a correct pick is celebrated,
  * a wrong one returns gently (PR-08) and enables a hint after two misses (PR-22).
  */
-export type MiniGame = 'football' | 'garage' | 'birds' | 'abc3d' | 'car3d';
+export type MiniGame = 'football' | 'garage' | 'birds' | 'abc3d' | 'car3d' | 'race3d';
 
 export interface ChoiceOption {
 	id: string;

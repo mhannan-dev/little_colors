@@ -98,3 +98,54 @@ test('toy car: tapping a sign drives there; a wrong sign backs up gently, hint a
 	await page.locator(`[data-option-id="${id}"]`).click();
 	await expect(page.getByRole('button', { name: 'পরেরটা' })).toBeVisible({ timeout: 10000 });
 });
+
+async function steerTo(page: Page, target: number, keys: boolean) {
+	const scene = page.locator('section.scene');
+	while (Number(await scene.getAttribute('data-lane')) !== target) {
+		const lane = Number(await scene.getAttribute('data-lane'));
+		if (keys) await page.keyboard.press(lane < target ? 'ArrowRight' : 'ArrowLeft');
+		else await page.locator(`[data-steer="${lane < target ? 'right' : 'left'}"]`).click();
+	}
+}
+
+test('race: steer onto the named pads, then everyone finishes together', async ({ page }) => {
+	test.setTimeout(150_000);
+	const errors = watchErrors(page);
+	await page.goto('/race');
+	await page.locator('[data-set="abc"]').click();
+	const scene = page.locator('section.scene');
+	for (let i = 0; i < 5; i++) {
+		await expect(page.locator('.tap').first()).toBeVisible({ timeout: 15000 });
+		const id = await answer(page);
+		const target = Number(await page.locator(`[data-option-id="${id}"]`).getAttribute('data-lane-index'));
+		await steerTo(page, target, i % 2 === 1);
+		if (i === 0) {
+			await page.waitForTimeout(2500);
+			await page.screenshot({ path: 'test-results/play3d-race.png' });
+		}
+		await expect(scene).toHaveAttribute('data-progress', String(i + 1), { timeout: 15000 });
+		if (i === 0) await page.screenshot({ path: 'test-results/play3d-race-boost.png' });
+	}
+	await expect(scene).toHaveAttribute('data-phase', 'finish');
+	await expect(page.getByRole('button', { name: 'আবার খেলি' })).toBeVisible({ timeout: 20000 });
+	expect(errors).toEqual([]);
+});
+
+test('race: a missed pad costs nothing, then the pads wait; tapping a pad steers there', async ({ page }) => {
+	test.setTimeout(90_000);
+	await page.goto('/race');
+	await page.locator('[data-set="123"]').click();
+	const scene = page.locator('section.scene');
+	await expect(page.locator('.tap').first()).toBeVisible({ timeout: 15000 });
+	const id = await answer(page);
+	const target = Number(await page.locator(`[data-option-id="${id}"]`).getAttribute('data-lane-index'));
+	await steerTo(page, (target + 1) % 3, false);
+	await expect(page.getByText('আবার চেষ্টা করি!').first()).toBeVisible({ timeout: 15000 });
+	await expect(scene).toHaveAttribute('data-progress', '0');
+	// The same pads come back and wait for the child: no hurry.
+	await expect(scene).toHaveAttribute('data-phase', 'wait', { timeout: 15000 });
+	await page.waitForTimeout(2000);
+	await expect(scene).toHaveAttribute('data-phase', 'wait');
+	await page.locator(`[data-option-id="${id}"]`).click();
+	await expect(scene).toHaveAttribute('data-progress', '1', { timeout: 15000 });
+});
