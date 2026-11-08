@@ -149,3 +149,15 @@ test('race: a missed pad costs nothing, then the pads wait; tapping a pad steers
 	await page.locator(`[data-option-id="${id}"]`).click();
 	await expect(scene).toHaveAttribute('data-progress', '1', { timeout: 15000 });
 });
+
+test('all three 3D games open from the game picker', async ({ page }) => {
+	for (const [name, url] of [['ABC আর ১২৩ ব্লক', '/abc-123'], ['রুমির খেলনা গাড়ি', '/toy-car'], ['বন্ধুদের সাথে রেস', '/race']] as const) {
+		await page.goto('/play');
+		const card = page.getByRole('button', { name, exact: true });
+		await expect(card).toBeVisible();
+		if (url === '/race') await page.screenshot({ path: 'test-results/play3d-picker.png', fullPage: true });
+		await card.click();
+		await expect(page).toHaveURL(new RegExp(`${url}$`));
+		await expect(page.locator('[data-set="abc"]')).toBeVisible();
+	}
+});

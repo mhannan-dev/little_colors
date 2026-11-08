@@ -14,6 +14,9 @@
 		{ id: 'car', key: 'mode.car', href: '/car' },
 		{ id: 'garden3d', key: 'mode.garden3d', href: '/garden-3d' },
 		{ id: 'blocks3d', key: 'mode.blocks3d', href: '/blocks-3d' },
+		{ id: 'abc3d', key: 'mode.abc3d', href: '/abc-123' },
+		{ id: 'car3d', key: 'mode.car3d', href: '/toy-car' },
+		{ id: 'race3d', key: 'mode.race3d', href: '/race' },
 		{ id: 'flag', key: 'mode.flag', href: '/flag' },
 		{ id: 'bird', key: 'mode.bird', href: '/bird' },
 		{ id: 'holy-puzzle', key: 'mode.holy-puzzle', href: '/holy-puzzle' },
@@ -76,6 +79,34 @@
 							<path d="M{block.x} {block.y} l25 -13 25 13 -25 13Z" fill={block.c} stroke="var(--text-primary)" stroke-width="2" />
 							<path d="M{block.x} {block.y} v25 l25 13 25 -13 v-25 l-25 13Z" fill={block.c} stroke="var(--text-primary)" stroke-width="2" />
 							<path d="M{block.x+25} {block.y+13} v25" stroke="var(--text-primary)" stroke-width="2" />
+						{/each}
+					{:else if m.id === 'abc3d'}
+						{#each [{ x: 14, c: 'var(--learn-red)', g: 'A' }, { x: 60, c: 'var(--learn-blue)', g: 'অ' }, { x: 106, c: 'var(--learn-green)', g: '১' }] as b (b.x)}
+							<rect x={b.x} y="34" width="40" height="40" rx="8" fill={b.c} stroke="var(--text-primary)" stroke-width="3" />
+							<rect x={b.x + 7} y="41" width="26" height="26" rx="5" fill="var(--surface)" />
+							<text x={b.x + 20} y="62" text-anchor="middle" font-size="22" font-weight="700" fill="var(--text-primary)">{b.g}</text>
+						{/each}
+					{:else if m.id === 'car3d'}
+						<rect x="77" y="22" width="5" height="34" fill="var(--text-primary)" />
+						<rect x="58" y="4" width="44" height="30" rx="5" fill="var(--learn-green)" stroke="var(--text-primary)" stroke-width="3" />
+						<text x="80" y="27" text-anchor="middle" font-size="22" font-weight="700" fill="var(--surface)">B</text>
+						<rect x="44" y="70" width="72" height="24" rx="8" fill="var(--learn-red)" stroke="var(--text-primary)" stroke-width="4" />
+						<rect x="60" y="56" width="40" height="18" rx="5" fill="var(--bg-secondary)" stroke="var(--text-primary)" stroke-width="3" />
+						<circle cx="80" cy="52" r="7" fill="var(--mascot-fur-light)" stroke="var(--text-primary)" stroke-width="2" />
+						<circle cx="58" cy="96" r="9" fill="var(--text-primary)" />
+						<circle cx="102" cy="96" r="9" fill="var(--text-primary)" />
+					{:else if m.id === 'race3d'}
+						<rect x="74" y="6" width="4" height="44" fill="var(--text-primary)" />
+						{#each [0, 1, 2, 3] as i (i)}
+							{#each [0, 1] as j (j)}
+								<rect x={78 + i * 9} y={6 + j * 9} width="9" height="9" fill={(i + j) % 2 ? 'var(--text-primary)' : 'var(--surface)'} />
+							{/each}
+						{/each}
+						{#each [{ x: 6, c: 'var(--learn-blue)' }, { x: 56, c: 'var(--learn-red)' }, { x: 106, c: 'var(--learn-yellow)' }] as car (car.x)}
+							<rect x={car.x} y="72" width="48" height="20" rx="6" fill={car.c} stroke="var(--text-primary)" stroke-width="3" />
+							<rect x={car.x + 12} y="60" width="24" height="14" rx="4" fill="var(--bg-secondary)" stroke="var(--text-primary)" stroke-width="3" />
+							<circle cx={car.x + 12} cy="94" r="7" fill="var(--text-primary)" />
+							<circle cx={car.x + 36} cy="94" r="7" fill="var(--text-primary)" />
 						{/each}
 					{:else if m.id === 'flag'}
 						<rect x="78" y="28" width="6" height="64" fill="var(--text-primary)" rx="3" />
