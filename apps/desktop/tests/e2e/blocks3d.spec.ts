@@ -133,3 +133,40 @@ test('the Kaaba template stays whole: nothing taken away or piled on, the courty
 	await page.keyboard.press('Enter');
 	expect(await saved(page)).toHaveLength(start.length + 1);
 });
+
+test('save a build, find it in My builds, open it again, and delete it with a second tap', async ({ page }) => {
+	await page.goto('/blocks-3d');
+	await page.getByRole('button', { name: 'English', exact: true }).click();
+	await page.evaluate(() => { localStorage.removeItem('lc.blocks3d.v1'); localStorage.removeItem('lc.blocks3d.saved.v1'); });
+	await page.reload();
+	const save = page.getByTestId('save-build');
+	await expect(save).toBeDisabled(); // nothing to save on an empty mat
+	await page.getByRole('button', { name: /Rainbow steps/ }).click();
+	const rainbow = await saved(page);
+	await save.click();
+	await expect(page.locator('.feedback')).toContainText('Saved! It is in My builds.');
+	await save.click();
+	await expect(page.locator('.feedback')).toContainText('already saved');
+	await expect(page.getByTestId('my-builds')).toContainText('1');
+
+	await page.getByRole('button', { name: /Clear/ }).click();
+	expect(await saved(page)).toHaveLength(0);
+	await page.reload(); // My builds survive closing the game
+	await page.getByTestId('my-builds').click();
+	const dialog = page.getByRole('dialog', { name: 'My builds' });
+	await expect(dialog.locator('img')).toHaveCount(1);
+	await page.screenshot({ path: 'test-results/blocks3d-my-builds.png' });
+	await dialog.getByRole('button', { name: 'Open build 1' }).click();
+	await expect(dialog).toBeHidden();
+	expect(await saved(page)).toEqual(rainbow);
+	await expect(page.locator('.feedback')).toContainText("Here it is again!");
+
+	await page.getByTestId('my-builds').click();
+	await dialog.getByRole('button', { name: 'Delete', exact: true }).click();
+	await expect(dialog.locator('img')).toHaveCount(1); // first tap only asks
+	await dialog.getByRole('button', { name: 'Yes, delete' }).click();
+	await expect(dialog.locator('img')).toHaveCount(0);
+	await expect(dialog).toContainText('Nothing saved yet');
+	await page.keyboard.press('Escape');
+	await expect(dialog).toBeHidden();
+});

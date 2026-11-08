@@ -6,6 +6,8 @@
 	import { firstTime, hideHand, showHand } from '#lib/game/hand.ts';
 	import { PALETTE, SIZE, HEIGHT, SAVE_KEY, columnTop, inside, isLockedColumn, key, readBuild, template, type Block, type Cell, type Template } from './blocks.ts';
 	import { paint, pick, type ScreenFace } from './render.ts';
+	import { addSaved, MAX_SAVED, readSaved, removeSaved, SAVED_KEY, type SavedBuild } from './savedBuilds.ts';
+	import { formatNumeral, narrationText } from '@little-colors/core';
 
 	let canvas: HTMLCanvasElement;
 	let board: HTMLDivElement;
@@ -68,6 +70,44 @@
 		undoStack = [...undoStack,blocks]; blocks = next; redoStack = redoStack.slice(0,-1);
 		save(); announce('blocks.redone');
 	}
+	// ── My builds: keep finished creations and open them again (stored on this device) ──
+	let savedList = $state<SavedBuild[]>([]);
+	let galleryOpen = $state(false);
+	let confirmDelete = $state<string | null>(null);
+	let justSaved = $state(false);
+	const SAY_KEYS = new Set(['blocks.saved','blocks.already','blocks.full','blocks.opened','blocks.deleted','blocks.save-failed']);
+	const num = (n: number) => formatNumeral(n, $settings.numeralStyle);
+	function persistSaved(next: SavedBuild[]): boolean {
+		try { localStorage.setItem(SAVED_KEY,JSON.stringify(next)); savedList = next; return true; }
+		catch { return false; }
+	}
+	function snapshot(): string {
+		// A clean picture of the build (no ghost block), small enough to keep many.
+		const c = document.createElement('canvas'); c.width = 240; c.height = 160;
+		const g = c.getContext('2d'); if (!g) return '';
+		paint(g,240,160,blocks,angle,1);
+		return c.toDataURL('image/jpeg',0.8);
+	}
+	function saveBuild() {
+		if (!blocks.length) return;
+		const result = addSaved(savedList,blocks,snapshot(),Date.now());
+		if (result.status === 'already') { announce('blocks.already',true); return; }
+		if (result.status === 'full') { announce('blocks.full',true); galleryOpen = true; return; }
+		if (result.status !== 'saved') return;
+		if (!persistSaved(result.list)) { announce('blocks.save-failed',true); return; }
+		announce('blocks.saved',true);
+		justSaved = true; setTimeout(()=>justSaved=false,1200);
+	}
+	function openSaved(s: SavedBuild) {
+		commit(s.blocks.map(b=>({...b}))); tool='build'; galleryOpen=false; confirmDelete=null;
+		announce('blocks.opened',true);
+	}
+	function deleteSaved(id: string) {
+		if (confirmDelete !== id) { confirmDelete = id; return; }
+		persistSaved(removeSaved(savedList,id)); confirmDelete = null; announce('blocks.deleted');
+	}
+	function closeGallery() { galleryOpen = false; confirmDelete = null; }
+	const focusIn = (node: HTMLElement) => { node.focus({ preventScroll: true }); };
 	function loadPreset(id: Template) {
 		commit(template(id)); tool='build'; cursor={x:0,y:0,z:5}; announce('blocks.template',true);
 	}
@@ -108,6 +148,7 @@
 	$effect(()=>{ blocks; color; cursor; tool; angle; zoom; render(); });
 	onMount(()=>{
 		try { blocks=readBuild(localStorage.getItem(SAVE_KEY)); } catch { storageOk=false; }
+		try { savedList=readSaved(localStorage.getItem(SAVED_KEY)); } catch { savedList=[]; }
 		ready=true;
 		const ctx=canvas.getContext('2d');
 		if (!ctx) { unavailable=true; return () => { hideHand(); leaveScreen(); }; }
@@ -128,12 +169,13 @@
 	});
 </script>
 
+<svelte:window onkeydown={(e)=>{ if (galleryOpen && e.key==='Escape') closeGallery(); }} />
 <svelte:head><title>3D Block Building · Little Colors</title></svelte:head>
 <TopBar onreplay={()=>instruct('blocks.intro')} />
 <section class="builder">
 	<div class="heading">
 		<div><p class="eyebrow">{bn ? 'কল্পনা করি • তৈরি করি • খেলি' : 'IMAGINE · BUILD · PLAY'}</p><h1>{bn ? 'থ্রিডি ব্লক বিল্ডিং' : '3D Block Building'}</h1></div>
-		<p class="saved" role="status">{storageOk ? (bn ? '✓ এই ডিভাইসে সেভ থাকে' : '✓ Saved on this device') : (bn ? 'এইবারের ডিজাইন সেভ করা যাচ্ছে না' : 'Saving is unavailable this time')}</p>
+		<div class="heading-actions"><button class="gallery-button" class:pop={justSaved} data-testid="my-builds" onclick={()=>{galleryOpen=true;}} onfocus={()=>speakLabel('blocks.gallery')}><span aria-hidden="true">🖼</span> {bn ? 'আমার বানানো' : 'My builds'} <span class="count">{num(savedList.length)}</span></button><p class="saved" role="status">{storageOk ? (bn ? '✓ এই ডিভাইসে সেভ থাকে' : '✓ Saved on this device') : (bn ? 'এইবারের ডিজাইন সেভ করা যাচ্ছে না' : 'Saving is unavailable this time')}</p></div>
 	</div>
 	<div class="workspace">
 		<aside>
@@ -177,12 +219,38 @@
 	<div class="bottom-bar">
 		<div id="building-help"><strong>{bn ? 'ঘরে বা ব্লকে ট্যাপ করি, নতুন ব্লক উপরে বসবে' : 'Tap a tile or a block: the new block goes on top'}</strong><small>{bn ? 'কিবোর্ড: তীর দিয়ে ঘর বাছি • Enter বসায় • Backspace সরায়' : 'Keyboard: arrows choose a tile · Enter adds · Backspace removes'}</small></div>
 		<div class="history">
+			<button class="save-button" data-testid="save-build" disabled={!blocks.length} onclick={saveBuild} onfocus={()=>speakLabel('blocks.save')}><span aria-hidden="true">💾</span> {bn ? 'সেভ করি' : 'Save'}</button>
 			<button aria-label={bn ? 'আগের ধাপে যাই' : 'Undo'} disabled={!undoStack.length} onclick={undo}>↶ {bn ? 'আগের ধাপ' : 'Undo'}</button>
 			<button aria-label={bn ? 'পরের ধাপে যাই' : 'Redo'} disabled={!redoStack.length} onclick={redo}>↷ {bn ? 'পরের ধাপ' : 'Redo'}</button>
 			<button disabled={!blocks.length} onclick={()=>{commit([]);announce('blocks.cleared');}}>▧ {bn ? 'খালি করি' : 'Clear'}</button>
 		</div>
 	</div>
-	<p class="feedback" aria-live="polite">{#if message==='blocks.limit'}{bn ? `এই জায়গায় আর ব্লক বসবে না। সর্বোচ্চ ${HEIGHT.toLocaleString('bn-BD')} তলা বানাই।` : `Try another spot. You can build up to ${HEIGHT} blocks high.`}{:else if message==='blocks.placed'}{bn ? 'ব্লক বসেছে! এবার কী বানাবো?' : 'Block added. What shall we build?'}{:else if message==='blocks.removed'}{bn ? 'ব্লক সরেছে। নতুন করে সাজাই!' : 'Block removed. Make room for a new idea!'}{:else if message==='blocks.undone'}{bn ? 'আগের ধাপে ফিরে এসেছি।' : 'Back to the previous step.'}{:else if message==='blocks.redone'}{bn ? 'ধাপটি আবার ফিরেছে।' : 'That step is back.'}{:else if message==='blocks.cleared'}{bn ? 'আবার নতুন কিছু বানাই! আগের ধাপে গেলে ডিজাইন ফিরে আসবে।' : 'A fresh canvas! Undo brings your design back.'}{:else if message==='blocks.kaaba'}{bn ? 'কাবা ঘর যেমন আছে তেমনই থাকুক। চারপাশের উঠানে সাজাই!' : 'The Kaaba stays just as it is. Let’s build in the courtyard around it!'}{:else if message==='blocks.template'}{bn ? 'এবার নিজের মতো করে সাজাই!' : 'Now make it your own!'}{:else}{bn ? 'বাড়ি, টাওয়ার, সিঁড়ি—যা ইচ্ছে বানাই!' : 'A house, a tower, some steps. Build anything you imagine!'}{/if}</p>
+	<p class="feedback" aria-live="polite">{#if message==='blocks.limit'}{bn ? `এই জায়গায় আর ব্লক বসবে না। সর্বোচ্চ ${HEIGHT.toLocaleString('bn-BD')} তলা বানাই।` : `Try another spot. You can build up to ${HEIGHT} blocks high.`}{:else if message==='blocks.placed'}{bn ? 'ব্লক বসেছে! এবার কী বানাবো?' : 'Block added. What shall we build?'}{:else if message==='blocks.removed'}{bn ? 'ব্লক সরেছে। নতুন করে সাজাই!' : 'Block removed. Make room for a new idea!'}{:else if message==='blocks.undone'}{bn ? 'আগের ধাপে ফিরে এসেছি।' : 'Back to the previous step.'}{:else if message==='blocks.redone'}{bn ? 'ধাপটি আবার ফিরেছে।' : 'That step is back.'}{:else if message==='blocks.cleared'}{bn ? 'আবার নতুন কিছু বানাই! আগের ধাপে গেলে ডিজাইন ফিরে আসবে।' : 'A fresh canvas! Undo brings your design back.'}{:else if message==='blocks.kaaba'}{bn ? 'কাবা ঘর যেমন আছে তেমনই থাকুক। চারপাশের উঠানে সাজাই!' : 'The Kaaba stays just as it is. Let’s build in the courtyard around it!'}{:else if SAY_KEYS.has(message)}{narrationText(message,$settings.language,$settings.islamicExpressionsEnabled)}{:else if message==='blocks.template'}{bn ? 'এবার নিজের মতো করে সাজাই!' : 'Now make it your own!'}{:else}{bn ? 'বাড়ি, টাওয়ার, সিঁড়ি—যা ইচ্ছে বানাই!' : 'A house, a tower, some steps. Build anything you imagine!'}{/if}</p>
+	{#if galleryOpen}
+		<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+		<div class="scrim" onclick={closeGallery}></div>
+		<div class="gallery" role="dialog" aria-modal="true" aria-label={bn ? 'আমার বানানো' : 'My builds'} tabindex="-1" use:focusIn>
+			<div class="gallery-head">
+				<h2><span aria-hidden="true">🖼</span> {bn ? 'আমার বানানো' : 'My builds'} <small>{num(savedList.length)} / {num(MAX_SAVED)}</small></h2>
+				<button class="close" aria-label={bn ? 'বন্ধ করি' : 'Close'} onclick={closeGallery}>✕</button>
+			</div>
+			{#if savedList.length === 0}
+				<p class="gallery-empty"><span aria-hidden="true">💾</span> {bn ? 'এখনো কিছু সেভ করা নেই। বানিয়ে "সেভ করি" চাপি!' : 'Nothing saved yet. Build something and press "Save"!'}</p>
+			{:else}
+				<div class="gallery-grid">
+					{#each savedList as s, i (s.id)}
+						<div class="saved-card" data-saved-id={s.id}>
+							<button class="open" aria-label={bn ? `বানানো ${num(savedList.length - i)} খুলি` : `Open build ${savedList.length - i}`} onclick={()=>openSaved(s)}>
+								<img src={s.thumb} alt="" />
+								<span class="badge">{num(savedList.length - i)}</span>
+							</button>
+							<button class="delete" class:confirm={confirmDelete===s.id} aria-label={confirmDelete===s.id ? (bn ? 'হ্যাঁ, মুছে ফেলি' : 'Yes, delete') : (bn ? 'মুছে ফেলি' : 'Delete')} onclick={()=>deleteSaved(s.id)}>{confirmDelete===s.id ? '✓' : '🗑'}</button>
+						</div>
+					{/each}
+				</div>
+			{/if}
+		</div>
+	{/if}
 </section>
 
 <style>
@@ -200,5 +268,17 @@
 	.stage { display:flex; flex:1; min-width:0; flex-direction:column; gap:8px; } .board { position:relative; flex:1; min-height:220px; overflow:hidden; border:2px solid #b7cdba; border-radius:24px; background:#dfedec; touch-action:manipulation; cursor:crosshair; } canvas { position:absolute; display:block; width:100%; height:100%; } .board-label { position:absolute; top:16px; left:18px; border-radius:10px; padding:5px 11px; background:#fffcf0d9; font-size:15px; font-weight:600; pointer-events:none; color:#567465; }
 	.view-tools { display:flex; align-items:center; justify-content:center; gap:9px; } .view-tools button { min-width:48px; font-size:24px; } .view-tools span { font-size:16px; color:var(--text-secondary); } .divider { width:1px; height:25px; background:var(--border-soft); margin:0 8px; }
 	.bottom-bar { display:flex; align-items:center; justify-content:space-between; gap:14px; } #building-help { display:flex; flex-direction:column; } strong { font-size:21px; } small { font-size:16px; color:var(--text-secondary); } .history { display:flex; gap:8px; } .feedback { margin:0; font-size:17px; text-align:center; color:var(--text-secondary); min-height:25px; } .unavailable { position:absolute; inset:0; display:grid; place-items:center; background:#fff8e8e8; padding:30px; text-align:center; }
+	.heading-actions { display:flex; align-items:center; gap:10px; } .gallery-button { display:flex; align-items:center; gap:6px; } .gallery-button .count { min-width:28px; padding:0 7px; border-radius:10px; background:#e6eddf; color:#506d51; } .gallery-button.pop { animation:pop 600ms ease-out; }
+	.save-button { background:#3f8f5f; border-color:#2f6f49; color:#ffffff; } .save-button:hover:not(:disabled) { background:#357d52; }
+	.scrim { position:fixed; inset:0; background:#2a2f2a66; z-index:40; }
+	.gallery { position:fixed; z-index:41; left:50%; top:50%; transform:translate(-50%,-50%); width:min(860px,92vw); max-height:84vh; overflow:auto; padding:18px 22px 22px; border-radius:24px; background:var(--surface); box-shadow:0 20px 50px #0003; }
+	.gallery-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; } .gallery-head h2 { margin:0; font-size:26px; } .gallery-head small { font-size:17px; color:var(--text-secondary); margin-left:6px; } .close { min-width:52px; font-size:22px; }
+	.gallery-empty { font-size:20px; text-align:center; padding:30px 10px; color:var(--text-secondary); }
+	.gallery-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:14px; }
+	.saved-card { position:relative; } .saved-card .open { width:100%; padding:6px; border-radius:16px; display:block; } .saved-card img { width:100%; aspect-ratio:3/2; display:block; border-radius:11px; object-fit:cover; }
+	.badge { position:absolute; left:14px; top:14px; min-width:30px; padding:1px 8px; border-radius:10px; background:#fffcf0e6; font-size:17px; }
+	.delete { position:absolute; right:10px; top:10px; min-height:40px; min-width:40px; padding:2px 8px; font-size:18px; background:#fffcf0e6; } .delete.confirm { background:#c4553f; border-color:#a03f2c; color:#ffffff; }
+	@keyframes pop { 0% { transform:scale(1); } 40% { transform:scale(1.12); } 100% { transform:scale(1); } }
+	@media (prefers-reduced-motion: reduce) { .gallery-button.pop { animation:none; } }
 	@media(max-height:720px) { .builder { gap:8px; } .eyebrow { display:none; } h1 { font-size:28px; } aside { gap:9px; padding:12px; } .workspace { min-height:0; } }
 </style>
