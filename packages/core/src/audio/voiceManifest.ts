@@ -84,6 +84,7 @@ export const VOICE_MANIFEST: readonly NarrationEntry[] = [
 	line('blocks.add', 'ব্লক বসাই', 'Add a block'),
 	line('blocks.erase', 'ব্লক সরাই', 'Remove a block'),
 	line('blocks.limit', 'অন্য জায়গায় ব্লক বসাই। দশ তলা পর্যন্ত বানানো যায়।', 'Try another spot. We can build up to ten blocks high.'),
+	line('blocks.kaaba', 'কাবা ঘর যেমন আছে তেমনই থাকুক। চারপাশের উঠানে সাজাই!', 'The Kaaba stays just as it is. Let’s build in the courtyard around it!'),
 	line('blocks.template', 'এবার নিজের মতো করে সাজাই!', 'Now make it your own!'),
 	line('mode.flag', 'দেশের পতাকা', 'Country Flag'),
 	line('mode.bird', 'পাখি', 'Bird'),

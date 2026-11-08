@@ -4,7 +4,7 @@
 	import { settings } from '#lib/stores/settings.ts';
 	import { instruct, leaveScreen, say, speakLabel } from '#lib/audio/narrator.ts';
 	import { firstTime, hideHand, showHand } from '#lib/game/hand.ts';
-	import { PALETTE, SIZE, HEIGHT, SAVE_KEY, columnTop, inside, key, readBuild, template, type Block, type Cell, type Template } from './blocks.ts';
+	import { PALETTE, SIZE, HEIGHT, SAVE_KEY, columnTop, inside, isLockedColumn, key, readBuild, template, type Block, type Cell, type Template } from './blocks.ts';
 	import { paint, pick, type ScreenFace } from './render.ts';
 
 	let canvas: HTMLCanvasElement;
@@ -28,7 +28,8 @@
 	const presets = [
 		{ id: 'house', icon: '⌂', bn: 'ছোট বাড়ি', en: 'Little house' },
 		{ id: 'tower', icon: '▥', bn: 'রঙিন টাওয়ার', en: 'Color tower' },
-		{ id: 'rainbow', icon: '▰', bn: 'রংধনু সিঁড়ি', en: 'Rainbow steps' }
+		{ id: 'rainbow', icon: '▰', bn: 'রংধনু সিঁড়ি', en: 'Rainbow steps' },
+		{ id: 'kaaba', icon: '■', bn: 'কাবা ঘর', en: 'The Kaaba' }
 	] as const;
 	function announce(id: string, narration = false) {
 		message = id;
@@ -44,6 +45,8 @@
 	}
 	function edit(cell: Cell, erase = tool==='erase') {
 		if (!ready || unavailable) return;
+		// The Kaaba model stays whole: nothing is taken away from it or piled on it (PR-13).
+		if (isLockedColumn(blocks,cell.x,cell.z)) { announce('blocks.kaaba',true); return; }
 		if (!inside(cell)) { announce('blocks.limit',true); return; }
 		const existing = blocks.find(b=>key(b)===key(cell));
 		if (erase) {
@@ -179,7 +182,7 @@
 			<button disabled={!blocks.length} onclick={()=>{commit([]);announce('blocks.cleared');}}>▧ {bn ? 'খালি করি' : 'Clear'}</button>
 		</div>
 	</div>
-	<p class="feedback" aria-live="polite">{#if message==='blocks.limit'}{bn ? `এই জায়গায় আর ব্লক বসবে না। সর্বোচ্চ ${HEIGHT.toLocaleString('bn-BD')} তলা বানাই।` : `Try another spot. You can build up to ${HEIGHT} blocks high.`}{:else if message==='blocks.placed'}{bn ? 'ব্লক বসেছে! এবার কী বানাবো?' : 'Block added. What shall we build?'}{:else if message==='blocks.removed'}{bn ? 'ব্লক সরেছে। নতুন করে সাজাই!' : 'Block removed. Make room for a new idea!'}{:else if message==='blocks.undone'}{bn ? 'আগের ধাপে ফিরে এসেছি।' : 'Back to the previous step.'}{:else if message==='blocks.redone'}{bn ? 'ধাপটি আবার ফিরেছে।' : 'That step is back.'}{:else if message==='blocks.cleared'}{bn ? 'আবার নতুন কিছু বানাই! আগের ধাপে গেলে ডিজাইন ফিরে আসবে।' : 'A fresh canvas! Undo brings your design back.'}{:else if message==='blocks.template'}{bn ? 'এবার নিজের মতো করে সাজাই!' : 'Now make it your own!'}{:else}{bn ? 'বাড়ি, টাওয়ার, সিঁড়ি—যা ইচ্ছে বানাই!' : 'A house, a tower, some steps. Build anything you imagine!'}{/if}</p>
+	<p class="feedback" aria-live="polite">{#if message==='blocks.limit'}{bn ? `এই জায়গায় আর ব্লক বসবে না। সর্বোচ্চ ${HEIGHT.toLocaleString('bn-BD')} তলা বানাই।` : `Try another spot. You can build up to ${HEIGHT} blocks high.`}{:else if message==='blocks.placed'}{bn ? 'ব্লক বসেছে! এবার কী বানাবো?' : 'Block added. What shall we build?'}{:else if message==='blocks.removed'}{bn ? 'ব্লক সরেছে। নতুন করে সাজাই!' : 'Block removed. Make room for a new idea!'}{:else if message==='blocks.undone'}{bn ? 'আগের ধাপে ফিরে এসেছি।' : 'Back to the previous step.'}{:else if message==='blocks.redone'}{bn ? 'ধাপটি আবার ফিরেছে।' : 'That step is back.'}{:else if message==='blocks.cleared'}{bn ? 'আবার নতুন কিছু বানাই! আগের ধাপে গেলে ডিজাইন ফিরে আসবে।' : 'A fresh canvas! Undo brings your design back.'}{:else if message==='blocks.kaaba'}{bn ? 'কাবা ঘর যেমন আছে তেমনই থাকুক। চারপাশের উঠানে সাজাই!' : 'The Kaaba stays just as it is. Let’s build in the courtyard around it!'}{:else if message==='blocks.template'}{bn ? 'এবার নিজের মতো করে সাজাই!' : 'Now make it your own!'}{:else}{bn ? 'বাড়ি, টাওয়ার, সিঁড়ি—যা ইচ্ছে বানাই!' : 'A house, a tower, some steps. Build anything you imagine!'}{/if}</p>
 </section>
 
 <style>
@@ -188,12 +191,12 @@
 	h1 { margin:0; font-size:34px; line-height:1.2; } .eyebrow { margin:0 0 4px; font-size:14px; color:var(--text-secondary); letter-spacing:0.1em; }
 	.saved { margin:0; padding:8px 14px; border-radius:12px; background:#e6eddf; color:#506d51; font-size:17px; }
 	.workspace { display:flex; gap:20px; flex:1; min-height:0; }
-	aside { display:flex; flex-direction:column; width:232px; flex-shrink:0; gap:10px; padding:12px; border:2px solid var(--border-soft); border-radius:24px; background:var(--surface); overflow-y:auto; min-height:0; line-height:1.2; }
+	aside { display:flex; flex-direction:column; width:262px; flex-shrink:0; gap:10px; padding:12px; border:2px solid var(--border-soft); border-radius:24px; background:var(--surface); overflow-y:auto; min-height:0; line-height:1.2; }
 	h2 { margin:0 0 9px; font-size:20px; } button { border:2px solid var(--border-soft); border-radius:13px; background:var(--surface); min-height:48px; padding:7px 12px; cursor:pointer; font-weight:600; font-size:18px; }
 	button:hover { background:#edf1e6; } button:disabled { opacity:0.4; cursor:default; } button[aria-pressed='true'] { border-color:#526e63; background:#e9efe1; }
-	.palette { display:grid; grid-template-columns:repeat(5,1fr); gap:7px; } .swatch { padding:3px; min-height:38px; height:38px; border-radius:11px; background:var(--swatch); box-shadow:inset 0 0 0 3px #ffffff80; } .swatch[aria-pressed='true'] { background:var(--swatch); outline:2px solid #526e63; outline-offset:2px; } .swatch span { font-size:22px; color:#304c4a; } .swatch.dark span { color:#ffffff; } .swatch.light { box-shadow:inset 0 0 0 2px #c9c2b4; }
+	.palette { display:grid; grid-template-columns:repeat(6,1fr); gap:6px; } .swatch { padding:3px; min-height:38px; height:38px; border-radius:11px; background:var(--swatch); box-shadow:inset 0 0 0 3px #ffffff80; } .swatch[aria-pressed='true'] { background:var(--swatch); outline:2px solid #526e63; outline-offset:2px; } .swatch span { font-size:22px; color:#304c4a; } .swatch.dark span { color:#ffffff; } .swatch.light { box-shadow:inset 0 0 0 2px #c9c2b4; }
 	.selected-color { margin:6px 0 0; font-size:14px; color:var(--text-secondary); } .tools { display:flex; gap:7px; } .tools button { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; font-size:15px; padding:5px; min-height:64px; } .tools button span { font-size:25px; }
-	.presets { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; } .presets h2 { grid-column:1/-1; margin-bottom:2px; } .presets button { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; font-size:13px; padding:5px 3px; min-height:70px; } .preset-icon { font-size:27px; color:#9b765b; } .go { display:none; } .help { margin-top:auto; font-size:16px; min-height:44px; }
+	.presets { display:grid; grid-template-columns:repeat(2,1fr); gap:6px; } .presets h2 { grid-column:1/-1; margin-bottom:2px; } .presets button { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; font-size:13px; padding:4px 3px; min-height:52px; } .preset-icon { font-size:27px; color:#9b765b; } .go { display:none; } .help { margin-top:auto; font-size:16px; min-height:44px; }
 	.stage { display:flex; flex:1; min-width:0; flex-direction:column; gap:8px; } .board { position:relative; flex:1; min-height:220px; overflow:hidden; border:2px solid #b7cdba; border-radius:24px; background:#dfedec; touch-action:manipulation; cursor:crosshair; } canvas { position:absolute; display:block; width:100%; height:100%; } .board-label { position:absolute; top:16px; left:18px; border-radius:10px; padding:5px 11px; background:#fffcf0d9; font-size:15px; font-weight:600; pointer-events:none; color:#567465; }
 	.view-tools { display:flex; align-items:center; justify-content:center; gap:9px; } .view-tools button { min-width:48px; font-size:24px; } .view-tools span { font-size:16px; color:var(--text-secondary); } .divider { width:1px; height:25px; background:var(--border-soft); margin:0 8px; }
 	.bottom-bar { display:flex; align-items:center; justify-content:space-between; gap:14px; } #building-help { display:flex; flex-direction:column; } strong { font-size:21px; } small { font-size:16px; color:var(--text-secondary); } .history { display:flex; gap:8px; } .feedback { margin:0; font-size:17px; text-align:center; color:var(--text-secondary); min-height:25px; } .unavailable { position:absolute; inset:0; display:grid; place-items:center; background:#fff8e8e8; padding:30px; text-align:center; }

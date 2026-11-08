@@ -102,3 +102,34 @@ test('black and white blocks can be chosen and are saved', async ({ page }) => {
 	await page.reload();
 	expect((await saved(page)).map((b) => b.color).sort()).toEqual(['#2f3437', '#ffffff']);
 });
+
+test('the Kaaba template stays whole: nothing taken away or piled on, the courtyard is free (PR-13)', async ({ page }) => {
+	await page.goto('/blocks-3d');
+	await page.getByRole('button', { name: 'English', exact: true }).click();
+	await page.getByRole('button', { name: /The Kaaba/ }).click();
+	const start = await saved(page);
+	expect(start.filter((b) => b.color === '#c9a227').length).toBeGreaterThan(10);
+	await page.waitForTimeout(200);
+	await page.screenshot({ path: 'test-results/blocks3d-kaaba.png' });
+	const board = page.getByRole('application', { name: '3D building area' });
+	await board.focus();
+	for (let i = 0; i < 3; i++) await page.keyboard.press('ArrowRight');
+	await page.keyboard.press('Enter'); // build on the Kaaba
+	await expect(page.locator('.feedback')).toContainText('The Kaaba stays just as it is');
+	await page.getByRole('button', { name: 'Remove block', exact: true }).click();
+	await board.focus();
+	await page.keyboard.press('Backspace'); // take a piece away
+	await page.keyboard.press('Enter');
+	expect(await saved(page)).toEqual(start);
+	// Tapping the Kaaba with the mouse is gentle too.
+	const rect = (await board.boundingBox())!;
+	await page.mouse.click(rect.x + rect.width * 0.5, rect.y + rect.height * 0.45);
+	expect(await saved(page)).toEqual(start);
+	// The courtyard can be decorated.
+	await page.getByRole('button', { name: 'Add block', exact: true }).click();
+	await page.getByRole('button', { name: 'Green', exact: true }).click();
+	await board.focus();
+	for (let i = 0; i < 8; i++) await page.keyboard.press('ArrowLeft');
+	await page.keyboard.press('Enter');
+	expect(await saved(page)).toHaveLength(start.length + 1);
+});

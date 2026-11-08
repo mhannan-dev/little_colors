@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { columnTop, inside, key, PALETTE, readBuild, template } from './blocks.ts';
+import { columnTop, inside, isLockedColumn, key, PALETTE, readBuild, template } from './blocks.ts';
 import { pick } from './render.ts';
 
 describe('saved block designs',()=>{
@@ -15,7 +15,7 @@ describe('saved block designs',()=>{
 	});
 });
 
-for (const kind of ['house','tower','rainbow'] as const) {
+for (const kind of ['house','tower','rainbow','kaaba'] as const) {
 	it(`${kind} is an editable, valid design that survives saving`,()=>{
 		const blocks=template(kind);
 		expect(blocks.length).toBeGreaterThan(20);
@@ -31,4 +31,18 @@ it('picks the foreground block instead of the floor behind it',()=>{
 	const points: [number,number][]=[[0,0],[100,0],[100,100],[0,100]];
 	expect(pick([{points,hit:floor},{points,hit:block}],50,50)).toEqual(block);
 	expect(pick([{points,hit:floor}],150,50)).toBeUndefined();
+});
+
+it('the Kaaba is a locked black cube with a gold band and door, on a free white courtyard (PR-13)',()=>{
+	const blocks=template('kaaba');
+	const kaaba=blocks.filter(b=>b.locked);
+	expect(kaaba.length).toBe(16*7);
+	expect(kaaba.every(b=>b.x>=2 && b.x<=5 && b.z>=2 && b.z<=5)).toBe(true);
+	expect(kaaba.some(b=>b.color==='#c9a227' && b.y===5)).toBe(true);
+	expect(kaaba.filter(b=>b.color==='#c9a227' && b.y<5)).toHaveLength(2);
+	expect(blocks.filter(b=>!b.locked).every(b=>b.y===0 && b.color==='#ffffff')).toBe(true);
+	expect(isLockedColumn(blocks,3,3)).toBe(true);
+	expect(isLockedColumn(blocks,0,0)).toBe(false);
+	// The lock survives saving and reopening.
+	expect(readBuild(JSON.stringify(blocks)).filter(b=>b.locked)).toHaveLength(kaaba.length);
 });
