@@ -1,6 +1,6 @@
-/** Small enough for ages 3–6: an 8×8 mat, up to five blocks high. */
+/** An 8×8 mat, up to ten blocks high (the camera fits any height). */
 export const SIZE = 8;
-export const HEIGHT = 5;
+export const HEIGHT = 10;
 export const SAVE_KEY = 'lc.blocks3d.v1';
 export const PALETTE = [
 	{ hex: '#e58c81', bn: 'প্রবাল লাল', en: 'Coral' },
