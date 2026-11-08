@@ -2,7 +2,9 @@ import { HEIGHT, key, SIZE, type Block, type Cell } from './blocks.ts';
 
 type Vec = [number, number, number];
 export type Hit = { cell: Cell; normal: Cell; floor: boolean };
-type Face = { points: Vec[]; color: string; shade: number; depth: number; layer: number; hit?: Hit; ghost?: boolean };
+/** ghost: 0 = real block, 1 = preview/idea shadow, 2 = the idea block to fill next. */
+type Face = { points: Vec[]; color: string; shade: number; depth: number; layer: number; hit?: Hit; ghost: 0 | 1 | 2 };
+export type Guide = { cells: Block[]; next?: Cell | null };
 export type ScreenFace = { points: [number, number][]; hit: Hit };
 const sides: { normal: Cell; vertices: Vec[]; shade: number }[] = [
 	{ normal: {x:0,y:1,z:0}, vertices: [[0,1,0],[0,1,1],[1,1,1],[1,1,0]], shade: 1 },
@@ -52,9 +54,9 @@ function makeCamera(width: number, height: number, angle: number, zoom: number, 
 	return { view, project, eye };
 }
 
-export function paint(ctx: CanvasRenderingContext2D, width: number, height: number, blocks: Block[], angle: number, zoom: number, preview?: Block): ScreenFace[] {
+export function paint(ctx: CanvasRenderingContext2D, width: number, height: number, blocks: Block[], angle: number, zoom: number, preview?: Block, guide?: Guide): ScreenFace[] {
 	const faces: Face[] = [];
-	const buildTop = blocks.reduce((top,b) => Math.max(top,b.y+1), 0);
+	const buildTop = topOf(blocks, guide);
 	const { view, project, eye } = makeCamera(width, height, angle, zoom, buildTop);
 	ctx.clearRect(0,0,width,height);
 	const sky = ctx.createLinearGradient(0,0,0,height);
@@ -65,12 +67,12 @@ export function paint(ctx: CanvasRenderingContext2D, width: number, height: numb
 	for (const [x,y,r] of [[0.15,0.15,0.035],[0.19,0.15,0.05],[0.24,0.16,0.035],[0.72,0.12,0.025],[0.76,0.12,0.035]]) {
 		ctx.beginPath(); ctx.ellipse(width*x,height*y,width*r,height*0.027,0,0,Math.PI*2); ctx.fill();
 	}
-	function face(points: Vec[], color: string, shade: number, layer: number, hit?: Hit, ghost = false) {
+	function face(points: Vec[], color: string, shade: number, layer: number, hit?: Hit, ghost: 0 | 1 | 2 = 0) {
 		faces.push({ points,color,shade,layer,hit,ghost,depth: points.reduce((sum,p)=>sum+view(p)[2],0)/points.length });
 	}
 	const occupied = new Set(blocks.map(key));
 	const h = SIZE/2;
-	function cube(block: Block, ghost = false) {
+	function cube(block: Block, ghost: 0 | 1 | 2 = 0) {
 		for (const side of sides) {
 			const n = side.normal;
 			if (!ghost && occupied.has(key({x:block.x+n.x,y:block.y+n.y,z:block.z+n.z}))) continue;
@@ -88,20 +90,35 @@ export function paint(ctx: CanvasRenderingContext2D, width: number, height: numb
 		face([[x-h,0,z-h],[x-h,0,z-h+1],[x-h+1,0,z-h+1],[x-h+1,0,z-h]],(x+z)%2===0 ? '#c3d5ad' : '#b9cda2',1,0,{cell:{x,y:-1,z},normal:{x:0,y:1,z:0},floor:true});
 	}
 	blocks.forEach(block=>cube(block));
-	if (preview) cube(preview,true);
+	if (guide) for (const c of guide.cells) {
+		if (occupied.has(key(c))) continue;
+		const isNext = !!guide.next && key(guide.next) === key(c);
+		cube(c, isNext ? 2 : 1);
+	}
+	if (preview) cube(preview,1);
 	faces.sort((a,b)=>a.layer-b.layer || b.depth-a.depth);
 	const screen: ScreenFace[] = [];
 	for (const f of faces) {
 		const points = f.points.map(project);
 		ctx.beginPath(); points.forEach(([x,y],i)=>i ? ctx.lineTo(x,y) : ctx.moveTo(x,y)); ctx.closePath();
 		const rgb = f.color.match(/[a-f\d]{2}/gi)!.map(hex=>Math.round(parseInt(hex,16)*f.shade));
-		ctx.fillStyle = `rgba(${rgb.join(',')},${f.ghost ? 0.4 : 1})`; ctx.fill();
+		ctx.fillStyle = `rgba(${rgb.join(',')},${f.ghost === 2 ? 0.62 : f.ghost ? 0.32 : 1})`; ctx.fill();
 		ctx.strokeStyle = f.ghost ? '#ffffff' : f.layer===0 ? '#6e8e6255' : '#504a3d30';
-		ctx.lineWidth = f.ghost ? 2 : 0.8;
+		ctx.lineWidth = f.ghost === 2 ? 3.5 : f.ghost ? 2 : 0.8;
 		ctx.setLineDash(f.ghost ? [5,4] : []); ctx.stroke(); ctx.setLineDash([]);
 		if (f.hit) screen.push({points,hit:f.hit});
 	}
 	return screen;
+}
+
+const topOf = (blocks: Block[], guide?: Guide) =>
+	[...blocks, ...(guide?.cells ?? [])].reduce((top,b) => Math.max(top,b.y+1), 0);
+
+/** Screen point (canvas CSS px) of the middle of a block's top face, e.g. for the pointing hand. */
+export function cellCenter(width: number, height: number, blocks: Block[], angle: number, zoom: number, cell: Cell, guide?: Guide): [number, number] {
+	const { project } = makeCamera(width, height, angle, zoom, topOf(blocks, guide));
+	const h = SIZE/2;
+	return project([cell.x+0.5-h, cell.y+1, cell.z+0.5-h]);
 }
 
 /** Pick the nearest visible polygon, using exactly the order used to paint the scene. */

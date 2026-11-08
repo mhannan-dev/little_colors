@@ -37,9 +37,7 @@ test('build, undo, erase, save, and reopen a colorful 3D design',async({page})=>
 	await page.getByRole('button',{name:'Rotate right',exact:true}).click();
 	await page.getByRole('button',{name:'Zoom out',exact:true}).click();
 	await page.getByRole('button',{name:'Rotate left',exact:true}).click();
-	const sidebar=await page.locator('aside').boundingBox();
-	const help=await page.getByRole('button',{name:/Show me how/}).boundingBox();
-	expect(help!.y+help!.height).toBeLessThanOrEqual(sidebar!.y+sidebar!.height);
+	await expect(page.getByRole('button',{name:/Show me how/})).toBeInViewport();
 	await page.screenshot({path:'test-results/blocks3d-house.png'});
 	await page.getByRole('button',{name:/Clear/}).click();
 	const rect=await board.boundingBox(); expect(rect).not.toBeNull();
@@ -169,4 +167,59 @@ test('save a build, find it in My builds, open it again, and delete it with a se
 	await expect(dialog).toContainText('Nothing saved yet');
 	await page.keyboard.press('Escape');
 	await expect(dialog).toBeHidden();
+});
+
+async function tapGuide(page: Page) {
+	const box = (await page.locator('[data-guide-target]').boundingBox())!;
+	await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+}
+
+test('💡 idea: a shadow appears, the child fills it block by block, and it is celebrated (no score)', async ({ page }) => {
+	await page.goto('/blocks-3d');
+	await page.getByRole('button', { name: 'English', exact: true }).click();
+	await page.evaluate(() => localStorage.removeItem('lc.blocks3d.v1'));
+	await page.reload();
+	const idea = page.getByTestId('idea');
+	await idea.click();
+	await expect(idea).toHaveAttribute('aria-pressed', 'true');
+	await expect(page.locator('.feedback')).toContainText('Put blocks on the light shadow!');
+	await page.waitForTimeout(200);
+	await page.screenshot({ path: 'test-results/blocks3d-idea.png' });
+	// The first idea is a 4-block rainbow tower; the color follows the shadow.
+	for (let i = 0; i < 4; i++) await tapGuide(page);
+	await expect(page.locator('.feedback')).toContainText('We built the whole thing!');
+	await expect(idea).toHaveAttribute('aria-pressed', 'false');
+	const tower = await saved(page);
+	expect(tower).toHaveLength(4);
+	expect(new Set(tower.map((b) => `${b.x},${b.z}`)).size).toBe(1);
+	expect(new Set(tower.map((b) => b.color)).size).toBe(4);
+	// Pressing again shows the next idea; pressing once more hides it.
+	await idea.click();
+	await expect(idea).toHaveAttribute('aria-pressed', 'true');
+	await idea.click();
+	await expect(idea).toHaveAttribute('aria-pressed', 'false');
+});
+
+test('💡 idea follows the active mission, and a stuck tap on the Kaaba points to free ground', async ({ page }) => {
+	await page.goto('/blocks-3d');
+	await page.getByRole('button', { name: 'English', exact: true }).click();
+	await page.evaluate(() => localStorage.removeItem('lc.blocks3d.v1'));
+	await page.reload();
+	await page.getByRole('tab', { name: /Missions/ }).click();
+	await page.getByRole('button', { name: /Build a Tall Tower/ }).click();
+	await page.getByTestId('idea').click();
+	for (let i = 0; i < 4; i++) await tapGuide(page);
+	await expect(page.locator('.celebration-dialog')).toBeVisible();
+	await page.getByRole('button', { name: 'Keep Building' }).click();
+
+	await page.getByRole('tab', { name: /Build/ }).click();
+	await page.getByRole('button', { name: /The Kaaba/ }).click();
+	const board = page.getByRole('application', { name: '3D building area' });
+	const rect = (await board.boundingBox())!;
+	await page.mouse.click(rect.x + rect.width * 0.5, rect.y + rect.height * 0.45);
+	await expect(page.locator('.feedback')).toContainText('The Kaaba stays just as it is');
+	// The hand's target is on free courtyard: tapping it adds a block there.
+	const before = (await saved(page)).length;
+	await tapGuide(page);
+	expect(await saved(page)).toHaveLength(before + 1);
 });

@@ -1,11 +1,12 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, tick } from 'svelte';
 	import TopBar from '#lib/components/ui/TopBar.svelte';
 	import { settings } from '#lib/stores/settings.ts';
-	import { instruct, leaveScreen, say, speakLabel } from '#lib/audio/narrator.ts';
+	import { instruct, leaveScreen, say, setIdlePrompt, speakLabel } from '#lib/audio/narrator.ts';
 	import { firstTime, hideHand, showHand } from '#lib/game/hand.ts';
 	import { PALETTE, SIZE, HEIGHT, SAVE_KEY, columnTop, inside, isLockedColumn, key, readBuild, template, type Block, type Cell, type Template } from './blocks.ts';
-	import { paint, pick, type ScreenFace } from './render.ts';
+	import { cellCenter, paint, pick, type ScreenFace } from './render.ts';
+	import { FREE_IDEAS, freeTile, ideaForMission, nextCell, placeIdea, type Guide } from './ideas.ts';
 	import { addSaved, MAX_SAVED, readSaved, removeSaved, SAVED_KEY, type SavedBuild } from './savedBuilds.ts';
 	import { formatNumeral, narrationText } from '@little-colors/core';
 	import { playPlaceSound, playRemoveSound, playCelebrationSound } from './sfx.ts';
@@ -46,6 +47,66 @@
 	const activeMission = $derived(MISSIONS.find(m => m.id === activeMissionId) ?? null);
 	const progress = $derived(activeMission ? activeMission.check(blocks) : null);
 
+
+	// ── Hints (PR-25): idle hand, 💡 idea shadows, and a pointer when stuck ──
+	let guide = $state<Guide | null>(null);
+	let ideaTurn = 0;
+	let handPoint = $state<{ x: number; y: number } | null>(null);
+	/** The block top the hand points at; its screen point is recomputed on every redraw. */
+	let handCell: Cell | null = null;
+	function placeHand() {
+		if (!handCell || !canvas) return;
+		const [x,y] = cellCenter(canvas.clientWidth,canvas.clientHeight,blocks,angle,zoom,handCell,guide ?? undefined);
+		handPoint = {x,y};
+	}
+	const guideNext = $derived(guide ? nextCell(guide, blocks) : null);
+	const HINT_KEYS = new Set(['blocks.idea','blocks.idea-done','blocks.idea-full']);
+	/** Point the ghost hand at the tile/block a child should tap to fill `cell`. */
+	async function pointAt(cell: Cell | null, show = true) {
+		if (!cell || !canvas) return;
+		handCell = {x:cell.x,y:cell.y-1,z:cell.z};
+		placeHand();
+		await tick();
+		if (show) showHand(['[data-guide-target]']);
+	}
+	function giveIdea() {
+		if (guide) { guide = null; hideHand(); setIdlePrompt('blocks.intro'); return; }
+		const id = ideaForMission(activeMissionId) ?? FREE_IDEAS[ideaTurn++ % FREE_IDEAS.length]!;
+		const placed = placeIdea(id,blocks);
+		if (!placed) { announce('blocks.idea-full',true); return; }
+		guide = placed; tool = 'build';
+		const next = nextCell(placed,blocks);
+		if (next) color = next.color;
+		announce('blocks.idea',true);
+		setIdlePrompt('blocks.idea');
+		void pointAt(next);
+	}
+	/** After each change: follow the shadow, or celebrate when it is all filled. */
+	function followGuide() {
+		if (!guide) return;
+		const next = nextCell(guide,blocks);
+		if (!next) {
+			guide = null; setIdlePrompt('blocks.intro');
+			announce('blocks.idea-done',true);
+			playCelebrationSound($settings.soundEnabled ? $settings.volume : 0);
+			return;
+		}
+		color = next.color;
+		void pointAt(next,false);
+	}
+	// Idle: show what to do (at most twice until the child does something). Free building is never nagged.
+	let idleTimer: ReturnType<typeof setTimeout> | null = null;
+	let idleShown = 0;
+	function onIdle() {
+		if (galleryOpen || showCelebration || idleShown >= 2) return;
+		idleShown += 1;
+		if (guide && guideNext) void pointAt(guideNext);
+		else if (!blocks.some(b=>!b.locked)) showHand(['[data-block-color]','[data-building-board]']);
+		armIdle();
+	}
+	function armIdle() { if (idleTimer) clearTimeout(idleTimer); idleTimer = setTimeout(onIdle,10000); }
+	function activity() { idleShown = 0; armIdle(); }
+
 	function announce(id: string, narration = false) {
 		message = id;
 		if (narration) say(id,{interrupt:true});
@@ -61,8 +122,8 @@
 	function edit(cell: Cell, erase = tool==='erase') {
 		if (!ready || unavailable) return;
 		// The Kaaba model stays whole: nothing is taken away from it or piled on it (PR-13).
-		if (isLockedColumn(blocks,cell.x,cell.z)) { announce('blocks.kaaba',true); return; }
-		if (!inside(cell)) { announce('blocks.limit',true); return; }
+		if (isLockedColumn(blocks,cell.x,cell.z)) { announce('blocks.kaaba',true); void pointAt(freeTile(blocks,angle)); return; }
+		if (!inside(cell)) { announce('blocks.limit',true); void pointAt(freeTile(blocks,angle)); return; }
 		const existing = blocks.find(b=>key(b)===key(cell));
 		const vol = $settings.soundEnabled ? $settings.volume : 0;
 		if (erase) {
@@ -77,6 +138,7 @@
 			announce('blocks.placed');
 		}
 		hideHand();
+		followGuide();
 	}
 	function undo() {
 		const previous = undoStack.at(-1); if (!previous) return;
@@ -135,7 +197,7 @@
 		justSaved = true; setTimeout(()=>justSaved=false,1200);
 	}
 	function openSaved(s: SavedBuild) {
-		commit(s.blocks.map(b=>({...b}))); tool='build'; galleryOpen=false; confirmDelete=null;
+		guide=null; commit(s.blocks.map(b=>({...b}))); tool='build'; galleryOpen=false; confirmDelete=null;
 		announce('blocks.opened',true);
 	}
 	function deleteSaved(id: string) {
@@ -145,7 +207,7 @@
 	function closeGallery() { galleryOpen = false; confirmDelete = null; }
 	const focusIn = (node: HTMLElement) => { node.focus({ preventScroll: true }); };
 	function loadPreset(id: Template) {
-		commit(template(id)); tool='build'; cursor={x:0,y:0,z:5}; announce('blocks.template',true);
+		guide=null; commit(template(id)); tool='build'; cursor={x:0,y:0,z:5}; announce('blocks.template',true);
 	}
 	function locate(event: PointerEvent) {
 		const rect = canvas.getBoundingClientRect();
@@ -180,7 +242,7 @@
 		instruct('blocks.intro'); showHand(['[data-block-color]','[data-building-board]']);
 	}
 
-	$effect(()=>{ blocks; color; cursor; tool; angle; zoom; render(); });
+	$effect(()=>{ blocks; color; cursor; tool; angle; zoom; guide; render(); });
 
 	// Trigger celebration when active mission goal is met
 	$effect(()=>{
@@ -206,13 +268,15 @@
 				canvas.width=Math.round(width*ratio); canvas.height=Math.round(height*ratio);
 			}
 			ctx.setTransform(ratio,0,0,ratio,0,0);
-			const preview=tool==='build' && inside(cursor) && !blocks.some(b=>key(b)===key(cursor)) ? {...cursor,color} : undefined;
-			faces=paint(ctx,width,height,blocks,angle,zoom,preview);
+			const preview=tool==='build' && !guide && inside(cursor) && !isLockedColumn(blocks,cursor.x,cursor.z) && !blocks.some(b=>key(b)===key(cursor)) ? {...cursor,color} : undefined;
+			faces=paint(ctx,width,height,blocks,angle,zoom,preview,guide ? {cells:guide.cells,next:nextCell(guide,blocks)} : undefined);
+			placeHand();
 		};
 		const observer=new ResizeObserver(()=>render()); observer.observe(canvas);
 		instruct('blocks.intro');
 		if (firstTime('blocks3d')) showHand(['[data-block-color]','[data-building-board]']);
-		return ()=>{ observer.disconnect(); hideHand(); leaveScreen(); render=()=>{}; };
+		window.addEventListener('pointerdown',activity); window.addEventListener('keydown',activity); armIdle();
+		return ()=>{ observer.disconnect(); hideHand(); leaveScreen(); render=()=>{}; if (idleTimer) clearTimeout(idleTimer); window.removeEventListener('pointerdown',activity); window.removeEventListener('keydown',activity); };
 	});
 </script>
 
@@ -312,7 +376,6 @@
 				</div>
 			{/if}
 
-			<button class="help" onclick={help}>☞ {bn ? 'দেখিয়ে দাও' : 'Show me how'}</button>
 		</aside>
 
 		<div class="stage">
@@ -320,6 +383,7 @@
 			<div class="board" bind:this={board} data-building-board tabindex="0" role="application" aria-label={bn ? 'থ্রিডি ব্লক তৈরির জায়গা' : '3D building area'} aria-describedby="building-help"
 				onpointermove={(e)=>point(e)} onpointerdown={(e)=>point(e,true)} onkeydown={keyboard}>
 				<canvas bind:this={canvas} aria-hidden="true"></canvas>
+				{#if handPoint}<span class="guide-target" data-guide-target aria-hidden="true" style:left="{handPoint.x}px" style:top="{handPoint.y}px"></span>{/if}
 				<div class="board-label" aria-hidden="true">{tool==='build' ? '＋' : '−'} {bn ? (tool==='build' ? 'ব্লক বসাই' : 'ব্লক সরাই') : (tool==='build' ? 'BUILD MODE' : 'REMOVE MODE')}</div>
 				{#if unavailable}<div class="unavailable" role="status">{bn ? 'তৈরির জায়গাটি খুলতে পারিনি। আবার খুলি।' : 'The building area could not open. Please reopen the game.'}</div>{/if}
 			</div>
@@ -330,6 +394,9 @@
 				<div class="divider"></div>
 				<button aria-label={bn ? 'দূর থেকে দেখি' : 'Zoom out'} disabled={zoom<=0.65} onclick={()=>zoom=Math.max(0.65,zoom-0.15)}>−</button>
 				<button aria-label={bn ? 'কাছ থেকে দেখি' : 'Zoom in'} disabled={zoom>=1.45} onclick={()=>zoom=Math.min(1.45,zoom+0.15)}>＋</button>
+				<div class="divider"></div>
+				<button class="idea" class:on={!!guide} data-testid="idea" aria-pressed={!!guide} onclick={giveIdea} onfocus={()=>speakLabel('blocks.idea-button')}><span aria-hidden="true">{guide ? '✕' : '💡'}</span> {guide ? (bn ? 'ছায়া বন্ধ' : 'Hide idea') : (bn ? 'আইডিয়া দাও' : 'Give me an idea')}</button>
+				<button class="help" onclick={help}>☞ {bn ? 'দেখিয়ে দাও' : 'Show me how'}</button>
 			</div>
 		</div>
 	</div>
@@ -340,10 +407,10 @@
 			<button class="save-button" data-testid="save-build" disabled={!blocks.length} onclick={saveBuild} onfocus={()=>speakLabel('blocks.save')}><span aria-hidden="true">💾</span> {bn ? 'সেভ করি' : 'Save'}</button>
 			<button aria-label={bn ? 'আগের ধাপে যাই' : 'Undo'} disabled={!undoStack.length} onclick={undo}>↶ {bn ? 'আগের ধাপ' : 'Undo'}</button>
 			<button aria-label={bn ? 'পরের ধাপে যাই' : 'Redo'} disabled={!redoStack.length} onclick={redo}>↷ {bn ? 'পরের ধাপ' : 'Redo'}</button>
-			<button disabled={!blocks.length} onclick={()=>{commit([]);announce('blocks.cleared');}}>▧ {bn ? 'খালি করি' : 'Clear'}</button>
+			<button disabled={!blocks.length} onclick={()=>{guide=null;commit([]);announce('blocks.cleared');}}>▧ {bn ? 'খালি করি' : 'Clear'}</button>
 		</div>
 	</div>
-	<p class="feedback" aria-live="polite">{#if message==='blocks.limit'}{bn ? `এই জায়গায় আর ব্লক বসবে না। সর্বোচ্চ ${HEIGHT.toLocaleString('bn-BD')} তলা বানাই।` : `Try another spot. You can build up to ${HEIGHT} blocks high.`}{:else if message==='blocks.placed'}{bn ? 'ব্লক বসেছে! এবার কী বানাবো?' : 'Block added. What shall we build?'}{:else if message==='blocks.removed'}{bn ? 'ব্লক সরেছে। নতুন করে সাজাই!' : 'Block removed. Make room for a new idea!'}{:else if message==='blocks.undone'}{bn ? 'আগের ধাপে ফিরে এসেছি।' : 'Back to the previous step.'}{:else if message==='blocks.redone'}{bn ? 'ধাপটি আবার ফিরেছে।' : 'That step is back.'}{:else if message==='blocks.cleared'}{bn ? 'আবার নতুন কিছু বানাই! আগের ধাপে গেলে ডিজাইন ফিরে আসবে।' : 'A fresh canvas! Undo brings your design back.'}{:else if message==='blocks.kaaba'}{bn ? 'কাবা ঘর যেমন আছে তেমনই থাকুক। চারপাশের উঠানে সাজাই!' : 'The Kaaba stays just as it is. Let’s build in the courtyard around it!'}{:else if SAY_KEYS.has(message)}{narrationText(message,$settings.language,$settings.islamicExpressionsEnabled)}{:else if message==='blocks.template'}{bn ? 'এবার নিজের মতো করে সাজাই!' : 'Now make it your own!'}{:else}{bn ? 'বাড়ি, টাওয়ার, সিঁড়ি—যা ইচ্ছে বানাই!' : 'A house, a tower, some steps. Build anything you imagine!'}{/if}</p>
+	<p class="feedback" aria-live="polite">{#if message==='blocks.limit'}{bn ? `এই জায়গায় আর ব্লক বসবে না। সর্বোচ্চ ${HEIGHT.toLocaleString('bn-BD')} তলা বানাই।` : `Try another spot. You can build up to ${HEIGHT} blocks high.`}{:else if message==='blocks.placed'}{bn ? 'ব্লক বসেছে! এবার কী বানাবো?' : 'Block added. What shall we build?'}{:else if message==='blocks.removed'}{bn ? 'ব্লক সরেছে। নতুন করে সাজাই!' : 'Block removed. Make room for a new idea!'}{:else if message==='blocks.undone'}{bn ? 'আগের ধাপে ফিরে এসেছি।' : 'Back to the previous step.'}{:else if message==='blocks.redone'}{bn ? 'ধাপটি আবার ফিরেছে।' : 'That step is back.'}{:else if message==='blocks.cleared'}{bn ? 'আবার নতুন কিছু বানাই! আগের ধাপে গেলে ডিজাইন ফিরে আসবে।' : 'A fresh canvas! Undo brings your design back.'}{:else if message==='blocks.kaaba'}{bn ? 'কাবা ঘর যেমন আছে তেমনই থাকুক। চারপাশের উঠানে সাজাই!' : 'The Kaaba stays just as it is. Let’s build in the courtyard around it!'}{:else if SAY_KEYS.has(message) || HINT_KEYS.has(message)}{narrationText(message,$settings.language,$settings.islamicExpressionsEnabled)}{:else if message==='blocks.template'}{bn ? 'এবার নিজের মতো করে সাজাই!' : 'Now make it your own!'}{:else}{bn ? 'বাড়ি, টাওয়ার, সিঁড়ি—যা ইচ্ছে বানাই!' : 'A house, a tower, some steps. Build anything you imagine!'}{/if}</p>
 
 	<!-- Celebration Modal -->
 	{#if showCelebration && activeMission}
@@ -351,7 +418,7 @@
 		<div class="scrim" onclick={closeCelebration}></div>
 		<div class="celebration-dialog" role="dialog" aria-modal="true" tabindex="-1">
 			<div class="confetti-ring">✨ 🌟 💫 🎈 🏆</div>
-			<h2>{bn ? 'মাশাআল্লাহ! চমৎকার হয়েছে!' : 'MashaAllah! Great Job!'}</h2>
+			<h2>{$settings.islamicExpressionsEnabled ? (bn ? 'মাশাআল্লাহ! চমৎকার হয়েছে!' : 'MashaAllah! Great Job!') : (bn ? 'চমৎকার হয়েছে!' : 'Great job!')}</h2>
 			<div class="celebration-badge">
 				<span class="big-badge">{activeMission.badge}</span>
 				<p><strong>{bn ? activeMission.badgeNameBn : activeMission.badgeNameEn}</strong> {bn ? 'ব্যাজ অর্জন করেছো!' : 'Badge Unlocked!'}</p>
@@ -430,7 +497,9 @@
 	.selected-color { margin:6px 0 0; font-size:14px; color:var(--text-secondary); } .tools { display:flex; gap:7px; } .tools button { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; font-size:15px; padding:5px; min-height:64px; } .tools button span { font-size:25px; }
 	.presets { display:grid; grid-template-columns:repeat(2,1fr); gap:6px; } .presets h2 { grid-column:1/-1; margin-bottom:2px; } .presets button { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; font-size:13px; padding:4px 3px; min-height:52px; } .preset-icon { font-size:27px; color:#9b765b; } .go { display:none; } .help { margin-top:auto; font-size:16px; min-height:44px; }
 	.stage { display:flex; flex:1; min-width:0; flex-direction:column; gap:8px; } .board { position:relative; flex:1; min-height:220px; overflow:hidden; border:2px solid #b7cdba; border-radius:24px; background:#dfedec; touch-action:manipulation; cursor:crosshair; } canvas { position:absolute; display:block; width:100%; height:100%; } .board-label { position:absolute; top:16px; left:18px; border-radius:10px; padding:5px 11px; background:#fffcf0d9; font-size:15px; font-weight:600; pointer-events:none; color:#567465; }
-	.view-tools { display:flex; align-items:center; justify-content:center; gap:9px; } .view-tools button { min-width:48px; font-size:24px; } .view-tools span { font-size:16px; color:var(--text-secondary); } .divider { width:1px; height:25px; background:var(--border-soft); margin:0 8px; }
+	.guide-target { position:absolute; width:2px; height:2px; pointer-events:none; }
+	.idea { font-size:17px; } .idea.on { background:#fff3c4; border-color:#d9b23c; } .help { font-size:16px; }
+	.view-tools { display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:9px; } .view-tools button { min-width:48px; font-size:24px; } .view-tools span { font-size:16px; color:var(--text-secondary); } .divider { width:1px; height:25px; background:var(--border-soft); margin:0 8px; }
 	.bottom-bar { display:flex; align-items:center; justify-content:space-between; gap:14px; } #building-help { display:flex; flex-direction:column; } strong { font-size:21px; } small { font-size:16px; color:var(--text-secondary); } .history { display:flex; gap:8px; } .feedback { margin:0; font-size:17px; text-align:center; color:var(--text-secondary); min-height:25px; } .unavailable { position:absolute; inset:0; display:grid; place-items:center; background:#fff8e8e8; padding:30px; text-align:center; }
 	.heading-actions { display:flex; align-items:center; gap:10px; } .gallery-button { display:flex; align-items:center; gap:6px; } .gallery-button .count { min-width:28px; padding:0 7px; border-radius:10px; background:#e6eddf; color:#506d51; } .gallery-button.pop { animation:pop 600ms ease-out; }
 	.save-button { background:#3f8f5f; border-color:#2f6f49; color:#ffffff; } .save-button:hover:not(:disabled) { background:#357d52; }
