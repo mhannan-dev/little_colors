@@ -137,7 +137,7 @@
 			<div class="tool-section"><h2>{bn ? 'রং বেছে নিই' : 'Pick a color'}</h2>
 				<div class="palette" role="group" aria-label={bn ? 'ব্লকের রং' : 'Block colors'}>
 					{#each PALETTE as c}
-						<button data-block-color style:--swatch={c.hex} class="swatch" aria-label={bn ? c.bn : c.en} aria-pressed={color===c.hex} onclick={()=>{color=c.hex;tool='build';}}><span aria-hidden="true">{color===c.hex ? '✓' : ''}</span></button>
+						<button data-block-color style:--swatch={c.hex} class="swatch" class:dark={c.hex==='#2f3437'} class:light={c.hex==='#ffffff'} aria-label={bn ? c.bn : c.en} aria-pressed={color===c.hex} onclick={()=>{color=c.hex;tool='build';}}><span aria-hidden="true">{color===c.hex ? '✓' : ''}</span></button>
 					{/each}
 				</div><p class="selected-color">{bn ? colorName.bn : colorName.en}</p>
 			</div>
@@ -191,7 +191,7 @@
 	aside { display:flex; flex-direction:column; width:232px; flex-shrink:0; gap:10px; padding:12px; border:2px solid var(--border-soft); border-radius:24px; background:var(--surface); overflow-y:auto; min-height:0; line-height:1.2; }
 	h2 { margin:0 0 9px; font-size:20px; } button { border:2px solid var(--border-soft); border-radius:13px; background:var(--surface); min-height:48px; padding:7px 12px; cursor:pointer; font-weight:600; font-size:18px; }
 	button:hover { background:#edf1e6; } button:disabled { opacity:0.4; cursor:default; } button[aria-pressed='true'] { border-color:#526e63; background:#e9efe1; }
-	.palette { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; } .swatch { padding:3px; min-height:38px; height:38px; border-radius:11px; background:var(--swatch); box-shadow:inset 0 0 0 3px #ffffff80; } .swatch[aria-pressed='true'] { background:var(--swatch); outline:2px solid #526e63; outline-offset:2px; } .swatch span { font-size:22px; color:#304c4a; }
+	.palette { display:grid; grid-template-columns:repeat(5,1fr); gap:7px; } .swatch { padding:3px; min-height:38px; height:38px; border-radius:11px; background:var(--swatch); box-shadow:inset 0 0 0 3px #ffffff80; } .swatch[aria-pressed='true'] { background:var(--swatch); outline:2px solid #526e63; outline-offset:2px; } .swatch span { font-size:22px; color:#304c4a; } .swatch.dark span { color:#ffffff; } .swatch.light { box-shadow:inset 0 0 0 2px #c9c2b4; }
 	.selected-color { margin:6px 0 0; font-size:14px; color:var(--text-secondary); } .tools { display:flex; gap:7px; } .tools button { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; font-size:15px; padding:5px; min-height:64px; } .tools button span { font-size:25px; }
 	.presets { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; } .presets h2 { grid-column:1/-1; margin-bottom:2px; } .presets button { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; font-size:13px; padding:5px 3px; min-height:70px; } .preset-icon { font-size:27px; color:#9b765b; } .go { display:none; } .help { margin-top:auto; font-size:16px; min-height:44px; }
 	.stage { display:flex; flex:1; min-width:0; flex-direction:column; gap:8px; } .board { position:relative; flex:1; min-height:220px; overflow:hidden; border:2px solid #b7cdba; border-radius:24px; background:#dfedec; touch-action:manipulation; cursor:crosshair; } canvas { position:absolute; display:block; width:100%; height:100%; } .board-label { position:absolute; top:16px; left:18px; border-radius:10px; padding:5px 11px; background:#fffcf0d9; font-size:15px; font-weight:600; pointer-events:none; color:#567465; }

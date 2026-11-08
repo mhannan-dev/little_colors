@@ -83,3 +83,22 @@ test('tapping the same column again stacks on top, up to ten, and a full build s
 		expect(clear.y + clear.height).toBeLessThanOrEqual(height);
 	}
 });
+
+test('black and white blocks can be chosen and are saved', async ({ page }) => {
+	await page.goto('/blocks-3d');
+	await page.getByRole('button', { name: 'English', exact: true }).click();
+	await page.evaluate(() => localStorage.removeItem('lc.blocks3d.v1'));
+	await page.reload();
+	const board = page.getByRole('application', { name: '3D building area' });
+	for (const [name, hex] of [['Black', '#2f3437'], ['White', '#ffffff']] as const) {
+		await page.getByRole('button', { name, exact: true }).click();
+		await expect(page.getByRole('button', { name, exact: true })).toHaveAttribute('aria-pressed', 'true');
+		await board.focus();
+		await page.keyboard.press(name === 'Black' ? 'Enter' : 'ArrowRight');
+		if (name === 'White') await page.keyboard.press('Enter');
+		expect((await saved(page)).filter((b) => b.color === hex)).toHaveLength(1);
+	}
+	await page.screenshot({ path: 'test-results/blocks3d-black-white.png' });
+	await page.reload();
+	expect((await saved(page)).map((b) => b.color).sort()).toEqual(['#2f3437', '#ffffff']);
+});

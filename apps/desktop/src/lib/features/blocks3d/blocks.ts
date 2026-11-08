@@ -10,7 +10,9 @@ export const PALETTE = [
 	{ hex: '#80b9ce', bn: 'নীল', en: 'Blue' },
 	{ hex: '#a598ca', bn: 'বেগুনি', en: 'Purple' },
 	{ hex: '#faf0dc', bn: 'ক্রিম', en: 'Cream' },
-	{ hex: '#a78169', bn: 'বাদামি', en: 'Brown' }
+	{ hex: '#a78169', bn: 'বাদামি', en: 'Brown' },
+	{ hex: '#ffffff', bn: 'সাদা', en: 'White' },
+	{ hex: '#2f3437', bn: 'কালো', en: 'Black' }
 ] as const;
 export type Cell = { x: number; y: number; z: number };
 export type Block = Cell & { color: string };
