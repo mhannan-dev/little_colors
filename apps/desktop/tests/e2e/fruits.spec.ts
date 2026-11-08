@@ -1,6 +1,6 @@
 import {expect,test,type Page} from '@playwright/test';
 const FRUITS:Record<string,string>={Mango:'mango',Jackfruit:'jackfruit',Banana:'banana',Guava:'guava',Lychee:'lychee',Papaya:'papaya',Pineapple:'pineapple',Watermelon:'watermelon',Apple:'apple',Orange:'orange',Grapes:'grapes',Strawberry:'strawberry'};
-async function mute(page:Page){const sound=page.locator('header button[aria-pressed]').first();if(await sound.getAttribute('aria-pressed')==='true')await sound.click();}
+async function mute(page:Page){const sound=page.locator('[data-testid="sound-toggle"]').first();if(await sound.getAttribute('aria-pressed')==='true')await sound.click();}
 async function open(page:Page,older=false){await page.goto('/fruit');await mute(page);if(older)await page.getByTestId('fruit-age-8-10').click();}
 async function solve(page:Page){if(await page.getByTestId('fruit-count').count()){const count=await page.locator('[data-count-fruit]').count();await page.locator(`[data-fruit-number="${count}"]`).click();}else if(await page.getByTestId('fruit-target-name').count()){const id=await page.getByTestId('fruit-target-name').getAttribute('data-fruit');await page.locator(`[data-fruit-answer="${id}"]`).click();}else{const word=(await page.getByTestId('fruit-question-picture').getByRole('img').getAttribute('aria-label'))!;await page.locator(`[data-fruit-answer="${FRUITS[word]}"]`).click();}}
 test('learn all 12 fruit pictures, Bengali/English names and the Bangladesh collection',async({page},info)=>{

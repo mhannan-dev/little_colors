@@ -42,6 +42,8 @@
 	let unlockedBadges = $state<string[]>([]);
 	let showCelebration = $state(false);
 	let lastCelebratedId = $state<string | null>(null);
+	let missionArmed = false;
+	const celebrated = new Set<string>();
 	let activeTab = $state<'build' | 'missions'>('build');
 
 	const activeMission = $derived(MISSIONS.find(m => m.id === activeMissionId) ?? null);
@@ -54,6 +56,7 @@
 	let handPoint = $state<{ x: number; y: number } | null>(null);
 	/** The block top the hand points at; its screen point is recomputed on every redraw. */
 	let handCell: Cell | null = null;
+	function dropHand() { handCell = null; handPoint = null; hideHand(); }
 	function placeHand() {
 		if (!handCell || !canvas) return;
 		const [x,y] = cellCenter(canvas.clientWidth,canvas.clientHeight,blocks,angle,zoom,handCell,guide ?? undefined);
@@ -123,6 +126,7 @@
 		if (!ready || unavailable) return;
 		// The Kaaba model stays whole: nothing is taken away from it or piled on it (PR-13).
 		if (isLockedColumn(blocks,cell.x,cell.z)) { announce('blocks.kaaba',true); void pointAt(freeTile(blocks,angle)); return; }
+		if (erase && cell.y < 0) return;
 		if (!inside(cell)) { announce('blocks.limit',true); void pointAt(freeTile(blocks,angle)); return; }
 		const existing = blocks.find(b=>key(b)===key(cell));
 		const vol = $settings.soundEnabled ? $settings.volume : 0;
@@ -143,12 +147,12 @@
 	function undo() {
 		const previous = undoStack.at(-1); if (!previous) return;
 		redoStack = [...redoStack,blocks]; blocks = previous; undoStack = undoStack.slice(0,-1);
-		save(); announce('blocks.undone');
+		save(); announce('blocks.undone'); followGuide();
 	}
 	function redo() {
 		const next = redoStack.at(-1); if (!next) return;
 		undoStack = [...undoStack,blocks]; blocks = next; redoStack = redoStack.slice(0,-1);
-		save(); announce('blocks.redone');
+		save(); announce('blocks.redone'); followGuide();
 	}
 
 	// ── Missions Actions ──
@@ -156,10 +160,14 @@
 		activeMissionId = m.id;
 		activeTab = 'missions';
 		showCelebration = false;
-		announce(bn ? `${m.titleBn}: ${m.goalBn}` : `${m.titleEn}: ${m.goalEn}`);
+		// Celebrate only what the child builds now: a mat that already meets the goal does not count.
+		missionArmed = !m.check(blocks).done;
+		announce(`blocks.mission.${m.id}`,true);
+		setIdlePrompt(`blocks.mission.${m.id}`);
 	}
 	function closeCelebration() {
 		showCelebration = false;
+		board?.focus({preventScroll:true});
 	}
 	function nextMission() {
 		showCelebration = false;
@@ -176,6 +184,8 @@
 	let justSaved = $state(false);
 	const SAY_KEYS = new Set(['blocks.saved','blocks.already','blocks.full','blocks.opened','blocks.deleted','blocks.save-failed']);
 	const num = (n: number) => formatNumeral(n, $settings.numeralStyle);
+	/** Rewrites any digits in a text (Western or Bengali) in the chosen numeral style. */
+	const digits = (s: string) => s.replace(/[0-9\u09E6-\u09EF]/g, (ch) => num(ch >= '0' && ch <= '9' ? Number(ch) : ch.charCodeAt(0) - 0x09E6));
 	function persistSaved(next: SavedBuild[]): boolean {
 		try { localStorage.setItem(SAVED_KEY,JSON.stringify(next)); savedList = next; return true; }
 		catch { return false; }
@@ -197,17 +207,17 @@
 		justSaved = true; setTimeout(()=>justSaved=false,1200);
 	}
 	function openSaved(s: SavedBuild) {
-		guide=null; commit(s.blocks.map(b=>({...b}))); tool='build'; galleryOpen=false; confirmDelete=null;
+		guide=null; dropHand(); commit(s.blocks.map(b=>({...b}))); tool='build'; galleryOpen=false; confirmDelete=null;
 		announce('blocks.opened',true);
 	}
 	function deleteSaved(id: string) {
 		if (confirmDelete !== id) { confirmDelete = id; return; }
-		persistSaved(removeSaved(savedList,id)); confirmDelete = null; announce('blocks.deleted');
+		const ok = persistSaved(removeSaved(savedList,id)); confirmDelete = null; announce(ok ? 'blocks.deleted' : 'blocks.save-failed',!ok);
 	}
 	function closeGallery() { galleryOpen = false; confirmDelete = null; }
 	const focusIn = (node: HTMLElement) => { node.focus({ preventScroll: true }); };
 	function loadPreset(id: Template) {
-		guide=null; commit(template(id)); tool='build'; cursor={x:0,y:0,z:5}; announce('blocks.template',true);
+		guide=null; dropHand(); commit(template(id)); tool='build'; cursor={x:0,y:0,z:5}; announce('blocks.template',true);
 	}
 	function locate(event: PointerEvent) {
 		const rect = canvas.getBoundingClientRect();
@@ -218,7 +228,7 @@
 		const hit = locate(event); if (!hit) return;
 		const top = columnTop(blocks,hit.cell.x,hit.cell.z);
 		const cell = {x:hit.cell.x,y:tool==='erase' ? top-1 : top,z:hit.cell.z};
-		cursor = {x:cell.x,y:cell.y,z:cell.z};
+		if (cursor.x!==cell.x || cursor.y!==cell.y || cursor.z!==cell.z) cursor = {x:cell.x,y:cell.y,z:cell.z};
 		if (apply) { board.focus({preventScroll:true}); edit(cell); }
 	}
 	function keyboard(event: KeyboardEvent) {
@@ -246,8 +256,12 @@
 
 	// Trigger celebration when active mission goal is met
 	$effect(()=>{
-		if (activeMission && progress?.done && lastCelebratedId !== activeMission.id) {
+		if (activeMission && progress && !progress.done) missionArmed = true;
+		if (activeMission && progress?.done && missionArmed && !celebrated.has(activeMission.id)) {
+			celebrated.add(activeMission.id);
+			missionArmed = false;
 			lastCelebratedId = activeMission.id;
+			say('feedback.celebrate',{interrupt:true});
 			unlockedBadges = saveUnlockedBadge(activeMission.id);
 			playCelebrationSound($settings.soundEnabled ? $settings.volume : 0);
 			showCelebration = true;
@@ -314,8 +328,8 @@
 				<span class="mission-icon" aria-hidden="true">{activeMission.badge}</span>
 				<div>
 					<strong>{bn ? activeMission.titleBn : activeMission.titleEn}:</strong>
-					<span>{bn ? activeMission.goalBn : activeMission.goalEn}</span>
-					<small class="mission-summary">({bn ? progress.summaryBn : progress.summaryEn})</small>
+					<span>{digits(bn ? activeMission.goalBn : activeMission.goalEn)}</span>
+					<small class="mission-summary">({digits(bn ? progress.summaryBn : progress.summaryEn)})</small>
 				</div>
 			</div>
 			<div class="mission-meter">
@@ -325,7 +339,7 @@
 		</div>
 	{/if}
 
-	<div class="workspace">
+	<div class="workspace" inert={galleryOpen || showCelebration}>
 		<aside>
 			<!-- Mode switch: Tools vs Missions -->
 			<div class="mode-tabs" role="tablist">
@@ -341,7 +355,7 @@
 				<div class="tool-section"><h2>{bn ? 'রং বেছে নিই' : 'Pick a color'}</h2>
 					<div class="palette" role="group" aria-label={bn ? 'ব্লকের রং' : 'Block colors'}>
 						{#each PALETTE as c}
-							<button data-block-color style:--swatch={c.hex} class="swatch" class:dark={c.hex==='#2f3437'} class:light={c.hex==='#ffffff'} aria-label={bn ? c.bn : c.en} aria-pressed={color===c.hex} onclick={()=>{color=c.hex;tool='build';}}><span aria-hidden="true">{color===c.hex ? '✓' : ''}</span></button>
+							<button data-block-color style:--swatch={c.hex} class="swatch" class:dark={c.hex==='#2f3437'} class:light={c.hex==='#ffffff'} aria-label={bn ? c.bn : c.en} aria-pressed={color===c.hex} onclick={()=>{color=c.hex;tool='build';speakLabel(`blocks.color.${c.en.toLowerCase()}`);}}><span aria-hidden="true">{color===c.hex ? '✓' : ''}</span></button>
 						{/each}
 					</div><p class="selected-color">{bn ? colorName.bn : colorName.en}</p>
 				</div>
@@ -365,7 +379,7 @@
 								<span class="m-badge" aria-hidden="true">{m.badge}</span>
 								<div class="m-text">
 									<strong>{bn ? m.titleBn : m.titleEn}</strong>
-									<small>{bn ? m.goalBn : m.goalEn}</small>
+									<small>{digits(bn ? m.goalBn : m.goalEn)}</small>
 								</div>
 								{#if isDone}
 									<span class="m-tick" title={bn ? 'সম্পন্ন' : 'Completed'}>✓</span>
@@ -401,22 +415,22 @@
 		</div>
 	</div>
 
-	<div class="bottom-bar">
+	<div class="bottom-bar" inert={galleryOpen || showCelebration}>
 		<div id="building-help"><strong>{bn ? 'ঘরে বা ব্লকে ট্যাপ করি, নতুন ব্লক উপরে বসবে' : 'Tap a tile or a block: the new block goes on top'}</strong><small>{bn ? 'কিবোর্ড: তীর দিয়ে ঘর বাছি • Enter বসায় • Backspace সরায়' : 'Keyboard: arrows choose a tile · Enter adds · Backspace removes'}</small></div>
 		<div class="history">
 			<button class="save-button" data-testid="save-build" disabled={!blocks.length} onclick={saveBuild} onfocus={()=>speakLabel('blocks.save')}><span aria-hidden="true">💾</span> {bn ? 'সেভ করি' : 'Save'}</button>
 			<button aria-label={bn ? 'আগের ধাপে যাই' : 'Undo'} disabled={!undoStack.length} onclick={undo}>↶ {bn ? 'আগের ধাপ' : 'Undo'}</button>
 			<button aria-label={bn ? 'পরের ধাপে যাই' : 'Redo'} disabled={!redoStack.length} onclick={redo}>↷ {bn ? 'পরের ধাপ' : 'Redo'}</button>
-			<button disabled={!blocks.length} onclick={()=>{guide=null;commit([]);announce('blocks.cleared');}}>▧ {bn ? 'খালি করি' : 'Clear'}</button>
+			<button disabled={!blocks.length} onclick={()=>{guide=null;dropHand();commit([]);announce('blocks.cleared');}}>▧ {bn ? 'খালি করি' : 'Clear'}</button>
 		</div>
 	</div>
-	<p class="feedback" aria-live="polite">{#if message==='blocks.limit'}{bn ? `এই জায়গায় আর ব্লক বসবে না। সর্বোচ্চ ${HEIGHT.toLocaleString('bn-BD')} তলা বানাই।` : `Try another spot. You can build up to ${HEIGHT} blocks high.`}{:else if message==='blocks.placed'}{bn ? 'ব্লক বসেছে! এবার কী বানাবো?' : 'Block added. What shall we build?'}{:else if message==='blocks.removed'}{bn ? 'ব্লক সরেছে। নতুন করে সাজাই!' : 'Block removed. Make room for a new idea!'}{:else if message==='blocks.undone'}{bn ? 'আগের ধাপে ফিরে এসেছি।' : 'Back to the previous step.'}{:else if message==='blocks.redone'}{bn ? 'ধাপটি আবার ফিরেছে।' : 'That step is back.'}{:else if message==='blocks.cleared'}{bn ? 'আবার নতুন কিছু বানাই! আগের ধাপে গেলে ডিজাইন ফিরে আসবে।' : 'A fresh canvas! Undo brings your design back.'}{:else if message==='blocks.kaaba'}{bn ? 'কাবা ঘর যেমন আছে তেমনই থাকুক। চারপাশের উঠানে সাজাই!' : 'The Kaaba stays just as it is. Let’s build in the courtyard around it!'}{:else if SAY_KEYS.has(message) || HINT_KEYS.has(message)}{narrationText(message,$settings.language,$settings.islamicExpressionsEnabled)}{:else if message==='blocks.template'}{bn ? 'এবার নিজের মতো করে সাজাই!' : 'Now make it your own!'}{:else}{bn ? 'বাড়ি, টাওয়ার, সিঁড়ি—যা ইচ্ছে বানাই!' : 'A house, a tower, some steps. Build anything you imagine!'}{/if}</p>
+	<p class="feedback" aria-live="polite">{#if message==='blocks.limit'}{bn ? `এই জায়গায় আর ব্লক বসবে না। সর্বোচ্চ ${num(HEIGHT)} তলা বানাই।` : `Try another spot. You can build up to ${num(HEIGHT)} blocks high.`}{:else if message==='blocks.placed'}{bn ? 'ব্লক বসেছে! এবার কী বানাবো?' : 'Block added. What shall we build?'}{:else if message==='blocks.removed'}{bn ? 'ব্লক সরেছে। নতুন করে সাজাই!' : 'Block removed. Make room for a new idea!'}{:else if message==='blocks.undone'}{bn ? 'আগের ধাপে ফিরে এসেছি।' : 'Back to the previous step.'}{:else if message==='blocks.redone'}{bn ? 'ধাপটি আবার ফিরেছে।' : 'That step is back.'}{:else if message==='blocks.cleared'}{bn ? 'আবার নতুন কিছু বানাই! আগের ধাপে গেলে ডিজাইন ফিরে আসবে।' : 'A fresh canvas! Undo brings your design back.'}{:else if message==='blocks.kaaba'}{bn ? 'কাবা ঘর যেমন আছে তেমনই থাকুক। চারপাশের উঠানে সাজাই!' : 'The Kaaba stays just as it is. Let’s build in the courtyard around it!'}{:else if SAY_KEYS.has(message) || HINT_KEYS.has(message) || message.startsWith('blocks.mission.')}{digits(narrationText(message,$settings.language,$settings.islamicExpressionsEnabled))}{:else if message==='blocks.template'}{bn ? 'এবার নিজের মতো করে সাজাই!' : 'Now make it your own!'}{:else}{bn ? 'বাড়ি, টাওয়ার, সিঁড়ি—যা ইচ্ছে বানাই!' : 'A house, a tower, some steps. Build anything you imagine!'}{/if}</p>
 
 	<!-- Celebration Modal -->
 	{#if showCelebration && activeMission}
 		<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
 		<div class="scrim" onclick={closeCelebration}></div>
-		<div class="celebration-dialog" role="dialog" aria-modal="true" tabindex="-1">
+		<div class="celebration-dialog" role="dialog" aria-modal="true" aria-label={bn ? 'মিশন শেষ' : 'Mission complete'} tabindex="-1" use:focusIn>
 			<div class="confetti-ring">✨ 🌟 💫 🎈 🏆</div>
 			<h2>{$settings.islamicExpressionsEnabled ? (bn ? 'মাশাআল্লাহ! চমৎকার হয়েছে!' : 'MashaAllah! Great Job!') : (bn ? 'চমৎকার হয়েছে!' : 'Great job!')}</h2>
 			<div class="celebration-badge">

@@ -106,10 +106,11 @@
 	function nameFor(s: SymbolSet, symbol: string): string {
 		const def = symbolDef(s, symbol);
 		if (s === '123') return lang === 'bn-BD' ? def.bn : def.en;
-		return lang === 'bn-BD' ? def.bn : s === 'abc' ? def.en : def.glyph;
+		return lang === 'bn-BD' ? def.bn : def.en;
 	}
 
 	// ── 3D ──────────────────────────────────────────────────────────────────
+	let destroyed = false;
 	async function startStage() {
 		try {
 			kit = await import('#lib/three3d/toyKit.ts');
@@ -118,9 +119,14 @@
 			failed = true;
 			return;
 		}
-		if (!canvas) return;
+		if (!canvas || destroyed) return;
 		const { THREE } = kit;
-		stage = kit.createStage(canvas, { fov: 55, background: '#DDF0FB' });
+		try {
+			stage = kit.createStage(canvas, { fov: 55, background: '#DDF0FB' });
+		} catch {
+			failed = true;
+			return;
+		}
 		stage.scene.fog = new THREE.Fog('#DDF0FB', 32, 62);
 
 		const grass = new THREE.Mesh(new THREE.PlaneGeometry(90, 140), new THREE.MeshStandardMaterial({ color: '#BFE3A5', roughness: 1 }));
@@ -184,6 +190,7 @@
 		stage.onFrame(frame);
 		stage.setPaused($paused);
 		ready = true;
+		if (a && machine && !row) spawnRow(a, START_Z);
 	}
 
 	/** A pole with a little triangle flag for the roadside. */
@@ -294,14 +301,20 @@
 		finishLine = { group, z: START_Z, crossed: false };
 	}
 
+	let sparkGeo: Kit.THREE.BufferGeometry[] | null = null;
+	const sparkMat = new Map<string, Kit.THREE.MeshStandardMaterial>();
 	function burst(at: Kit.THREE.Vector3, count: number, colors: readonly string[]) {
 		if (!stage || !kit || d.reduced) return;
 		const { THREE } = kit;
+		sparkGeo ??= [new THREE.BoxGeometry(0.22, 0.22, 0.05), new THREE.OctahedronGeometry(0.16)];
 		for (let i = 0; i < count; i++) {
-			const mesh = new THREE.Mesh(
-				i % 2 ? new THREE.BoxGeometry(0.22, 0.22, 0.05) : new THREE.OctahedronGeometry(0.16),
-				new THREE.MeshStandardMaterial({ color: colors[i % colors.length], emissive: colors[i % colors.length], emissiveIntensity: 0.3 })
-			);
+			const color = colors[i % colors.length]!;
+			let mat = sparkMat.get(color);
+			if (!mat) {
+				mat = new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.3 });
+				sparkMat.set(color, mat);
+			}
+			const mesh = new THREE.Mesh(sparkGeo[i % 2]!, mat);
 			mesh.position.copy(at);
 			stage.scene.add(mesh);
 			const ang = Math.random() * Math.PI * 2;
@@ -312,14 +325,14 @@
 
 	function frame(dt: number, time: number) {
 		if (!car) return;
-		let speed = driving ? BASE_SPEED : 0;
+		let speed = driving ? (d.reduced ? 4 : BASE_SPEED) : 0;
 		if (boostT > 0) {
 			boostT = Math.max(0, boostT - dt);
 			speed = BOOST_SPEED;
 		}
 		if (row && !row.decided) {
 			if (row.z > SLOW_Z) speed = Math.min(speed, SLOW_SPEED);
-			if (!row.acted && assist() && row.z >= WAIT_Z) {
+			if (!row.acted && row.z >= WAIT_Z) {
 				row.z = WAIT_Z;
 				speed = 0;
 				if (phase !== 'wait') phase = 'wait';
@@ -425,7 +438,7 @@
 			s.mesh.rotation.x += dt * 6;
 			s.mesh.rotation.y += dt * 4;
 		}
-		for (const s of sparkles.filter((x) => x.life <= 0)) disposeGroup(s.mesh);
+		for (const s of sparkles.filter((x) => x.life <= 0)) stage?.scene.remove(s.mesh);
 		sparkles = sparkles.filter((x) => x.life > 0);
 
 		// Camera: behind the car; widens a touch during a boost.
@@ -439,9 +452,10 @@
 			cam.updateProjectionMatrix();
 		}
 		cam.lookAt(carX * 0.3, 1.4, -10);
-		placeButtons();
+		if ((frameNo = (frameNo + 1) % 3) === 0) placeButtons();
 	}
 
+	let frameNo = 0;
 	function placeButtons() {
 		if (!stage || !kit || !canvas || !row) return;
 		const next: typeof spots = {};
@@ -481,6 +495,11 @@
 	}
 
 	function tapPad(id: string) {
+		if (failed) {
+			// No 3D: choose straight away.
+			if (a && machine && mState === 'READY' && a.options.some((o) => o.id === id)) machine.send({ type: 'CHOOSE', optionId: id });
+			return;
+		}
 		if (!a || !canSteer || !row || row.decided) return;
 		const i = a.options.findIndex((o) => o.id === id);
 		if (i < 0) return;
@@ -490,6 +509,8 @@
 
 	function onkeydown(e: KeyboardEvent) {
 		if (!set || roundDone || $paused) return;
+		// Arrow keys belong to text fields, menus and dialogs when they have focus.
+		if ((e.target as HTMLElement | null)?.closest?.('input, textarea, select, [role=radiogroup], [role=dialog]')) return;
 		if (e.key === 'ArrowLeft') steer(lane - 1);
 		else if (e.key === 'ArrowRight') steer(lane + 1);
 		else if (e.key === 'ArrowUp') steer(lane);
@@ -511,7 +532,7 @@
 					boostT = d.reduced ? 0 : 2.2;
 					phase = 'boost';
 				} else {
-					animatePad(effect.optionId, 'bump');
+					if (!d.reduced) animatePad(effect.optionId, 'bump');
 				}
 				scheduler.after(300, () => m.send({ type: 'ANIM_DONE' }));
 				break;
@@ -589,7 +610,7 @@
 	function clearWorld() {
 		if (row) for (const p of row.pads) disposeGroup(p.group);
 		for (const l of leaving) disposeGroup(l.group);
-		for (const s of sparkles) disposeGroup(s.mesh);
+		for (const s of sparkles) stage?.scene.remove(s.mesh);
 		if (finishLine) disposeGroup(finishLine.group);
 		row = null;
 		leaving = [];
@@ -627,6 +648,7 @@
 			phase = 'finish';
 			setIdlePrompt(null);
 			spawnFinish();
+			if (!finishLine) crossFinish();
 			return;
 		}
 		index += 1;
@@ -664,8 +686,13 @@
 		instruct('mode.race3d');
 	});
 
+	$effect(() => {
+		void ready;
+		stage?.setPaused($paused || !set || roundDone);
+	});
+
 	const offPause = paused.subscribe((p) => {
-		stage?.setPaused(p);
+		stage?.setPaused(p || !set || roundDone);
 		if (p) {
 			scheduler.pause();
 			stopNarration();
@@ -675,12 +702,17 @@
 	});
 
 	onDestroy(() => {
+		destroyed = true;
 		offPause();
 		teardown();
 		hideHand();
 		leaveScreen();
+		for (const s of sparkles) stage?.scene.remove(s.mesh);
+		sparkles = [];
 		stage?.dispose();
 		stage = null;
+		for (const g of sparkGeo ?? []) g.dispose();
+		for (const m of sparkMat.values()) m.dispose();
 	});
 
 	const sideLabel = (key: 'drive.left' | 'drive.right') => narrationText(key, lang, true);
@@ -733,10 +765,14 @@
 		{/if}
 		<div class="view" data-answer={a?.answerId}>
 			<canvas bind:this={canvas} aria-hidden="true"></canvas>
-			{#if failed}
-				<p class="fallback">🏎️</p>
+			{#if failed && set && a && !roundDone}
+				<div class="flat-options">
+					{#each a.options as o, i (o.id)}
+						<button class="flat" data-option-id={o.id} data-symbol={o.symbol} data-lane-index={i} aria-label={nameFor(set, o.symbol!)} onclick={() => tapPad(o.id)}>{glyphFor(set, o.symbol!)}</button>
+					{/each}
+				</div>
 			{/if}
-			{#if set && a && showPads && !roundDone && phase !== 'finish'}
+			{#if !failed && set && a && showPads && !roundDone && phase !== 'finish'}
 				{#each a.options as o, i (o.id)}
 					{@const p = spots[o.id]}
 					<button
@@ -769,6 +805,8 @@
 					>
 						<svg viewBox="0 0 48 48" width="60" height="60" aria-hidden="true"><path d="M30 10 L14 24 L30 38" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" /></svg>
 					</button>
+					<!-- Pads wait for the child; if the car is already in the right lane, Go drives on. -->
+					<span class="go-slot" data-testid="race-go" class:hidden={phase !== 'wait'}><GameButton action="play" onclick={() => steer(lane)} /></span>
 					<button
 						class="steer"
 						data-steer="right"
@@ -879,14 +917,6 @@
 		height: 100%;
 		display: block;
 	}
-	.fallback {
-		position: absolute;
-		inset: 0;
-		display: grid;
-		place-items: center;
-		font-size: 80px;
-		margin: 0;
-	}
 	.tap {
 		position: absolute;
 		transform: translate(-50%, -50%);
@@ -908,7 +938,10 @@
 	.controls {
 		display: flex;
 		align-items: center;
-		gap: 120px;
+		gap: 40px;
+	}
+	.go-slot.hidden {
+		visibility: hidden;
 	}
 	.steer {
 		display: grid;
@@ -957,4 +990,8 @@
 			gap: 40px;
 		}
 	}
+
+	/* WebGL unavailable: the same choices as plain big buttons, so the game still works. */
+	.flat-options { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 28px; flex-wrap: wrap; }
+	.flat { min-width: 120px; min-height: 120px; font-size: 64px; font-weight: 700; border: 4px solid var(--border-soft); border-radius: var(--radius-xl); background: var(--surface); color: var(--text-primary); cursor: pointer; }
 </style>

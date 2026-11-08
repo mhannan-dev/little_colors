@@ -118,7 +118,16 @@ test('race: steer onto the named pads, then everyone finishes together', async (
 		await expect(page.locator('.tap').first()).toBeVisible({ timeout: 15000 });
 		const id = await answer(page);
 		const target = Number(await page.locator(`[data-option-id="${id}"]`).getAttribute('data-lane-index'));
+		const steered = Number(await scene.getAttribute('data-lane')) !== target;
 		await steerTo(page, target, i % 2 === 1);
+		// Already in the right lane? The pads wait for the child: drive on with Go (keyboard: ArrowUp).
+		if (!steered) {
+			if (i % 2 === 1) await page.keyboard.press('ArrowUp');
+			else {
+				await expect(scene).toHaveAttribute('data-phase', 'wait', { timeout: 15000 });
+				await page.getByTestId('race-go').getByRole('button').click();
+			}
+		}
 		if (i === 0) {
 			await page.waitForTimeout(2500);
 			await page.screenshot({ path: 'test-results/play3d-race.png' });
@@ -146,6 +155,7 @@ test('race: a missed pad costs nothing, then the pads wait; tapping a pad steers
 	await expect(scene).toHaveAttribute('data-phase', 'wait', { timeout: 15000 });
 	await page.waitForTimeout(2000);
 	await expect(scene).toHaveAttribute('data-phase', 'wait');
+	await expect(page.getByTestId('race-go').getByRole('button')).toBeVisible();
 	await page.locator(`[data-option-id="${id}"]`).click();
 	await expect(scene).toHaveAttribute('data-progress', '1', { timeout: 15000 });
 });

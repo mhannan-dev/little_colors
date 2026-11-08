@@ -19,6 +19,7 @@ const FLOWER_NOTES = [523.25, 587.33, 659.25, 783.99, 880.0]; // C5, D5, E5, G5,
 
 /** Plays a sparkling flower pickup chime. */
 export function playFlowerPickupChime(flowerIndex: number, masterVolume = 1): void {
+	if (!(masterVolume > 0)) return;
 	try {
 		const audioCtx = getAudioContext();
 		if (!audioCtx) return;
@@ -54,6 +55,7 @@ export function playFlowerPickupChime(flowerIndex: number, masterVolume = 1): vo
 
 /** Plays a grand celebration harp flourish when all flowers are found. */
 export function playGardenCelebrationChime(masterVolume = 1): void {
+	if (!(masterVolume > 0)) return;
 	try {
 		const audioCtx = getAudioContext();
 		if (!audioCtx) return;

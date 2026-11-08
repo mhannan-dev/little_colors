@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
 async function open(page:Page, older=false) {
-	await page.goto('/thinking'); const sound=page.locator('header button[aria-pressed]').first();
+	await page.goto('/thinking'); const sound=page.locator('[data-testid="sound-toggle"]').first();
 	if(await sound.getAttribute('aria-pressed')==='true') await sound.click();
 	if(older) await page.getByTestId('age-8-10').click();
 	await page.getByTestId('start-treasure').click();

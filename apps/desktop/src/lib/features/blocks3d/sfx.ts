@@ -36,6 +36,7 @@ const COLOR_FREQUENCIES: Record<string, number> = {
 
 /** Plays a soft, bell-like / marimba note when a block is placed. */
 export function playPlaceSound(colorHex: string, masterVolume = 1): void {
+	if (!(masterVolume > 0)) return;
 	try {
 		const audioCtx = getAudioContext();
 		if (!audioCtx) return;
@@ -66,6 +67,7 @@ export function playPlaceSound(colorHex: string, masterVolume = 1): void {
 
 /** Plays a gentle bubble-pop sound when a block is removed. */
 export function playRemoveSound(masterVolume = 1): void {
+	if (!(masterVolume > 0)) return;
 	try {
 		const audioCtx = getAudioContext();
 		if (!audioCtx) return;
@@ -94,6 +96,7 @@ export function playRemoveSound(masterVolume = 1): void {
 
 /** Plays a cheerful celebration fanfare arpeggio when a mission is finished. */
 export function playCelebrationSound(masterVolume = 1): void {
+	if (!(masterVolume > 0)) return;
 	try {
 		const audioCtx = getAudioContext();
 		if (!audioCtx) return;

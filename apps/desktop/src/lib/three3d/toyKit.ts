@@ -94,6 +94,7 @@ export function createStage(canvas: HTMLCanvasElement, opts: { fov?: number; bac
 				}
 			});
 			renderer.dispose();
+			renderer.forceContextLoss();
 		}
 	};
 }

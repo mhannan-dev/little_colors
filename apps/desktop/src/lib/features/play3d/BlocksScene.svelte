@@ -75,10 +75,11 @@
 	function nameFor(s: SymbolSet, symbol: string): string {
 		const def = symbolDef(s, symbol);
 		if (s === '123') return lang === 'bn-BD' ? def.bn : def.en;
-		return lang === 'bn-BD' ? def.bn : s === 'abc' ? def.en : def.glyph;
+		return lang === 'bn-BD' ? def.bn : def.en;
 	}
 
 	// ── 3D ──────────────────────────────────────────────────────────────────
+	let destroyed = false;
 	async function startStage() {
 		try {
 			kit = await import('#lib/three3d/toyKit.ts');
@@ -87,9 +88,14 @@
 			failed = true;
 			return;
 		}
-		if (!canvas) return;
+		if (!canvas || destroyed) return;
 		const { THREE } = kit;
-		stage = kit.createStage(canvas, { fov: 40 });
+		try {
+			stage = kit.createStage(canvas, { fov: 40 });
+		} catch {
+			failed = true;
+			return;
+		}
 		stage.camera.position.set(0, 3.8, 8.6);
 		stage.camera.lookAt(0, 1.4, 0);
 
@@ -164,7 +170,7 @@
 				} else if (b.mode === 'glow') {
 					const g = (Math.sin(p * 5) + 1) * 0.18;
 					mat.emissive.setRGB(g, g * 0.9, g * 0.4);
-					m.scale.setScalar(1 + g * 0.25);
+					if (!d.reduced) m.scale.setScalar(1 + g * 0.25);
 					if (p > 2.4) b.mode = '';
 				} else if (b.mode === 'hop') {
 					const k = Math.min(1, p / 0.5);
@@ -174,9 +180,10 @@
 			}
 		}
 		// Keep the tap targets over the blocks (cheap: a handful of projections).
-		placeButtons();
+		if ((frameNo = (frameNo + 1) % 3) === 0) placeButtons();
 	}
 
+	let frameNo = 0;
 	function placeButtons() {
 		if (!stage || !kit || !canvas) return;
 		const next: typeof spots = {};
@@ -274,7 +281,7 @@
 		];
 		buildBlocks(activity);
 		instruct(activity.instructionKey);
-		if (firstTime('abc-blocks')) scheduler.after(1600, () => showHand([`[data-option-id="${activity.answerId}"]`]));
+		if (firstTime('abc-blocks')) scheduler.after(1600, () => machine?.state === 'READY' && showHand([`[data-option-id="${activity.answerId}"]`]));
 	}
 
 	function teardown() {
@@ -323,8 +330,13 @@
 		instruct('mode.abc3d');
 	});
 
+	$effect(() => {
+		void ready;
+		stage?.setPaused($paused || !set || roundDone);
+	});
+
 	const offPause = paused.subscribe((p) => {
-		stage?.setPaused(p);
+		stage?.setPaused(p || !set || roundDone);
 		if (p) {
 			scheduler.pause();
 			stopNarration();
@@ -334,6 +346,7 @@
 	});
 
 	onDestroy(() => {
+		destroyed = true;
 		offPause();
 		teardown();
 		hideHand();
@@ -372,10 +385,14 @@
 		{/if}
 		<div class="view" data-answer={a?.answerId}>
 			<canvas bind:this={canvas} aria-hidden="true"></canvas>
-			{#if failed}
-				<p class="fallback">🧸</p>
+			{#if failed && set && a && !roundDone}
+				<div class="flat-options">
+					{#each a.options as o, i (o.id)}
+						<button class="flat" data-option-id={o.id} data-symbol={o.symbol} data-lane-index={i} aria-label={nameFor(set, o.symbol!)} onclick={() => choose(o.id)}>{glyphFor(set, o.symbol!)}</button>
+					{/each}
+				</div>
 			{/if}
-			{#if set && a && !roundDone}
+			{#if !failed && set && a && !roundDone}
 				{#each a.options as o (o.id)}
 					{@const p = spots[o.id]}
 					<button
@@ -463,14 +480,6 @@
 		height: 100%;
 		display: block;
 	}
-	.fallback {
-		position: absolute;
-		inset: 0;
-		display: grid;
-		place-items: center;
-		font-size: 80px;
-		margin: 0;
-	}
 	.tap {
 		position: absolute;
 		transform: translate(-50%, -50%);
@@ -517,4 +526,8 @@
 			display: none;
 		}
 	}
+
+	/* WebGL unavailable: the same choices as plain big buttons, so the game still works. */
+	.flat-options { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 28px; flex-wrap: wrap; }
+	.flat { min-width: 120px; min-height: 120px; font-size: 64px; font-weight: 700; border: 4px solid var(--border-soft); border-radius: var(--radius-xl); background: var(--surface); color: var(--text-primary); cursor: pointer; }
 </style>

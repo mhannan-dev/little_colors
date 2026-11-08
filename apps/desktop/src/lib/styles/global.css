@@ -20,9 +20,17 @@ body {
 	font-size: 20px;
 	color: var(--text-primary);
 	background: var(--bg-primary);
+	-webkit-user-select: none;
+	user-select: none;
+	-webkit-tap-highlight-color: transparent;
+}
+
+/* Typing fields stay selectable. */
+input,
+textarea,
+[contenteditable]:not([contenteditable='false']) {
 	-webkit-user-select: text;
 	user-select: text;
-	-webkit-tap-highlight-color: transparent;
 }
 
 button {

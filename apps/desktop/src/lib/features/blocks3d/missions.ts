@@ -167,7 +167,7 @@ export function saveUnlockedBadge(id: string): string[] {
 		}
 		return existing;
 	} catch {
-		return [];
+		return [...new Set([...readUnlockedBadges(), id])];
 	}
 }
 

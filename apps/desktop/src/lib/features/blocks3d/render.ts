@@ -78,7 +78,7 @@ export function paint(ctx: CanvasRenderingContext2D, width: number, height: numb
 			if (!ghost && occupied.has(key({x:block.x+n.x,y:block.y+n.y,z:block.z+n.z}))) continue;
 			const mid: Vec = [block.x+0.5-h,block.y+0.5,block.z+0.5-h];
 			if (n.x*(eye[0]-mid[0])+n.y*(eye[1]-mid[1])+n.z*(eye[2]-mid[2]) <= 0) continue;
-			face(side.vertices.map(([x,y,z]): Vec=>[block.x+x-h,block.y+y,block.z+z-h]),block.color,side.shade,1,ghost ? undefined : {cell:block,normal:n,floor:false},ghost);
+			face(side.vertices.map(([x,y,z]): Vec=>[block.x+x-h,block.y+y,block.z+z-h]),block.color,side.shade,1,ghost ? {cell:{x:block.x,y:block.y-1,z:block.z},normal:{x:0,y:1,z:0},floor:false} : {cell:block,normal:n,floor:false},ghost);
 		}
 	}
 	// All ground faces precede the blocks, so distant tiles never cover a building.

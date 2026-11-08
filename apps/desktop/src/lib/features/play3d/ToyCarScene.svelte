@@ -95,10 +95,11 @@
 	function nameFor(s: SymbolSet, symbol: string): string {
 		const def = symbolDef(s, symbol);
 		if (s === '123') return lang === 'bn-BD' ? def.bn : def.en;
-		return lang === 'bn-BD' ? def.bn : s === 'abc' ? def.en : def.glyph;
+		return lang === 'bn-BD' ? def.bn : def.en;
 	}
 
 	// ── 3D ──────────────────────────────────────────────────────────────────
+	let destroyed = false;
 	async function startStage() {
 		try {
 			kit = await import('#lib/three3d/toyKit.ts');
@@ -107,9 +108,14 @@
 			failed = true;
 			return;
 		}
-		if (!canvas) return;
+		if (!canvas || destroyed) return;
 		const { THREE } = kit;
-		stage = kit.createStage(canvas, { fov: 50, background: '#DDF0FB' });
+		try {
+			stage = kit.createStage(canvas, { fov: 50, background: '#DDF0FB' });
+		} catch {
+			failed = true;
+			return;
+		}
 		stage.scene.fog = new THREE.Fog('#DDF0FB', 30, 60);
 
 		const grass = new THREE.Mesh(new THREE.PlaneGeometry(80, 140), new THREE.MeshStandardMaterial({ color: '#BFE3A5', roughness: 1 }));
@@ -173,7 +179,10 @@
 	function buildSigns(activity: ChoiceActivity) {
 		if (!stage || !kit) return;
 		const { THREE } = kit;
-		for (const s of signs) leaving.push({ group: s.group, z: s.group.position.z });
+		for (const s of signs) {
+			if (d.reduced) disposeGroup(s.group);
+			else leaving.push({ group: s.group, z: s.group.position.z });
+		}
 		signs = [];
 		const set = (activity.data as Play3DData).set;
 		signs = activity.options.map((o, i) => {
@@ -257,7 +266,7 @@
 			s.t += dt;
 			if (s.mode === 'win') {
 				const k = Math.min(1, s.t / 1.2);
-				s.board.position.y = 3.4 + Math.sin(k * Math.PI) * 1.2;
+				s.board.position.y = 3.4 + (d.reduced ? 0 : Math.sin(k * Math.PI) * 1.2);
 				s.board.rotation.y = d.reduced ? 0 : k * Math.PI * 2;
 				s.board.scale.setScalar(1 + 0.2 * Math.sin(k * Math.PI));
 				if (k >= 1) s.mode = '';
@@ -279,9 +288,10 @@
 		cam.position.y = 4.4;
 		cam.position.z = 8.2;
 		cam.lookAt(carX * 0.3, 1.6, -9);
-		placeButtons();
+		if ((frameNo = (frameNo + 1) % 3) === 0) placeButtons();
 	}
 
+	let frameNo = 0;
 	function placeButtons() {
 		if (!stage || !kit || !canvas) return;
 		const next: typeof spots = {};
@@ -331,6 +341,12 @@
 	/** Drive forward into the sign in the current lane. */
 	function go() {
 		if (!machine || mState !== 'READY' || !a) return;
+		if (failed) {
+			// No 3D: choose straight away.
+			const option = a.options[lane];
+			if (option) machine.send({ type: 'CHOOSE', optionId: option.id });
+			return;
+		}
 		if (phase === 'approach') {
 			pendingGo = true;
 			return;
@@ -341,7 +357,7 @@
 	}
 
 	function tapSign(id: string) {
-		if (!a || !canSteer) return;
+		if (!a || (!canSteer && !failed)) return;
 		const i = a.options.findIndex((o) => o.id === id);
 		if (i < 0) return;
 		lane = i;
@@ -350,6 +366,8 @@
 
 	function onkeydown(e: KeyboardEvent) {
 		if (!set || roundDone || $paused) return;
+		// Arrow keys belong to text fields, menus and dialogs when they have focus.
+		if ((e.target as HTMLElement | null)?.closest?.('input, textarea, select, [role=radiogroup], [role=dialog]')) return;
 		if (e.key === 'ArrowLeft') steer(lane - 1);
 		else if (e.key === 'ArrowRight') steer(lane + 1);
 		else if (e.key === 'ArrowUp') go();
@@ -432,7 +450,7 @@
 		buildSigns(activity);
 		instruct(activity.instructionKey);
 		// First visit: the ghost hand taps the right sign once to show how to play (PR-25).
-		if (firstTime('toy-car')) scheduler.after(d.reduced ? 1200 : 5000, () => showHand([`[data-option-id="${activity.answerId}"]`]));
+		if (firstTime('toy-car')) scheduler.after(d.reduced ? 1200 : 5000, () => machine?.state === 'READY' && showHand([`[data-option-id="${activity.answerId}"]`]));
 	}
 
 	function teardown() {
@@ -488,8 +506,13 @@
 		instruct('mode.car3d');
 	});
 
+	$effect(() => {
+		void ready;
+		stage?.setPaused($paused || !set || roundDone);
+	});
+
 	const offPause = paused.subscribe((p) => {
-		stage?.setPaused(p);
+		stage?.setPaused(p || !set || roundDone);
 		if (p) {
 			scheduler.pause();
 			stopNarration();
@@ -499,6 +522,7 @@
 	});
 
 	onDestroy(() => {
+		destroyed = true;
 		offPause();
 		teardown();
 		hideHand();
@@ -539,10 +563,14 @@
 		{/if}
 		<div class="view" data-answer={a?.answerId}>
 			<canvas bind:this={canvas} aria-hidden="true"></canvas>
-			{#if failed}
-				<p class="fallback">🚗</p>
+			{#if failed && set && a && !roundDone}
+				<div class="flat-options">
+					{#each a.options as o, i (o.id)}
+						<button class="flat" data-option-id={o.id} data-symbol={o.symbol} data-lane-index={i} aria-label={nameFor(set, o.symbol!)} onclick={() => tapSign(o.id)}>{glyphFor(set, o.symbol!)}</button>
+					{/each}
+				</div>
 			{/if}
-			{#if set && a && !roundDone}
+			{#if !failed && set && a && !roundDone}
 				{#each a.options as o, i (o.id)}
 					{@const p = spots[o.id]}
 					<button
@@ -651,14 +679,6 @@
 		height: 100%;
 		display: block;
 	}
-	.fallback {
-		position: absolute;
-		inset: 0;
-		display: grid;
-		place-items: center;
-		font-size: 80px;
-		margin: 0;
-	}
 	.tap {
 		position: absolute;
 		transform: translate(-50%, -50%);
@@ -722,4 +742,8 @@
 		flex-wrap: wrap;
 		justify-content: center;
 	}
+
+	/* WebGL unavailable: the same choices as plain big buttons, so the game still works. */
+	.flat-options { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 28px; flex-wrap: wrap; }
+	.flat { min-width: 120px; min-height: 120px; font-size: 64px; font-weight: 700; border: 4px solid var(--border-soft); border-radius: var(--radius-xl); background: var(--surface); color: var(--text-primary); cursor: pointer; }
 </style>

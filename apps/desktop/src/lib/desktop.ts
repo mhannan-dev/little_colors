@@ -16,9 +16,12 @@ export function installDesktopBehavior(): () => void {
 	const onKey = (e: KeyboardEvent) => {
 		if (e.key === 'F11') {
 			e.preventDefault();
-			void toggleFullscreen();
+			if (!e.repeat) void toggleFullscreen();
 		} else if (e.key === 'Escape') {
-			void toggleFullscreen(false);
+			// Closing a dialog or clearing a search box must not also drop fullscreen.
+			const inField = e.target instanceof Element && e.target.closest('input, textarea, select, [contenteditable]');
+			const dialogOpen = document.querySelector('[aria-modal="true"]');
+			if (!e.defaultPrevented && !inField && !dialogOpen) void toggleFullscreen(false);
 		} else if (!import.meta.env.DEV) {
 			// Block reload / zoom / devtools shortcuts in release builds.
 			const k = e.key.toLowerCase();

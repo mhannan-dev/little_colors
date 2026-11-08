@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-async function open(page:Page,older=false) { await page.goto('/thinking'); const sound=page.locator('header button[aria-pressed]').first(); if(await sound.getAttribute('aria-pressed')==='true') await sound.click(); if(older) await page.getByTestId('age-8-10').click(); await page.getByTestId('start-shop').click(); }
+async function open(page:Page,older=false) { await page.goto('/thinking'); const sound=page.locator('[data-testid="sound-toggle"]').first(); if(await sound.getAttribute('aria-pressed')==='true') await sound.click(); if(older) await page.getByTestId('age-8-10').click(); await page.getByTestId('start-shop').click(); }
 async function begin(page:Page,kind:string) { await expect(page.getByTestId('shop-intro')).toHaveAttribute('data-stage',kind); await page.getByTestId('shop-begin').click(); }
 async function order(page:Page) { return page.locator('[data-order-item]').evaluateAll(es=>es.map(e=>({item:e.getAttribute('data-order-item')!,quantity:Number(e.getAttribute('data-quantity'))}))); }
 async function fill(page:Page,entries:{item:string;quantity:number}[]) { for(const e of entries) for(let i=0;i<e.quantity;i++) await page.locator(`[data-shop-item="${e.item}"]`).click(); }

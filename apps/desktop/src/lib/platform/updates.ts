@@ -18,6 +18,27 @@ export interface AvailableUpdate {
 }
 
 export const availableUpdate = writable<AvailableUpdate | null>(null);
+/** Lives here, not in the notice, so going to a game and back cannot offer a second install. */
+export const updatePhase = writable<'offer' | 'downloading' | 'failed'>('offer');
+export const updateDismissed = writable(false);
+let installing = false;
+
+/** Runs the install once; extra calls while it runs are ignored. */
+export async function installUpdate(onProgress: (fraction: number) => void): Promise<void> {
+	let update: AvailableUpdate | null = null;
+	const off = availableUpdate.subscribe((u) => (update = u));
+	off();
+	if (!update || installing) return;
+	installing = true;
+	updatePhase.set('downloading');
+	try {
+		await (update as AvailableUpdate).install(onProgress);
+	} catch {
+		updatePhase.set('failed');
+	} finally {
+		installing = false;
+	}
+}
 
 export const isDesktopApp = () => typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
 
@@ -41,7 +62,8 @@ let started = false;
 
 /** Call once when the app starts. Never throws, never shows anything unless an update exists. */
 export async function checkForUpdateQuietly(now = Date.now()): Promise<void> {
-	if (started || !isDesktopApp()) return;
+	// `tauri dev` is a desktop app too, but must never look for public releases.
+	if (started || !isDesktopApp() || import.meta.env.DEV) return;
 	started = true;
 	if (!dueForCheck(readLast(), now, navigator.onLine)) return;
 	try {

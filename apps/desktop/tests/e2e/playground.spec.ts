@@ -4,7 +4,7 @@ const cell = (page: Page, index: number) => page.locator(`[data-playground-cell=
 const stamp = (page: Page, id: string) => page.locator(`[data-stamp="${id}"]`);
 async function open(page: Page, older = false) {
 	await page.goto('/thinking');
-	const sound = page.locator('header button[aria-pressed]').first();
+	const sound = page.locator('[data-testid="sound-toggle"]').first();
 	if (await sound.getAttribute('aria-pressed') === 'true') await sound.click();
 	if (older) await page.getByTestId('age-8-10').click();
 	await page.getByTestId('open-playground').click(); await expect(page.getByTestId('creative-playground')).toBeVisible();

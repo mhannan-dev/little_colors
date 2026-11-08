@@ -154,13 +154,15 @@
 
 <style>
 	.thinking-link { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 14px; padding: 16px 28px; min-height: 76px; border: 3px solid var(--border-soft); border-radius: var(--radius-lg); background: var(--bg-secondary); cursor: pointer; font-size: 26px; font-weight: 700; }
+	/* Many cards no longer fit small windows: keep this entry on screen instead of below the fold. */
+	.thinking-link { position: sticky; bottom: 12px; z-index: 2; box-shadow: 0 6px 18px #0002; }
 	.thinking-link small { font-size: 20px; font-weight: 400; }
 	section {
 		flex: 1;
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		justify-content: center;
+		justify-content: safe center;
 		gap: 32px;
 		padding: 0 24px 48px;
 	}

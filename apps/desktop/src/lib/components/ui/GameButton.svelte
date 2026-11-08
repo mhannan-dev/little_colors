@@ -49,6 +49,8 @@
 		if (hoverTimer) clearTimeout(hoverTimer);
 		hoverTimer = null;
 	};
+	// A button that disappears (next screen) must not speak later.
+	$effect(() => () => cancelHover());
 	function onpointerenter(e: PointerEvent) {
 		if (!spec || e.pointerType !== 'mouse') return;
 		cancelHover();

@@ -64,6 +64,7 @@ export function say(key: string, opts: { interrupt?: boolean } = {}): void {
 
 /** Speak a button's name without replacing the on-screen instruction (PR-26). */
 export function speakLabel(key: string): void {
+	if (typeof document !== 'undefined' && (document.hidden || !document.hasFocus())) return;
 	void getManager()?.narrate(key, { mode: 'interrupt', caption: false });
 }
 
@@ -159,6 +160,7 @@ export function stopNarration(): void {
 export function leaveScreen(): void {
 	setIdlePrompt(null);
 	getManager()?.stopAll();
+	caption.set('');
 }
 
 export function clearCaption(): void {

@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import TopBar from '#lib/components/ui/TopBar.svelte';
 	import { settings } from '#lib/stores/settings.ts';
+	import { formatNumeral } from '@little-colors/core';
 	import { paused } from '#lib/stores/pause.ts';
 	import { instruct, leaveScreen, say, setIdlePrompt } from '#lib/audio/narrator.ts';
 	import { playFlowerPickupChime, playGardenCelebrationChime } from './gardenSfx.ts';
@@ -36,6 +37,7 @@
 	let redraw = () => {};
 	const bn = $derived($settings.language === 'bn-BD');
 	const done = $derived(collected.length === flowers.length);
+	const num = (n: number) => formatNumeral(n, $settings.numeralStyle);
 
 	function clearInput() { keys.clear(); pointers.clear(); }
 	function restart() {
@@ -286,7 +288,8 @@
 				if (p.life <= 0) particles.splice(i, 1);
 			}
 
-			render(now);
+			// Paused, taking a break, or finished: only redraw while celebration petals are still falling.
+			if (!$paused && (particles.length > 0 || !(manualPause || done))) render(now);
 			frame = requestAnimationFrame(tick);
 		}
 
@@ -302,7 +305,7 @@
 <section class="garden">
 	<div class="heading">
 		<div><p class="eyebrow">{bn ? 'ছোট্ট এক অভিযান' : 'A LITTLE ADVENTURE'}</p><h1>{bn ? 'থ্রিডি ফুলের বাগান' : '3D Flower Garden'}</h1></div>
-		<div class="bouquet" aria-label={bn ? `${collected.length}টি ফুল পাওয়া গেছে` : `${collected.length} of 5 flowers collected`}>
+		<div class="bouquet" aria-label={bn ? `${num(collected.length)}টি ফুল পাওয়া গেছে` : `${num(collected.length)} of ${num(5)} flowers collected`}>
 			{#each flowers as f, i}<span class:found={collected.includes(i)} style:color={f.color} aria-hidden="true">✿</span>{/each}
 		</div>
 	</div>
@@ -341,7 +344,7 @@
 			<button aria-label={bn ? 'আবার শুরু' : 'Start over'} onclick={restart}>↻</button>
 		</div>
 	</div>
-	<p class="status" aria-live="polite">{done ? (bn ? 'পাঁচটি ফুল পেয়েছি! কী সুন্দর!' : 'All five flowers found. Beautiful!') : bn ? `${collected.length.toLocaleString('bn-BD')} / ৫টি ফুল পাওয়া গেছে` : `${collected.length} / 5 flowers found`}</p>
+	<p class="status" aria-live="polite">{done ? (bn ? 'পাঁচটি ফুল পেয়েছি! কী সুন্দর!' : 'All five flowers found. Beautiful!') : bn ? `${num(collected.length)} / ${num(5)}টি ফুল পাওয়া গেছে` : `${num(collected.length)} / ${num(5)} flowers found`}</p>
 </section>
 
 <style>

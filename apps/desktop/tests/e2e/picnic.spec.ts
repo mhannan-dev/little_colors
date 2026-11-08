@@ -2,7 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 
 async function openPicnic(page: Page, age = '5-7') {
 	await page.goto('/thinking');
-	const toggle = page.locator('header button[aria-pressed]');
+	const toggle = page.locator('[data-testid="sound-toggle"]');
 	if (await toggle.getAttribute('aria-pressed') === 'true') await toggle.click();
 	await page.getByTestId(`age-${age}`).click();
 	await page.getByTestId('start-picnic').click();

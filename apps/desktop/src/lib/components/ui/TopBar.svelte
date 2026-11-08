@@ -26,6 +26,7 @@
 		{/if}
 		<button
 			class="icon"
+			data-testid="sound-toggle"
 			onclick={toggleSound}
 			aria-pressed={$settings.soundEnabled}
 			aria-label={t($settings.soundEnabled ? 'soundOn' : 'soundOff', $settings.language)}

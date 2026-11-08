@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
 async function mute(page: Page) {
-	const toggle = page.locator('header button[aria-pressed]');
+	const toggle = page.locator('[data-testid="sound-toggle"]');
 	if (await toggle.getAttribute('aria-pressed') === 'true') await toggle.click();
 }
 

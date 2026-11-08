@@ -5,21 +5,23 @@
 	 * start a download. No internet means this never appears (OF-06).
 	 */
 	import { onDestroy, onMount } from 'svelte';
-	import { availableUpdate, checkForUpdateQuietly } from '#lib/platform/updates.ts';
+	import { availableUpdate, checkForUpdateQuietly, installUpdate, updateDismissed, updatePhase } from '#lib/platform/updates.ts';
 	import { settings } from '#lib/stores/settings.ts';
 
 	const HOLD_MS = 2000;
 	const bn = $derived($settings.language === 'bn-BD');
 
-	let dismissed = $state(false);
 	let holding = $state(0);
-	let phase = $state<'offer' | 'downloading' | 'failed'>('offer');
+	const phase = $derived($updatePhase);
 	let progress = $state(0);
 	let raf = 0;
 	let holdStart = 0;
 
 	function startHold(e: PointerEvent | KeyboardEvent) {
 		if (phase !== 'offer') return;
+		// One hold at a time: a second finger or Enter during a mouse hold must not start another timer.
+		if (e instanceof PointerEvent && !e.isPrimary) return;
+		if (holding > 0) return;
 		if (e instanceof KeyboardEvent && e.key !== 'Enter' && e.key !== ' ') return;
 		if (e instanceof KeyboardEvent && e.repeat) return;
 		e.preventDefault();
@@ -36,18 +38,14 @@
 	}
 	function stopHold() {
 		cancelAnimationFrame(raf);
+		raf = 0;
 		if (phase === 'offer') holding = 0;
 	}
 	async function install() {
-		const update = $availableUpdate;
-		if (!update) return;
-		phase = 'downloading';
+		cancelAnimationFrame(raf);
+		if (phase !== 'offer') return;
 		progress = 0;
-		try {
-			await update.install((f) => (progress = f));
-		} catch {
-			phase = 'failed';
-		}
+		await installUpdate((f) => (progress = f));
 	}
 
 	onMount(() => {
@@ -71,7 +69,7 @@
 	onDestroy(() => cancelAnimationFrame(raf));
 </script>
 
-{#if $availableUpdate && !dismissed}
+{#if $availableUpdate && !$updateDismissed}
 	<div class="update" role="region" aria-label={bn ? 'নতুন আপডেট' : 'New update'} data-testid="update-notice">
 		<span class="gift" aria-hidden="true">🎁</span>
 		<div class="text">
@@ -107,7 +105,7 @@
 			</button>
 		{/if}
 		{#if phase !== 'downloading'}
-			<button class="later" onclick={() => (dismissed = true)}>{bn ? 'পরে' : 'Later'}</button>
+			<button class="later" onclick={() => updateDismissed.set(true)}>{bn ? 'পরে' : 'Later'}</button>
 		{/if}
 	</div>
 {/if}
