@@ -12,6 +12,8 @@
 		{ id: 'numbers', key: 'mode.numbers', href: '/numbers' },
 		{ id: 'football', key: 'mode.football', href: '/football' },
 		{ id: 'car', key: 'mode.car', href: '/car' },
+		{ id: 'garden3d', key: 'mode.garden3d', href: '/garden-3d' },
+		{ id: 'blocks3d', key: 'mode.blocks3d', href: '/blocks-3d' },
 		{ id: 'flag', key: 'mode.flag', href: '/flag' },
 		{ id: 'bird', key: 'mode.bird', href: '/bird' },
 		{ id: 'holy-puzzle', key: 'mode.holy-puzzle', href: '/holy-puzzle' },
@@ -62,6 +64,19 @@
 						<rect x="52" y="40" width="42" height="22" rx="5" fill="var(--bg-primary)" stroke="var(--text-primary)" stroke-width="4" />
 						<circle cx="48" cy="90" r="12" fill="var(--text-primary)" />
 						<circle cx="112" cy="90" r="12" fill="var(--text-primary)" />
+					{:else if m.id === 'garden3d'}
+						<path d="M18 68 80 36 142 68 80 102Z" fill="var(--learn-green)" stroke="var(--text-primary)" stroke-width="3" />
+						<path d="M57 30 80 18 103 30 80 43Z" fill="var(--learn-yellow)" stroke="var(--text-primary)" stroke-width="3" />
+						<path d="M57 30v30l23 14V43Z" fill="var(--learn-orange)" stroke="var(--text-primary)" stroke-width="3" />
+						<path d="M80 43v31l23-14V30Z" fill="var(--learn-blue)" stroke="var(--text-primary)" stroke-width="3" />
+						<circle cx="122" cy="47" r="11" fill="var(--learn-red)" />
+						<path d="M122 58v18" stroke="var(--text-primary)" stroke-width="4" />
+					{:else if m.id === 'blocks3d'}
+						{#each [{x:30,y:65,c:'var(--learn-blue)'},{x:80,y:65,c:'var(--learn-green)'},{x:55,y:27,c:'var(--learn-orange)'}] as block}
+							<path d="M{block.x} {block.y} l25 -13 25 13 -25 13Z" fill={block.c} stroke="var(--text-primary)" stroke-width="2" />
+							<path d="M{block.x} {block.y} v25 l25 13 25 -13 v-25 l-25 13Z" fill={block.c} stroke="var(--text-primary)" stroke-width="2" />
+							<path d="M{block.x+25} {block.y+13} v25" stroke="var(--text-primary)" stroke-width="2" />
+						{/each}
 					{:else if m.id === 'flag'}
 						<rect x="78" y="28" width="6" height="64" fill="var(--text-primary)" rx="3" />
 						<path d="M84 30 L126 40 L84 52 Z" fill="var(--learn-red)" stroke="var(--text-primary)" stroke-width="3" stroke-linejoin="round" />
