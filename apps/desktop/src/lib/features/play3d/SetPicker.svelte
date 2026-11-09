@@ -7,7 +7,7 @@
 	import { speakLabel } from '#lib/audio/narrator.ts';
 	import { settings } from '#lib/stores/settings.ts';
 
-	let { onpick }: { onpick: (set: SymbolSet) => void } = $props();
+	let { onpick, onfree }: { onpick: (set: SymbolSet) => void; /** Shows a 4th card: drive freely, no questions. */ onfree?: () => void } = $props();
 
 	const num = (n: number) => formatNumeral(n, $settings.numeralStyle);
 	const cards = $derived<{ set: SymbolSet; glyphs: string; color: string }[]>([
@@ -49,6 +49,20 @@
 			<span class="name">{name(c.set)}</span>
 		</button>
 	{/each}
+	{#if onfree}
+		<button
+			class="card"
+			style:--card="var(--learn-orange)"
+			data-set="free"
+			aria-label={narrationText('race.free.card', $settings.language, true)}
+			onpointerenter={(e) => e.pointerType === 'mouse' && speakLabel('race.free.card')}
+			onfocus={(e) => (e.target as HTMLElement).matches(':focus-visible') && speakLabel('race.free.card')}
+			onclick={onfree}
+		>
+			<span class="cubes" aria-hidden="true"><span class="cube free">🏎️</span><span class="cube free">🎈</span></span>
+			<span class="name">{narrationText('race.free.card', $settings.language, true)}</span>
+		</button>
+	{/if}
 </div>
 
 <style>
@@ -94,6 +108,9 @@
 		font-weight: 700;
 		color: var(--text-primary);
 		transform: translateY(calc(var(--i) * -6px));
+	}
+	.cube.free {
+		font-size: 40px;
 	}
 	.name {
 		font-size: 26px;

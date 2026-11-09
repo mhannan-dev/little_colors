@@ -77,6 +77,14 @@
 	/** How far the friends have dropped back during a boost; they always catch up. */
 	let lag = 0;
 	let driving = false;
+	/** Free drive: no questions, balloons to pop, a lap arch now and then. Never ends, never lost. */
+	let free = $state(false);
+	let popped = $state(0);
+	/** Lane of the next balloon coming (for keyboard users and tests). */
+	let nextBalloonLane = $state(-1);
+	let balloons: { group: Kit.THREE.Group; z: number; lane: number; popped: boolean }[] = [];
+	const LAP_MS = 35000;
+	const BALLOON_MS = 3200;
 
 	interface Pad {
 		id: string;
@@ -280,6 +288,79 @@
 		placeButtons();
 	}
 
+	const BALLOON_COLORS = ['#E5484D', '#F2C94C', '#3478D4', '#35A66A', '#8A5AC2', '#F28C28'];
+	function spawnBalloon() {
+		if (!stage || !kit || !free) return;
+		const { THREE } = kit;
+		const laneIdx = Math.floor(Math.random() * LANES.length);
+		const color = BALLOON_COLORS[Math.floor(Math.random() * BALLOON_COLORS.length)]!;
+		const group = new THREE.Group();
+		const ball = new THREE.Mesh(new THREE.SphereGeometry(0.62, 20, 16), new THREE.MeshStandardMaterial({ color, roughness: 0.35 }));
+		ball.scale.set(1, 1.18, 1);
+		ball.position.y = 2.3;
+		const string = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 1.3, 6), new THREE.MeshStandardMaterial({ color: '#ffffff' }));
+		string.position.y = 1.15;
+		group.add(ball, string);
+		group.position.set(LANES[laneIdx]!, 0, START_Z);
+		stage.scene.add(group);
+		balloons.push({ group, z: START_Z, lane: laneIdx, popped: false });
+	}
+	function moveBalloons(moved: number, time: number) {
+		for (const b of balloons) {
+			b.z += moved;
+			b.group.position.z = b.z;
+			if (!d.reduced) b.group.position.y = Math.sin(time * 2 + b.lane) * 0.15;
+			// Drive into a balloon and it pops; missing one simply lets it float by.
+			if (!b.popped && b.z >= MEET_Z && b.z < 1 && b.lane === lane) {
+				b.popped = true;
+				b.group.visible = false;
+				popped += 1;
+				if (kit) burst(new kit.THREE.Vector3(LANES[b.lane]!, 2.3, b.z), 26, BALLOON_COLORS, { speed: 0.8, up: 0.8 });
+			}
+		}
+		const coming = balloons.filter((b) => !b.popped && b.z < MEET_Z).sort((p, q) => q.z - p.z)[0];
+		const nl = coming ? coming.lane : -1;
+		if (nl !== nextBalloonLane) nextBalloonLane = nl;
+		for (const b of balloons.filter((x) => x.z > 16)) disposeGroup(b.group);
+		balloons = balloons.filter((x) => x.z <= 16);
+		if (finishLine && finishLine.z > 16) {
+			disposeGroup(finishLine.group);
+			finishLine = null;
+		}
+	}
+	function startFree() {
+		teardown();
+		clearWorld();
+		free = true;
+		popped = 0;
+		set = 'abc';
+		round = null;
+		lane = 1;
+		roundDone = false;
+		ctx = null;
+		phase = 'idle';
+		say('race.free.start', { interrupt: true });
+		scheduler.after(d.reduced ? 600 : 2600, () => {
+			driving = true;
+			phase = 'drive';
+			const balloonLoop = () => {
+				spawnBalloon();
+				scheduler.after(BALLOON_MS, balloonLoop);
+			};
+			const lapLoop = () => {
+				if (!finishLine) spawnFinish();
+				scheduler.after(LAP_MS, lapLoop);
+			};
+			balloonLoop();
+			scheduler.after(LAP_MS, lapLoop);
+		});
+	}
+	/** VROOM: a short happy burst of speed (free drive). */
+	function vroom() {
+		if (!free || phase === 'idle') return;
+		boostT = d.reduced ? 0 : 1.6;
+	}
+
 	function spawnFinish() {
 		if (!stage || !kit) return;
 		const { THREE } = kit;
@@ -326,6 +407,7 @@
 		const moved = speed * dt;
 		offset += moved;
 
+		if (free) moveBalloons(moved, time);
 		if (row) {
 			row.z += moved;
 			for (const p of row.pads) p.group.position.z = row.z;
@@ -486,7 +568,7 @@
 		if ((e.target as HTMLElement | null)?.closest?.('input, textarea, select, [role=radiogroup], [role=dialog]')) return;
 		if (e.key === 'ArrowLeft') steer(lane - 1);
 		else if (e.key === 'ArrowRight') steer(lane + 1);
-		else if (e.key === 'ArrowUp') steer(lane);
+		else if (e.key === 'ArrowUp') (free ? vroom() : steer(lane));
 		else return;
 		e.preventDefault();
 	}
@@ -581,6 +663,8 @@
 	}
 
 	function clearWorld() {
+		for (const b of balloons) disposeGroup(b.group);
+		balloons = [];
 		if (row) for (const p of row.pads) disposeGroup(p.group);
 		for (const l of leaving) disposeGroup(l.group);
 		confetti?.clear();
@@ -595,6 +679,7 @@
 	}
 
 	function start(s: SymbolSet) {
+		free = false;
 		teardown();
 		clearWorld();
 		set = s;
@@ -628,6 +713,11 @@
 	}
 
 	function crossFinish() {
+		if (free) {
+			if (kit) burst(new kit.THREE.Vector3(0, 3.5, -1), 50, kit.TOY_COLORS);
+			say('race.free.lap', { interrupt: true });
+			return;
+		}
 		if (kit && car) {
 			burst(new kit.THREE.Vector3(0, 3.5, -1), 70, kit.TOY_COLORS);
 			burst(new kit.THREE.Vector3(-5, 3.5, -1), 30, kit.TOY_COLORS);
@@ -642,6 +732,7 @@
 	}
 
 	function backToPicker() {
+		free = false;
 		teardown();
 		clearWorld();
 		leaveScreen();
@@ -701,9 +792,12 @@
 	data-lane={lane}
 	data-phase={phase}
 	data-progress={done}
+	data-mode={free ? 'free' : 'learn'}
+	data-popped={popped}
+	data-next-balloon={nextBalloonLane}
 >
 	{#if !set}
-		<SetPicker onpick={start} />
+		<SetPicker onpick={start} onfree={startFree} />
 	{:else if roundDone}
 		<div class="done">
 			<div class="podium" aria-hidden="true">
@@ -776,7 +870,11 @@
 						<svg viewBox="0 0 48 48" width="60" height="60" aria-hidden="true"><path d="M30 10 L14 24 L30 38" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" /></svg>
 					</button>
 					<!-- Pads wait for the child; if the car is already in the right lane, Go drives on. -->
-					<span class="go-slot" data-testid="race-go" class:hidden={phase !== 'wait'}><GameButton action="play" onclick={() => steer(lane)} /></span>
+					{#if free}
+						<span class="go-slot" data-testid="race-vroom" class:hidden={phase === 'idle'}><GameButton action="play" label={narrationText('race.free.vroom', lang, true)} onclick={vroom} /></span>
+					{:else}
+						<span class="go-slot" data-testid="race-go" class:hidden={phase !== 'wait'}><GameButton action="play" onclick={() => steer(lane)} /></span>
+					{/if}
 					<button
 						class="steer"
 						data-steer="right"
@@ -787,6 +885,9 @@
 					>
 						<svg viewBox="0 0 48 48" width="60" height="60" aria-hidden="true"><path d="M18 10 L34 24 L18 38" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" /></svg>
 					</button>
+					{#if free}
+						<GameButton action="choose-game" size="small" onclick={backToPicker} />
+					{/if}
 					{#if ctx?.hintEnabled && mState === 'READY' && phase !== 'finish'}
 						<GameButton action="hint" size="small" onclick={() => machine?.send({ type: 'HINT' })} />
 					{/if}

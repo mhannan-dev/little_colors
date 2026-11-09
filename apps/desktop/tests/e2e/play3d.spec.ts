@@ -171,3 +171,24 @@ test('all three 3D games open from the game picker', async ({ page }) => {
 		await expect(page.locator('[data-set="abc"]')).toBeVisible();
 	}
 });
+
+test('race: just drive — no questions, VROOM, balloons pop, nothing to lose', async ({ page }) => {
+	test.setTimeout(120_000);
+	await page.goto('/race');
+	await page.locator('[data-set="free"]').click({ timeout: 60000 });
+	const scene = page.locator('section.scene');
+	await expect(scene).toHaveAttribute('data-mode', 'free');
+	await expect(scene).toHaveAttribute('data-phase', 'drive', { timeout: 15000 });
+	await expect(page.locator('.tap')).toHaveCount(0); // no questions
+	await page.getByTestId('race-vroom').getByRole('button').click();
+	// Steer toward the next balloon until one pops.
+	await expect(async () => {
+		const next = Number(await scene.getAttribute('data-next-balloon'));
+		if (next >= 0) await steerTo(page, next, true);
+		expect(Number(await scene.getAttribute('data-popped'))).toBeGreaterThan(0);
+	}).toPass({ timeout: 40000, intervals: [300] });
+	await page.screenshot({ path: 'test-results/play3d-free.png' });
+	// Leaving is always allowed; nothing is lost.
+	await page.getByRole('button', { name: 'অন্য খেলা' }).click();
+	await expect(page.locator('[data-set="free"]')).toBeVisible();
+});

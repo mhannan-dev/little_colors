@@ -115,6 +115,10 @@ export const PLAY3D_NARRATION: NarrationEntry[] = [
 	// Race with friends: nobody ever loses; everyone finishes together.
 	line('mode.race3d', 'বন্ধুদের সাথে রেস', 'Race with Friends'),
 	line('race.start', 'চলো, বন্ধুদের সাথে রেস করি! রেডি, স্টেডি, গো!', "Let's race with our friends! Ready, steady, go!"),
+	line('race.free.card', 'শুধু চালাই', 'Just drive'),
+	line('race.free.start', 'চলো, ইচ্ছেমতো গাড়ি চালাই! বেলুনের দিকে গেলে বেলুন ফাটে!', "Let's drive wherever we like! Drive into a balloon to pop it!"),
+	line('race.free.lap', 'এক পাক ঘুরে এলাম! চলো আরেক পাক!', "That's one lap! Let's go around again!"),
+	line('race.free.vroom', 'ভ্রুম!', 'Vroom!'),
 	line('race.finish', 'সবাই একসাথে পৌঁছে গেছি! দারুণ রেস!', 'We all made it together! What a race!'),
 	...(Object.keys(SYMBOLS) as SymbolSet[]).flatMap((set) =>
 		SYMBOLS[set].flatMap((s) => [

@@ -23,3 +23,5 @@ export * from './minigames/index.ts';
 export * from './flags/pictureFlags.ts';
 // 3D ABC & 123 blocks and toy car (Claude).
 export * from './play3d/symbols.ts';
+// Rumi's Kitchen (Claude).
+export * from './kitchen/kitchen.ts';
