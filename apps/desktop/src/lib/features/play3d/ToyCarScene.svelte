@@ -290,7 +290,7 @@
 			}
 		}
 
-		confetti?.update(dt);
+		confetti?.update(dt, moved * 0.5);
 
 		// Camera follows the car from behind, softly.
 		const cam = stage!.camera;

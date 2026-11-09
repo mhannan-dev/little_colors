@@ -306,12 +306,14 @@
 		balloons.push({ group, z: START_Z, lane: laneIdx, popped: false });
 	}
 	function moveBalloons(moved: number, time: number) {
+		const carLane = LANES.reduce((best, x, i) => (Math.abs(x - carX) < Math.abs(LANES[best]! - carX) ? i : best), 0);
 		for (const b of balloons) {
+			const before = b.z;
 			b.z += moved;
 			b.group.position.z = b.z;
 			if (!d.reduced) b.group.position.y = Math.sin(time * 2 + b.lane) * 0.15;
 			// Drive into a balloon and it pops; missing one simply lets it float by.
-			if (!b.popped && b.z >= MEET_Z && b.z < 1 && b.lane === lane) {
+			if (!b.popped && before < MEET_Z && b.z >= MEET_Z && b.lane === carLane) {
 				b.popped = true;
 				b.group.visible = false;
 				popped += 1;
@@ -339,7 +341,8 @@
 		roundDone = false;
 		ctx = null;
 		phase = 'idle';
-		say('race.free.start', { interrupt: true });
+		// The free-drive line becomes the idle/replay prompt (not the game-picker one).
+		instruct('race.free.start');
 		scheduler.after(d.reduced ? 600 : 2600, () => {
 			driving = true;
 			phase = 'drive';
@@ -359,6 +362,8 @@
 	function vroom() {
 		if (!free || phase === 'idle') return;
 		boostT = d.reduced ? 0 : 1.6;
+		// Always hear it, even with reduced motion (no speed burst then).
+		say('race.free.vroom', { interrupt: true });
 	}
 
 	function spawnFinish() {
@@ -797,7 +802,7 @@
 	data-next-balloon={nextBalloonLane}
 >
 	{#if !set}
-		<SetPicker onpick={start} onfree={startFree} />
+		<SetPicker onpick={start} onfree={failed ? undefined : startFree} />
 	{:else if roundDone}
 		<div class="done">
 			<div class="podium" aria-hidden="true">
@@ -871,7 +876,7 @@
 					</button>
 					<!-- Pads wait for the child; if the car is already in the right lane, Go drives on. -->
 					{#if free}
-						<span class="go-slot" data-testid="race-vroom" class:hidden={phase === 'idle'}><GameButton action="play" label={narrationText('race.free.vroom', lang, true)} onclick={vroom} /></span>
+						<span class="go-slot" data-testid="race-vroom" class:hidden={phase === 'idle'}><GameButton variant="go" label={`🏎️ ${narrationText('race.free.vroom', lang, true)}`} onclick={vroom} /></span>
 					{:else}
 						<span class="go-slot" data-testid="race-go" class:hidden={phase !== 'wait'}><GameButton action="play" onclick={() => steer(lane)} /></span>
 					{/if}

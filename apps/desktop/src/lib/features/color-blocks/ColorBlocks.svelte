@@ -56,18 +56,31 @@
 		drag = undefined;
 		finished = false;
 		feedback = 'blocks.instruction';
+		blockedTries = 0;
 		instruct(feedback);
+		say('blocks.choose');
 		void tick().then(() => title?.focus());
 	}
 
+	let blockedTries = 0;
+	const SHAPE: Record<string, [string, string]> = { '●': ['গোল', 'circle'], '◆': ['হীরা', 'diamond'], '▲': ['ত্রিভুজ', 'triangle'], '★': ['তারা', 'star'] };
+	const blockLabel = (id: BlockId) => {
+		const s = SHAPE[BLOCK_STYLES[id].symbol];
+		return s ? `${name(id)} ${copy(s[0], s[1])}` : name(id);
+	};
 	function move(id: BlockId, direction: BlockDirection, distance = 1) {
 		if ($paused || cleared || finished) return;
 		const next = slideColorBlock(level, board, id, direction, distance);
 		hint = undefined;
 		if (next === board) {
-			announce('blocks.blocked');
+			blockedTries += 1;
+			if (blockedTries >= 2) {
+				blockedTries = 0;
+				help();
+			} else announce('blocks.blocked');
 			return;
 		}
+		blockedTries = 0;
 		const removed = next[id] === undefined;
 		history = [...history, board];
 		board = next;
@@ -214,7 +227,7 @@
 					{#each ids as id (id)}
 						{#if board[id] !== undefined}
 							<button class="block" class:dragging={drag?.id === id} class:hinted={hint?.id === id}
-								aria-pressed={selected === id} aria-label={name(id)} data-block={id}
+								aria-pressed={selected === id} aria-label={blockLabel(id)} data-block={id}
 								data-color={BLOCK_STYLES[id].color} data-cell={board[id]}
 								style:left={(position(id) % size) * 100 / size + '%'}
 								style:top={Math.floor(position(id) / size) * 100 / size + '%'}

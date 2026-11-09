@@ -6,7 +6,7 @@ test('opens Color Blocks, drags to the gate, and follows a reversible hint', asy
 	await page.goto('/play');
 	await page.getByRole('button', { name: 'Color Blocks', exact: true }).click();
 	await expect(page).toHaveURL(/\/color-blocks$/);
-	const red = page.getByRole('button', { name: 'Red', exact: true });
+	const red = page.getByRole('button', { name: 'Red circle', exact: true });
 	const box = (await red.boundingBox())!;
 	const board = (await page.getByRole('group', { name: 'Color Blocks' }).boundingBox())!;
 	await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);

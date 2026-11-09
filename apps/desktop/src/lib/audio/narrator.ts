@@ -74,6 +74,8 @@ export function speakLabel(key: string): void {
 export const IDLE_PROMPT_MS = 8000;
 const IDLE_MAX_REPEATS = 2;
 let idleKey: string | null = null;
+/** Lines said right after the idle prompt, so a whole instruction is repeated, not half. */
+let idleFollow: string[] = [];
 let idleRepeats = 0;
 let idleTimer: ReturnType<typeof setTimeout> | null = null;
 let idleListening = false;
@@ -99,6 +101,7 @@ function armIdle() {
 		idleRepeats++;
 		document.body.dataset.idlePrompts = String(Number(document.body.dataset.idlePrompts ?? 0) + 1);
 		void getManager()?.narrate(idleKey, { mode: 'interrupt' });
+		for (const k of idleFollow) void getManager()?.narrate(k, { mode: 'queue' });
 		armIdle();
 	}, IDLE_PROMPT_MS);
 }
@@ -127,14 +130,16 @@ function watchPause() {
 		pausedAt = null;
 		if (away > 1500 && idleKey && !idleHeld) {
 			void getManager()?.narrate(idleKey, { mode: 'interrupt' });
+			for (const k of idleFollow) void getManager()?.narrate(k, { mode: 'queue' });
 			armIdle();
 		}
 	});
 }
 
 /** Set what to repeat when the child is idle (null = nothing). Resets the repeat count. */
-export function setIdlePrompt(key: string | null): void {
+export function setIdlePrompt(key: string | null, follow: string[] = []): void {
 	listenForActivity();
+	idleFollow = key === null ? [] : follow;
 	watchPause();
 	if (key === null) idleHeld = false; // leaving a screen / round never keeps a stale hold
 	idleKey = key;
@@ -146,6 +151,15 @@ export function setIdlePrompt(key: string | null): void {
 export function instruct(key: string): void {
 	void getManager()?.instruct(key);
 	setIdlePrompt(key);
+}
+
+/** Speak a multi-part instruction; idle repeats and pause-resume say all of it (PR-25). */
+export function instructAll(keys: string[]): void {
+	const [first, ...rest] = keys;
+	if (!first) return;
+	void getManager()?.instruct(first);
+	for (const k of rest) void getManager()?.narrate(k, { mode: 'queue' });
+	setIdlePrompt(first, rest);
 }
 
 export function replayInstruction(): void {

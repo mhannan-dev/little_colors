@@ -14,6 +14,10 @@
 	import DetectiveBadge from './DetectiveBadge.svelte';
 	import { playFlowerPickupChime as playClueChime } from '#lib/features/garden3d/gardenSfx.ts';
 	import { caption, instruct, leaveScreen, say, setIdlePrompt, stopNarration } from '#lib/audio/narrator.ts';
+	import { onMount as onArrive } from 'svelte';
+	onArrive(() => {
+		if (!mode) instruct('animals.intro');
+	});
 	import { hideHand, showHand } from '#lib/game/hand.ts';
 	import { paused } from '#lib/stores/pause.ts';
 	import { settings } from '#lib/stores/settings.ts';

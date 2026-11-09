@@ -26,7 +26,7 @@
 	import Mascot, { type MascotAnimation } from '#lib/components/mascot/Mascot.svelte';
 	import GameButton from '#lib/components/ui/GameButton.svelte';
 	import TopBar from '#lib/components/ui/TopBar.svelte';
-	import { instruct, leaveScreen, say, setIdlePrompt, speakLabel, stopNarration } from '#lib/audio/narrator.ts';
+	import { instructAll, leaveScreen, say, setIdlePrompt, speakLabel, stopNarration } from '#lib/audio/narrator.ts';
 	import { firstTime, hideHand, showHand } from '#lib/game/hand.ts';
 	import { createScheduler, durations } from '#lib/game/scheduler.ts';
 	import { paused } from '#lib/stores/pause.ts';
@@ -40,10 +40,14 @@
 	let round = $state(createKitchenRound($settings.difficulty, Date.now() >>> 0));
 	let index = $state(0);
 	let roundDone = $state(false);
-	let tray = $state<FoodId[]>([]);
+	/** Each plate item has its own id, so taking one off doesn't re-animate the rest. */
+	let tray = $state<{ id: number; food: FoodId }[]>([]);
+	let nextItemId = 1;
+	const trayFoods = $derived(tray.map((t) => t.food));
 	let making = $state<Partial<Record<StationId, FoodId>>>({});
 	let misses = $state(0);
-	let phase = $state<'order' | 'thanks'>('order');
+	/** 'checking': a short pause after a miss so a double-tap can't count as two tries. */
+	let phase = $state<'order' | 'checking' | 'thanks'>('order');
 	let served = $state<Order[]>([]);
 	let mascot = $state<MascotAnimation>('idle');
 	let bump = $state<StationId | null>(null);
@@ -54,17 +58,14 @@
 	const foodName = (f: FoodId) => (bn ? FOODS[f].bn : FOODS[f].en);
 	const busy = $derived(Object.values(making).some(Boolean));
 	const hint = $derived(misses >= 2);
-	const missing = $derived(order ? checkTray(order, tray).missing.map((m) => m.food) : []);
+	const missing = $derived(order ? checkTray(order, trayFoods).missing.map((m) => m.food) : []);
 	const label = (key: string) => narrationText(key, $settings.language, $settings.islamicExpressionsEnabled);
 
 	/** "বিড়াল খেতে চায়…" + "দুটো আপেল" + "আর" + "একটা দুধ". */
+	const orderKeys = (o: Order) => [friendWantsKey(o.friend), ...o.lines.flatMap((l, i) => (i > 0 ? ['kitchen.and', itemKey(l.food, l.count)] : [itemKey(l.food, l.count)]))];
 	function speakOrder(o: Order, interrupt = false) {
 		if (interrupt) stopNarration();
-		instruct(friendWantsKey(o.friend));
-		o.lines.forEach((l, i) => {
-			if (i > 0) say('kitchen.and');
-			say(itemKey(l.food, l.count));
-		});
+		instructAll(orderKeys(o));
 	}
 
 	function load(i: number) {
@@ -97,25 +98,25 @@
 		hideHand();
 		speakLabel(`kitchen.food.${food}`);
 		if (f.makeMs === 0) {
-			tray = [...tray, food];
+			tray = [...tray, { id: nextItemId++, food }];
 			return;
 		}
 		making = { ...making, [f.station]: food };
 		scheduler.after(d.reduced ? 400 : f.makeMs, () => {
 			making = { ...making, [f.station]: undefined };
-			tray = [...tray, food];
+			tray = [...tray, { id: nextItemId++, food }];
 		});
 	}
 
-	function takeOff(i: number) {
+	function takeOff(id: number) {
 		if (phase !== 'order') return;
-		tray = tray.filter((_, j) => j !== i);
+		tray = tray.filter((t) => t.id !== id);
 	}
 
 	function serve() {
 		if (phase !== 'order' || !order || busy || tray.length === 0) return;
 		hideHand();
-		const check = checkTray(order, tray);
+		const check = checkTray(order, trayFoods);
 		if (check.match) {
 			phase = 'thanks';
 			mascot = 'celebrate';
@@ -127,21 +128,19 @@
 		}
 		misses += 1;
 		mascot = 'encourage';
+		phase = 'checking';
+		scheduler.after(1200, () => phase === 'checking' && (phase = 'order'));
 		say(check.extra.length > 0 ? 'kitchen.too-many' : 'kitchen.not-yet', { interrupt: true });
 		o_repeat(order);
 		if (misses >= 2) {
-			const need = checkTray(order, tray).missing[0]?.food;
-			if (need) scheduler.after(1500, () => showHand([`[data-food="${need}"]`]));
+			const need = checkTray(order, trayFoods).missing[0]?.food;
+			if (need) scheduler.after(1500, () => phase === 'order' && showHand([`[data-food="${need}"]`]));
 		}
-		scheduler.after(1600, () => (mascot = 'idle'));
+		scheduler.after(1600, () => phase === 'order' && (mascot = 'idle'));
 	}
 	/** After a gentle "not yet", say the order again so a non-reader knows what to fix. */
 	function o_repeat(o: Order) {
-		say(friendWantsKey(o.friend));
-		o.lines.forEach((l, i) => {
-			if (i > 0) say('kitchen.and');
-			say(itemKey(l.food, l.count));
-		});
+		for (const k of orderKeys(o)) say(k);
 	}
 
 	function next() {
@@ -207,7 +206,7 @@
 		<div class="counter">
 			<div class="friend" class:happy={phase === 'thanks'}>
 				<span class="friend-face" role="img" aria-label={bn ? FRIENDS[order.friend].bn : FRIENDS[order.friend].en}>{FRIENDS[order.friend].icon}</span>
-				<div class="bubble" data-order={order.lines.map((l) => `${l.food}:${l.count}`).join(',')} aria-label={order.lines.map((l) => label(itemKey(l.food, l.count))).join(', ')}>
+				<div class="bubble" role="img" data-order={order.lines.map((l) => `${l.food}:${l.count}`).join(',')} aria-label={order.lines.map((l) => label(itemKey(l.food, l.count))).join(', ')}>
 					{#if phase === 'thanks'}
 						<span class="heart" aria-hidden="true">💛</span>
 					{:else}
@@ -222,9 +221,9 @@
 			</div>
 
 			<div class="plate-area">
-				<div class="plate" aria-label={bn ? 'প্লেট' : 'Plate'} data-tray={tray.join(',')}>
-					{#each tray as f, i (i + f)}
-						<button class="on-plate" aria-label={bn ? `${foodName(f)} সরাই` : `Take off ${foodName(f)}`} onclick={() => takeOff(i)}>{FOODS[f].icon}</button>
+				<div class="plate" role="group" aria-label={bn ? 'প্লেট' : 'Plate'} data-tray={trayFoods.join(',')}>
+					{#each tray as t (t.id)}
+						<button class="on-plate" aria-label={bn ? `${foodName(t.food)} সরাই` : `Take off ${foodName(t.food)}`} onclick={() => takeOff(t.id)}>{FOODS[t.food].icon}</button>
 					{/each}
 				</div>
 				<button class="serve" data-testid="serve" disabled={tray.length === 0 || busy || phase !== 'order'} aria-label={label('kitchen.serve')} onfocus={() => speakLabel('kitchen.serve')} onclick={serve}>
@@ -529,8 +528,20 @@
 	@media (prefers-reduced-motion: reduce) {
 		.friend.happy .friend-face, .guest, .on-plate, .food.glow, .station.bump { animation: none; }
 	}
+	/* Small windows (800x600): everything stays on screen. */
+	@media (max-height: 700px) {
+		.kitchen { gap: 8px; }
+		.friend-face { font-size: 76px; }
+		.want { font-size: 34px; }
+		.plate { width: 220px; height: 130px; }
+		.on-plate { font-size: 34px; }
+		.serve { min-height: 64px; font-size: 22px; }
+		.food { width: 64px; height: 64px; font-size: 38px; }
+		.station { padding: 8px 10px 12px; }
+	}
 	@media (max-width: 1000px) {
 		.counter { grid-template-columns: 1fr 1fr; }
+		.stations { gap: 10px; }
 		.rumi { display: none; }
 	}
 </style>

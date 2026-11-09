@@ -116,7 +116,7 @@ export function checkTray(order: Order, tray: readonly FoodId[]): TrayCheck {
 /** At most this many on one plate, so a tap-happy child can't bury the plate. */
 export const TRAY_MAX = 6;
 
-const BN_COUNT = ['', 'একটা', 'দুটো', 'তিনটে'] as const;
+const BN_COUNT = ['', 'একটা', 'দুইটা', 'তিনটা'] as const;
 const EN_COUNT = ['', 'one', 'two', 'three'] as const;
 const line = (key: string, bn: string, en: string): NarrationEntry => ({ key, bn, en, islamic: false, status: 'placeholder' });
 

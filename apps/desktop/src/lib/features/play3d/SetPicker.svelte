@@ -55,9 +55,17 @@
 			style:--card="var(--learn-orange)"
 			data-set="free"
 			aria-label={narrationText('race.free.card', $settings.language, true)}
-			onpointerenter={(e) => e.pointerType === 'mouse' && speakLabel('race.free.card')}
+			onpointerenter={(e) => {
+				if (e.pointerType !== 'mouse') return;
+				if (hoverTimer) clearTimeout(hoverTimer);
+				hoverTimer = setTimeout(() => speakLabel('race.free.card'), 600);
+			}}
+			onpointerleave={unhover}
 			onfocus={(e) => (e.target as HTMLElement).matches(':focus-visible') && speakLabel('race.free.card')}
-			onclick={onfree}
+			onclick={() => {
+				unhover();
+				onfree?.();
+			}}
 		>
 			<span class="cubes" aria-hidden="true"><span class="cube free">🏎️</span><span class="cube free">🎈</span></span>
 			<span class="name">{narrationText('race.free.card', $settings.language, true)}</span>
