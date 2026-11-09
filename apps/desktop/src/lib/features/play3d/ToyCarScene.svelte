@@ -67,7 +67,9 @@
 
 	let car: Kit.THREE.Group | null = null;
 	let carX = LANES[1]!;
-	let carHop = 0;
+	/** Seconds into the happy hop; -1 when not hopping. */
+	let carHop = -1;
+	let confetti: Kit.Confetti | null = null;
 	/** Distance travelled; scenery scrolls with it. */
 	let offset = 0;
 	let gateZ = START_Z;
@@ -111,7 +113,7 @@
 		if (!canvas || destroyed) return;
 		const { THREE } = kit;
 		try {
-			stage = kit.createStage(canvas, { fov: 50, background: '#DDF0FB' });
+			stage = kit.createStage(canvas, { fov: 50, background: '#DDF0FB', skyTop: '#8CC8F0' });
 		} catch {
 			failed = true;
 			return;
@@ -152,6 +154,7 @@
 		car = kit.toyCar('#E5484D');
 		stage.scene.add(car);
 
+		confetti = kit.createConfetti(stage.scene, d.reduced);
 		stage.onFrame(frame);
 		stage.setPaused($paused);
 		ready = true;
@@ -251,9 +254,14 @@
 		car.position.x = carX;
 		car.rotation.y = (carX - target) * 0.18;
 		car.position.y = d.reduced ? 0 : (speed > 0.5 ? Math.abs(Math.sin(time * 14)) * 0.05 : 0);
-		if (carHop > 0) {
-			carHop = Math.max(0, carHop - dt);
-			car.position.y += Math.sin((1 - carHop / 0.6) * Math.PI) * 0.8;
+		car.scale.setScalar(1);
+		if (carHop >= 0) {
+			// Squash & stretch hop (the car's origin is at its wheels, so it squashes onto the road).
+			carHop += dt;
+			const h = kit!.squashHop(carHop, 0.9);
+			car.position.y += h.y;
+			car.scale.set(h.sxz, h.sy, h.sxz);
+			if (h.done) carHop = -1;
 		}
 
 		for (const s of signs) {
@@ -281,6 +289,8 @@
 				if (s.t > 2.4) s.mode = '';
 			}
 		}
+
+		confetti?.update(dt);
 
 		// Camera follows the car from behind, softly.
 		const cam = stage!.camera;
@@ -319,6 +329,15 @@
 	}
 
 	const signFor = (id: string) => signs.find((s) => s.id === id);
+	/** Confetti pops out of the sign the child drove to. */
+	function popConfetti(id: string) {
+		const s = signFor(id);
+		if (!s || !kit) return;
+		const at = new kit.THREE.Vector3();
+		s.board.getWorldPosition(at);
+		at.y += 1.3; // from the top edge, so the number stays readable
+		confetti?.burst(at, 50, kit.TOY_COLORS, { up: 0.9, speed: 1.3, size: 1.8 });
+	}
 	function animateSign(id: string, mode: Sign['mode']) {
 		const s = signFor(id);
 		if (s) {
@@ -387,6 +406,7 @@
 				scheduler.after(d.reduced ? 320 : ANIM_MS + 20, () => {
 					phase = 'arrived';
 					animateSign(effect.optionId, effect.correct ? 'win' : 'wobble');
+					if (effect.correct) popConfetti(effect.optionId);
 					m.send({ type: 'ANIM_DONE' });
 				});
 				break;
@@ -410,7 +430,7 @@
 				scheduler.after(2400, () => (hintId = null));
 				break;
 			case 'celebrate':
-				carHop = d.reduced ? 0 : 0.6;
+				carHop = d.reduced ? -1 : 0;
 				scheduler.after(d.celebrate, () => m.send({ type: 'CELEBRATION_DONE' }));
 				break;
 			case 'cancelAll':
@@ -527,6 +547,8 @@
 		teardown();
 		hideHand();
 		leaveScreen();
+		confetti?.dispose();
+		confetti = null;
 		stage?.dispose();
 		stage = null;
 	});

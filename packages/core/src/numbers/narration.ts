@@ -11,6 +11,7 @@ import { RALLY_NARRATION } from './lessons/rallyNarration.ts';
 import { FRUIT_NARRATION } from './lessons/fruitNarration.ts';
 import { FLOWER_NARRATION } from './lessons/flowerNarration.ts';
 import { ANIMAL_NARRATION } from './lessons/animalNarration.ts';
+import { COLOR_BLOCKS_NARRATION } from './lessons/colorBlocksNarration.ts';
 
 export const NUMBERS_NARRATION: NarrationEntry[] = [
 	...THINKING_NARRATION,
@@ -24,6 +25,7 @@ export const NUMBERS_NARRATION: NarrationEntry[] = [
 	...FRUIT_NARRATION,
 	...FLOWER_NARRATION,
 	...ANIMAL_NARRATION,
+	...COLOR_BLOCKS_NARRATION,
 	{ key: 'numbers.instruction.count', bn: 'চলো গুনি! কয়টি জিনিস?', en: "Let's count! How many objects?" },
 	{ key: 'numbers.instruction.numeral-to-quantity', bn: 'সংখ্যার সঙ্গে জিনিসগুলো মেলাই!', en: 'Match the number to the objects!' },
 	{ key: 'numbers.instruction.add', bn: 'সব মিলিয়ে কয়টি?', en: 'How many altogether?' },

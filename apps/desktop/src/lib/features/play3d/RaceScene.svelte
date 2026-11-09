@@ -91,7 +91,7 @@
 	let leaving: { group: Kit.THREE.Group; z: number }[] = [];
 	let finishLine: { group: Kit.THREE.Group; z: number; crossed: boolean } | null = null;
 	let scenery: { obj: Kit.THREE.Object3D; base: number; span: number }[] = [];
-	let sparkles: { mesh: Kit.THREE.Mesh; life: number; vx: number; vy: number; vz: number }[] = [];
+	let confetti: Kit.Confetti | null = null;
 	let spots = $state<Record<string, { x: number; y: number; size: number }>>({});
 	let showPads = $state(false);
 
@@ -122,12 +122,13 @@
 		if (!canvas || destroyed) return;
 		const { THREE } = kit;
 		try {
-			stage = kit.createStage(canvas, { fov: 55, background: '#DDF0FB' });
+			stage = kit.createStage(canvas, { fov: 55, background: '#DDF0FB', skyTop: '#8CC8F0' });
 		} catch {
 			failed = true;
 			return;
 		}
 		stage.scene.fog = new THREE.Fog('#DDF0FB', 32, 62);
+		confetti = kit.createConfetti(stage.scene, d.reduced);
 
 		const grass = new THREE.Mesh(new THREE.PlaneGeometry(90, 140), new THREE.MeshStandardMaterial({ color: '#BFE3A5', roughness: 1 }));
 		grass.rotation.x = -Math.PI / 2;
@@ -301,26 +302,8 @@
 		finishLine = { group, z: START_Z, crossed: false };
 	}
 
-	let sparkGeo: Kit.THREE.BufferGeometry[] | null = null;
-	const sparkMat = new Map<string, Kit.THREE.MeshStandardMaterial>();
-	function burst(at: Kit.THREE.Vector3, count: number, colors: readonly string[]) {
-		if (!stage || !kit || d.reduced) return;
-		const { THREE } = kit;
-		sparkGeo ??= [new THREE.BoxGeometry(0.22, 0.22, 0.05), new THREE.OctahedronGeometry(0.16)];
-		for (let i = 0; i < count; i++) {
-			const color = colors[i % colors.length]!;
-			let mat = sparkMat.get(color);
-			if (!mat) {
-				mat = new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.3 });
-				sparkMat.set(color, mat);
-			}
-			const mesh = new THREE.Mesh(sparkGeo[i % 2]!, mat);
-			mesh.position.copy(at);
-			stage.scene.add(mesh);
-			const ang = Math.random() * Math.PI * 2;
-			const sp = 2 + Math.random() * 4;
-			sparkles.push({ mesh, life: 1.4 + Math.random() * 0.8, vx: Math.cos(ang) * sp, vy: 3 + Math.random() * 4, vz: Math.sin(ang) * sp });
-		}
+	function burst(at: Kit.THREE.Vector3, count: number, colors?: readonly string[], opts?: { speed?: number; up?: number }) {
+		confetti?.burst(at, count, colors, opts);
 	}
 
 	function frame(dt: number, time: number) {
@@ -427,19 +410,9 @@
 
 		// Boost sparkles trail behind the car; confetti falls.
 		if (boostT > 0 && !d.reduced && Math.random() < 0.6) {
-			burst(new kit!.THREE.Vector3(carX + (Math.random() - 0.5), 0.6, 1.5), 1, ['#F2C94C', '#ffffff', '#F28C28']);
+			burst(new kit!.THREE.Vector3(carX + (Math.random() - 0.5), 0.6, 1.5), 1, ['#F2C94C', '#ffffff', '#F28C28'], { speed: 0.6, up: 0.6 });
 		}
-		for (const s of sparkles) {
-			s.life -= dt;
-			s.vy -= 9 * dt;
-			s.mesh.position.x += s.vx * dt;
-			s.mesh.position.y = Math.max(0.05, s.mesh.position.y + s.vy * dt);
-			s.mesh.position.z += s.vz * dt + moved * 0.5;
-			s.mesh.rotation.x += dt * 6;
-			s.mesh.rotation.y += dt * 4;
-		}
-		for (const s of sparkles.filter((x) => x.life <= 0)) stage?.scene.remove(s.mesh);
-		sparkles = sparkles.filter((x) => x.life > 0);
+		confetti?.update(dt, moved * 0.5);
 
 		// Camera: behind the car; widens a touch during a boost.
 		const cam = stage!.camera;
@@ -610,11 +583,10 @@
 	function clearWorld() {
 		if (row) for (const p of row.pads) disposeGroup(p.group);
 		for (const l of leaving) disposeGroup(l.group);
-		for (const s of sparkles) stage?.scene.remove(s.mesh);
+		confetti?.clear();
 		if (finishLine) disposeGroup(finishLine.group);
 		row = null;
 		leaving = [];
-		sparkles = [];
 		finishLine = null;
 		spots = {};
 		showPads = false;
@@ -707,12 +679,10 @@
 		teardown();
 		hideHand();
 		leaveScreen();
-		for (const s of sparkles) stage?.scene.remove(s.mesh);
-		sparkles = [];
+		confetti?.dispose();
+		confetti = null;
 		stage?.dispose();
 		stage = null;
-		for (const g of sparkGeo ?? []) g.dispose();
-		for (const m of sparkMat.values()) m.dispose();
 	});
 
 	const sideLabel = (key: 'drive.left' | 'drive.right') => narrationText(key, lang, true);

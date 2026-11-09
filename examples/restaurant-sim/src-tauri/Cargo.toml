@@ -1,0 +1,12 @@
+[package]
+name = "counter-rush"
+version = "0.1.0"
+edition = "2021"
+
+[build-dependencies]
+tauri-build = "2"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+tauri = "2"
+tokio = { version = "1", features = ["macros", "sync", "time"] }

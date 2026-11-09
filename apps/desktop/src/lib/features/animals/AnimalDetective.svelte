@@ -5,10 +5,14 @@
 	 * spoken & repeated instructions and pictogram buttons so non-readers can play (PR-25/26).
 	 */
 	import { onDestroy, tick } from 'svelte';
+	import { MediaQuery } from 'svelte/reactivity';
 	import { asset } from '$app/paths';
 	import { DETECTIVE_ANIMALS, createRng, formatNumeral, narrationText, shuffle } from '@little-colors/core';
 	import TopBar from '#lib/components/ui/TopBar.svelte';
 	import GameButton from '#lib/components/ui/GameButton.svelte';
+	import Mascot from '#lib/components/mascot/Mascot.svelte';
+	import DetectiveBadge from './DetectiveBadge.svelte';
+	import { playFlowerPickupChime as playClueChime } from '#lib/features/garden3d/gardenSfx.ts';
 	import { caption, instruct, leaveScreen, say, setIdlePrompt, stopNarration } from '#lib/audio/narrator.ts';
 	import { hideHand, showHand } from '#lib/game/hand.ts';
 	import { paused } from '#lib/stores/pause.ts';
@@ -32,6 +36,12 @@
 	let marks = $state<number[]>([]);
 	let feedback = $state('');
 	let prompt = $state<HTMLHeadingElement>();
+	let notebook = $state<HTMLDivElement>();
+	let progressTrack = $state<HTMLDivElement>();
+	let flyingStar = $state<HTMLSpanElement>();
+	let flight: Animation | undefined;
+	const systemMotion = new MediaQuery('prefers-reduced-motion: reduce');
+	const reducedMotion = $derived($settings.reducedMotion || systemMotion.current);
 
 	const round = $derived(rounds[index]);
 	const solved = $derived(solvedCount > index);
@@ -39,7 +49,7 @@
 	const numeral = (value: number) => formatNumeral(value, $settings.numeralStyle);
 	const name = (animal: Animal) => ($settings.language === 'bn-BD' ? animal.bn : animal.en);
 	const questionKey = $derived(round ? `animals.${mode === 'name' ? 'find' : 'count'}.${round.target.id}` : 'mode.animals');
-	const replayKey = $derived(feedback || (mode && !round ? 'animals.done' : questionKey));
+	const replayKey = $derived(feedback || (!mode ? 'animals.intro' : round ? questionKey : 'animals.done'));
 	const isTarget = (photo: Photo) => !!round && photo.animal.id === round.target.id;
 
 	async function focusPrompt() {
@@ -72,6 +82,7 @@
 	}
 
 	function presentRound() {
+		flight?.cancel();
 		marks = [];
 		feedback = '';
 		attempts = 0;
@@ -86,16 +97,38 @@
 		void focusPrompt();
 	}
 
-	async function answer(correct: boolean) {
+	function celebrateClue(source: EventTarget | null) {
+		if ($settings.soundEnabled) playClueChime(index, $settings.volume * 0.25);
+		if (reducedMotion || !(source instanceof HTMLElement) || !notebook || !flyingStar) return;
+		const target = progressTrack?.children[index];
+		if (!target) return;
+		const stage = notebook.getBoundingClientRect();
+		const zoom = stage.width / notebook.offsetWidth;
+		const point = (element: Element): [number, number] => {
+			const box = element.getBoundingClientRect();
+			return [(box.left + box.width / 2 - stage.left) / zoom, (box.top + box.height / 2 - stage.top) / zoom];
+		};
+		const [x, y] = point(source);
+		const [endX, endY] = point(target);
+		flight?.cancel();
+		flight = flyingStar.animate([
+			{ transform: `translate(${x}px, ${y}px) translate(-50%, -50%) scale(.7)`, opacity: 1 },
+			{ transform: `translate(${(x + endX) / 2}px, ${(y + endY) / 2 - 42}px) translate(-50%, -50%) scale(1.15)`, opacity: 1 },
+			{ transform: `translate(${endX}px, ${endY}px) translate(-50%, -50%) scale(.55)`, opacity: 0 }
+		], { duration: 560, easing: 'ease-out' });
+	}
+
+	async function answer(correct: boolean, source: EventTarget | null) {
 		if ($paused || solved) return;
 		if (correct) {
+			celebrateClue(source);
 			solvedCount += 1;
 			feedback = 'animals.correct';
 			hideHand();
 			say(feedback, { interrupt: true });
 			setIdlePrompt('ui.tap-next');
 			await tick();
-			document.querySelector<HTMLElement>('[data-action="next"]')?.focus();
+			notebook?.querySelector<HTMLElement>('[data-action="next"]')?.focus();
 		} else {
 			attempts += 1;
 			feedback = 'animals.retry';
@@ -126,10 +159,14 @@
 	}
 
 	$effect(() => caption.set(text(replayKey)));
+	$effect(() => {
+		if (reducedMotion || $paused) flight?.cancel();
+	});
 	const offPause = paused.subscribe((value) => {
 		if (value) stopNarration();
 	});
 	onDestroy(() => {
+		flight?.cancel();
 		offPause();
 		hideHand();
 		leaveScreen();
@@ -139,8 +176,14 @@
 
 <TopBar onreplay={() => { if (!$paused) say(replayKey, { interrupt: true }); }} />
 
-<section class="detective" class:playing={!!mode} aria-labelledby="animal-title">
+<section class="detective" class:playing={!!mode} class:reduced={reducedMotion} aria-labelledby="animal-title">
+	<div class="notebook" bind:this={notebook}>
+	<span class="flying-star" bind:this={flyingStar} aria-hidden="true">★</span>
 	<h1 id="animal-title"><span aria-hidden="true">🔎</span> {text('mode.animals')}</h1>
+	{#if !mode}
+		<div class="welcome-art"><Mascot state={reducedMotion ? 'rest' : 'wave'} size={130} /></div>
+		<p class="intro">{text('animals.intro')}</p>
+	{/if}
 	<div class="modes" role="group" aria-label={text('mode.animals')}>
 		<button aria-pressed={mode === 'name'} disabled={$paused} onclick={() => start('name')}>
 			<span class="mode-icon" aria-hidden="true">🔎</span>{text('animals.name')}
@@ -151,10 +194,10 @@
 	</div>
 
 	{#if mode}
-		<!-- Progress dots, not a score (PR-07). -->
-		<div class="progress" aria-hidden="true">
+		<!-- Each marker represents a round, without a numeric rating (PR-07). -->
+		<div class="progress" bind:this={progressTrack} aria-hidden="true">
 			{#each rounds as r, i (i)}
-				<span class="pdot" class:filled={i < solvedCount}></span>
+				<span class="pdot" class:filled={i < solvedCount}>{i < solvedCount ? '★' : '·'}</span>
 			{/each}
 		</div>
 		{#if round}
@@ -168,7 +211,7 @@
 						aria-label={name(photo.animal)}
 						aria-pressed={mode === 'count' ? marks.includes(position) : undefined}
 						disabled={$paused || solved}
-						onclick={() => (mode === 'name' ? answer(isTarget(photo)) : mark(position))}
+						onclick={(event) => (mode === 'name' ? answer(isTarget(photo), event.currentTarget) : mark(position))}
 					>
 						<img src={photo.src} alt="" draggable="false" />
 						{#if marks.includes(position) || (solved && isTarget(photo))}
@@ -180,7 +223,7 @@
 			{#if mode === 'count'}
 				<div class="numbers">
 					{#each round.choices as choice (choice)}
-						<button class:match={solved && choice === round.quantity} disabled={$paused || solved} onclick={() => answer(choice === round.quantity)}>
+						<button class:match={solved && choice === round.quantity} disabled={$paused || solved} onclick={(event) => answer(choice === round.quantity, event.currentTarget)}>
 							<span class="num">{numeral(choice)}</span>
 							<span class="dots" aria-hidden="true">{#each Array.from({ length: choice }, (_, i) => i) as i (i)}<span class="dot-mark"></span>{/each}</span>
 						</button>
@@ -188,7 +231,7 @@
 				</div>
 			{/if}
 			<div class="feedback" role="status">
-				{#if solved}<span class="reward" aria-hidden="true">✨ 🔎 ✨</span>{/if}
+				{#if solved}<span class="reward" aria-hidden="true">✓</span>{/if}
 				{#if feedback}{text(feedback)}{/if}
 			</div>
 			<div class="actions">
@@ -199,59 +242,86 @@
 				{/if}
 			</div>
 		{:else}
-			<div class="badge reward" aria-hidden="true">🏅</div>
+			<div class="badge" aria-hidden="true">
+				<Mascot state={reducedMotion ? 'rest' : 'celebrate'} size={144} />
+				<DetectiveBadge {reducedMotion} />
+			</div>
 			<h2 tabindex="-1" bind:this={prompt}>{text('animals.done')}</h2>
 			<GameButton action="replay" label={text('animals.again')} onclick={() => { if (mode) start(mode); }} />
 		{/if}
 	{/if}
+	</div>
 </section>
 
 <style>
 	/* A size container, so the photo grid can grow with the space actually available. */
-	.detective { flex: 1; min-height: 0; overflow: auto; padding: 8px 16px 16px; text-align: center; container-type: size; }
+	.detective {
+		flex: 1;
+		min-height: 0;
+		overflow: auto;
+		padding: 8px 16px 20px;
+		text-align: center;
+		container-type: size;
+		background: radial-gradient(ellipse at top, #e1f0d8, #f3f6e9 70%);
+	}
+	.notebook {
+		position: relative;
+		box-sizing: border-box;
+		width: min(1160px, 100%);
+		margin: 0 auto;
+		padding: 14px 16px 16px;
+		border: 1px solid #c6d4b9;
+		border-radius: 24px;
+		background: #fffdf3;
+		box-shadow: 0 5px 0 #cfdbc4, 0 14px 28px #294a301a;
+	}
+	.welcome-art { display: grid; place-items: center; margin: 12px auto 4px; }
+	.intro { font-size: 22px; margin: 4px auto 16px; }
 	/* While playing, the title shrinks so the photos get the room. */
 	.detective.playing h1 { font-size: clamp(20px, 2.4vw, 28px); margin: 0 0 4px; }
 	.detective.playing .modes { margin: 4px 0; }
-	h1 { font-size: clamp(30px, 4vw, 48px); margin: 0 0 10px; }
+	h1 { font-size: clamp(30px, 4vw, 48px); margin: 0 0 10px; color: #254a35; }
 	h2 { font-size: clamp(20px, 3vw, 30px); margin: 8px 0; }
 	.modes, .numbers { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 8px 0; }
 	button { min-height: 56px; padding: 6px 16px; border: 3px solid var(--border-soft); border-radius: 14px; background: var(--surface); font-size: 20px; cursor: pointer; }
 	button:disabled { cursor: default; }
 	button[aria-pressed='true'] { border-color: var(--text-primary); background: var(--bg-secondary); }
 	.mode-icon { font-size: 28px; margin-right: 8px; vertical-align: middle; }
-	.progress { display: flex; justify-content: center; gap: 10px; margin: 8px 0; }
-	.pdot { width: 18px; height: 18px; border-radius: 50%; border: 3px solid var(--text-secondary); }
-	.pdot.filled { background: var(--text-secondary); }
+	.progress { display: flex; justify-content: center; gap: 7px; margin: 8px 0; }
+	.pdot { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: #e8efde; color: #4b6648; line-height: 1; }
+	.pdot.filled { color: #694318; background: #ffe5a0; }
+	.flying-star { position: absolute; z-index: 2; top: 0; left: 0; pointer-events: none; opacity: 0; color: #b67717; font-size: 42px; line-height: 1; }
 	/*
 	 * Grid width = whatever fits both ways: the container width, and the height left after
-	 * the title/buttons/feedback (~300 px), turned into width via the 4:3 tiles.
+	 * the notebook title, buttons, and feedback, turned into width via the 4:3 tiles.
 	 * Find: 1 row of 3 tiles  → width ≈ (free height) × 4/3 × 3 = × 4.
 	 * Count: 2 rows of 4 tiles → width ≈ (free height) / 2 × 4/3 × 4 ≈ × 2.67.
 	 */
-	.photos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 8px auto; width: max(300px, min(100cqw - 32px, 1080px, (100cqh - 300px) * 4)); }
-	.photos.counting { grid-template-columns: repeat(4, minmax(0, 1fr)); width: max(300px, min(100cqw - 32px, 1080px, (100cqh - 330px) * 2.67)); }
-	.photo { position: relative; overflow: hidden; padding: 0; aspect-ratio: 4 / 3; }
-	.photo img { display: block; width: 100%; height: 100%; object-fit: contain; background: var(--bg-secondary); }
-	.check { position: absolute; top: 3px; right: 3px; padding: 0 6px; border-radius: 50%; background: var(--surface); color: var(--text-primary); font-weight: 800; }
-	.match { outline: 3px solid var(--text-primary); outline-offset: 2px; }
+	.photos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 8px auto; width: min(100%, max(300px, min(1080px, (100cqh - 330px) * 4))); }
+	.photos.counting { grid-template-columns: repeat(4, minmax(0, 1fr)); width: min(100%, max(300px, min(1080px, (100cqh - 405px) * 2.67))); }
+	.photo { position: relative; overflow: hidden; padding: 0; aspect-ratio: 4 / 3; border-color: #c6d4b9; box-shadow: 0 3px 0 #dfe6d5; }
+	.photo img { display: block; width: 100%; height: 100%; object-fit: contain; background: #edf2e6; }
+	.check { position: absolute; top: 5px; right: 5px; min-width: 28px; padding: 0 5px; border-radius: 14px; background: #24513b; color: white; font-weight: 800; }
+	.match { outline: 3px solid #24513b; outline-offset: 2px; }
 	.hinted { outline: 4px dashed var(--learn-green); outline-offset: 2px; animation: pulse 1.2s ease-in-out 3; }
 	.numbers button { min-width: 88px; display: inline-flex; flex-direction: column; align-items: center; gap: 4px; }
 	.num { font-size: 28px; font-weight: 700; line-height: 1; }
 	.dots { display: flex; flex-wrap: wrap; justify-content: center; gap: 3px; max-width: 64px; }
 	.dot-mark { width: 9px; height: 9px; border-radius: 50%; background: var(--text-secondary); }
-	.feedback { min-height: 1.5em; margin: 8px 0; font-size: 20px; }
+	.feedback { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 32px; margin: 8px 0; font-size: 20px; }
 	.actions { display: flex; justify-content: center; min-height: 72px; }
-	.reward { display: block; font-size: 36px; animation: celebrate 550ms ease-out both; }
-	.badge { margin-top: 16px; font-size: 84px; }
+	.reward { display: grid; place-items: center; width: 28px; height: 28px; flex: none; border-radius: 50%; background: #24513b; color: white; font-weight: 800; animation: celebrate 550ms ease-out both; }
+	.badge { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
 	@keyframes celebrate {
 		0% { opacity: 0; transform: scale(.5) rotate(-12deg); }
 		65% { opacity: 1; transform: scale(1.18) rotate(8deg); }
 		100% { transform: scale(1); }
 	}
 	@keyframes pulse { 50% { outline-offset: 6px; } }
+	.reduced .reward, .reduced .hinted { animation: none; }
+	.reduced :global(.rumi), .reduced :global(.rumi *) { animation: none; }
 	@media (prefers-reduced-motion: reduce) { .reward, .hinted { animation: none; } }
 	@media (max-width: 440px) {
-		.photos { grid-template-columns: repeat(2, minmax(0, 1fr)); width: calc(100cqw - 24px); }
-		.photos.counting { grid-template-columns: repeat(2, minmax(0, 1fr)); width: calc(100cqw - 24px); }
+		.photos, .photos.counting { grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; }
 	}
 </style>

@@ -45,6 +45,8 @@ test('animal detective: progress per solved round (no score) and a completion ba
 	expect([...seen].sort()).toEqual([1, 2, 3, 4, 5, 6]);
 	await expect(prompt).toContainText('গোয়েন্দার ব্যাজ পেয়েছ');
 	await expect(game.locator('.badge')).toBeVisible();
+	await expect(game.locator('.badge .medal svg')).toBeVisible();
+	await expect(game.locator('.badge canvas')).toHaveCount(0);
 	await game.getByRole('button', { name: /আবার খেলি/ }).click();
 	await expect(game.locator('.pdot')).toHaveCount(6);
 	await expect(game.locator('.pdot.filled')).toHaveCount(0);

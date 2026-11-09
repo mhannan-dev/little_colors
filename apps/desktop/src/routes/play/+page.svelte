@@ -14,6 +14,7 @@
 		{ id: 'car', key: 'mode.car', href: '/car' },
 		{ id: 'garden3d', key: 'mode.garden3d', href: '/garden-3d' },
 		{ id: 'blocks3d', key: 'mode.blocks3d', href: '/blocks-3d' },
+		{ id: 'color-blocks', key: 'mode.color-blocks', href: '/color-blocks' },
 		{ id: 'abc3d', key: 'mode.abc3d', href: '/abc-123' },
 		{ id: 'car3d', key: 'mode.car3d', href: '/toy-car' },
 		{ id: 'race3d', key: 'mode.race3d', href: '/race' },
@@ -74,6 +75,12 @@
 						<path d="M80 43v31l23-14V30Z" fill="var(--learn-blue)" stroke="var(--text-primary)" stroke-width="3" />
 						<circle cx="122" cy="47" r="11" fill="var(--learn-red)" />
 						<path d="M122 58v18" stroke="var(--text-primary)" stroke-width="4" />
+					{:else if m.id === 'color-blocks'}
+						<rect x="21" y="17" width="118" height="76" rx="13" fill="var(--bg-secondary)" stroke="var(--text-primary)" stroke-width="4" />
+						<rect x="29" y="40" width="30" height="30" rx="5" fill="var(--learn-blue)" stroke="var(--text-primary)" stroke-width="3" />
+						<rect x="102" y="40" width="30" height="30" rx="5" fill="var(--learn-blue)" stroke="var(--text-primary)" stroke-width="3" stroke-dasharray="4 3" />
+						<path d="M44 47l8 8-8 8-8-8Z M117 47l8 8-8 8-8-8Z" fill="var(--text-primary)" />
+						<path d="M68 55h23m-8-7 8 7-8 7" fill="none" stroke="var(--text-primary)" stroke-width="3" stroke-linecap="round" />
 					{:else if m.id === 'blocks3d'}
 						{#each [{x:30,y:65,c:'var(--learn-blue)'},{x:80,y:65,c:'var(--learn-green)'},{x:55,y:27,c:'var(--learn-orange)'}] as block}
 							<path d="M{block.x} {block.y} l25 -13 25 13 -25 13Z" fill={block.c} stroke="var(--text-primary)" stroke-width="2" />

@@ -15,6 +15,7 @@ export const DETECTIVE_ANIMALS = [
 export const ANIMAL_NARRATION: NarrationEntry[] = [
 	{ key: 'mode.animals', bn: 'প্রাণী গোয়েন্দা', en: 'Animal Detective' },
 	{ key: 'animals.name', bn: 'প্রাণী চিনি', en: 'Find the animal' },
+	{ key: 'animals.intro', bn: 'রুমির সঙ্গে ছবির সূত্র খুঁজে প্রাণী চিনি আর গুনি।', en: 'Follow the photo clues with Rumi to find and count animals.' },
 	{ key: 'animals.count', bn: 'প্রাণী গুনি', en: 'Count the animals' },
 	// No scores or star counts (PR-07): praise the finding, not a tally.
 	{ key: 'animals.correct', bn: 'বাহ, গোয়েন্দা! ঠিক খুঁজে পেয়েছ!', en: 'Well spotted, Detective! You found it!' },

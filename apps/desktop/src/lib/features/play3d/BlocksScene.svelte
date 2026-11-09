@@ -51,6 +51,7 @@
 	let canvas = $state<HTMLCanvasElement | null>(null);
 	let kit: typeof Kit | null = null;
 	let stage: Kit.Stage | null = null;
+	let confetti: Kit.Confetti | null = null;
 	let ready = $state(false);
 	let failed = $state(false);
 
@@ -59,6 +60,8 @@
 		id: string;
 		mesh: Kit.THREE.Mesh;
 		baseX: number;
+		/** Resting turn, so a hop lands facing the same way. */
+		rotY: number;
 		phase: number;
 		mode: '' | 'jump' | 'wobble' | 'glow' | 'hop';
 		t: number;
@@ -107,6 +110,7 @@
 		mat.receiveShadow = true;
 		stage.scene.add(mat);
 
+		confetti = kit.createConfetti(stage.scene, d.reduced);
 		stage.onFrame(frame);
 		stage.setPaused($paused);
 		ready = true;
@@ -136,9 +140,10 @@
 			const mesh = kit!.toyBlock(glyphFor(s, o.symbol!), kit!.TOY_COLORS[i % kit!.TOY_COLORS.length], size);
 			const baseX = (i - (n - 1) / 2) * gap;
 			mesh.position.set(baseX, size / 2 + 0.4, 0);
-			mesh.rotation.y = (i - (n - 1) / 2) * -0.12;
+			const rotY = (i - (n - 1) / 2) * -0.12;
+			mesh.rotation.y = rotY;
 			stage!.scene.add(mesh);
-			return { id: o.id, mesh, baseX, phase: i * 1.3, mode: d.reduced ? '' : 'hop', t: -i * 0.08 } satisfies Block;
+			return { id: o.id, mesh, baseX, rotY, phase: i * 1.3, mode: d.reduced ? '' : 'hop', t: -i * 0.08 } satisfies Block;
 		});
 		placeButtons();
 	}
@@ -158,11 +163,13 @@
 				b.t += dt;
 				const p = Math.max(0, b.t);
 				if (b.mode === 'jump') {
-					const k = Math.min(1, p / 0.9);
-					m.position.y = rest + Math.sin(k * Math.PI) * 1.6;
-					m.rotation.y += dt * 7 * (1 - k);
-					m.scale.setScalar(1 + 0.15 * kit!.easeOutBack(k) * (1 - k));
-					if (k >= 1) b.mode = '';
+					// Cartoon hop: crouch, stretch up, spin in the air, squash on landing.
+					const h = kit!.squashHop(p);
+					m.position.y = rest + h.y - ((1 - h.sy) * size) / 2;
+					m.scale.set(h.sxz, h.sy, h.sxz);
+					const air = Math.min(1, Math.max(0, (p - 0.16) / 0.6));
+					m.rotation.y = b.rotY + Math.PI * 2 * air * air * (3 - 2 * air);
+					if (h.done) b.mode = '';
 				} else if (b.mode === 'wobble') {
 					const k = Math.min(1, p / 0.7);
 					m.position.x = b.baseX + Math.sin(k * Math.PI * 4) * 0.18 * (1 - k);
@@ -179,6 +186,7 @@
 				}
 			}
 		}
+		confetti?.update(dt);
 		// Keep the tap targets over the blocks (cheap: a handful of projections).
 		if ((frameNo = (frameNo + 1) % 3) === 0) placeButtons();
 	}
@@ -211,6 +219,14 @@
 		}
 	}
 
+	/** Confetti bursts from just above the block as it springs up. */
+	function popConfetti(id: string, count: number) {
+		const b = blockFor(id);
+		if (!b || !kit) return;
+		const at = b.mesh.position.clone().add(new kit.THREE.Vector3(0, 1.2, 0.4));
+		scheduler.after(120, () => confetti?.burst(at, count, undefined, { speed: 0.7, up: 0.7 }));
+	}
+
 	// ── Game flow ───────────────────────────────────────────────────────────
 	function runEffect(effect: ChoiceEffect) {
 		const m = machine;
@@ -219,6 +235,7 @@
 			case 'animate':
 				hintId = null;
 				animateBlock(effect.optionId, effect.correct ? 'jump' : 'wobble');
+				if (effect.correct) popConfetti(effect.optionId, 40);
 				mascot = 'thinking';
 				scheduler.after(d.reduced ? 300 : ANIM_MS, () => m.send({ type: 'ANIM_DONE' }));
 				break;
@@ -242,7 +259,10 @@
 				break;
 			case 'celebrate':
 				mascot = 'celebrate';
-				for (const b of blocks) if (b.id === ctx?.activity.answerId) animateBlock(b.id, 'jump');
+				for (const b of blocks) if (b.id === ctx?.activity.answerId) {
+					animateBlock(b.id, 'jump');
+					popConfetti(b.id, 18);
+				}
 				scheduler.after(d.celebrate, () => m.send({ type: 'CELEBRATION_DONE' }));
 				break;
 			case 'cancelAll':
@@ -351,6 +371,8 @@
 		teardown();
 		hideHand();
 		leaveScreen();
+		confetti?.dispose();
+		confetti = null;
 		stage?.dispose();
 		stage = null;
 	});

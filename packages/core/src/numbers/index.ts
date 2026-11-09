@@ -26,3 +26,4 @@ export * from './lessons/fruitLearning.ts';
 export * from './lessons/fruitNarration.ts';
 export * from './lessons/flowerNarration.ts';
 export * from './lessons/animalNarration.ts';
+export * from './lessons/colorBlocks.ts';

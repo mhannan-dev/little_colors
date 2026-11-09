@@ -5,6 +5,7 @@
  */
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 export { THREE };
 
@@ -22,21 +23,59 @@ export interface Stage {
 	dispose(): void;
 }
 
-export function createStage(canvas: HTMLCanvasElement, opts: { fov?: number; background?: string } = {}): Stage {
+/** A vertical sky gradient (top colour → horizon colour) used as a screen-space background. */
+function skyTexture(top: string, horizon: string): THREE.CanvasTexture {
+	const c = document.createElement('canvas');
+	c.width = 2;
+	c.height = 256;
+	const g = c.getContext('2d')!;
+	const grad = g.createLinearGradient(0, 0, 0, 256);
+	grad.addColorStop(0, top);
+	grad.addColorStop(0.75, horizon);
+	grad.addColorStop(1, horizon);
+	g.fillStyle = grad;
+	g.fillRect(0, 0, 2, 256);
+	const tex = new THREE.CanvasTexture(c);
+	tex.colorSpace = THREE.SRGBColorSpace;
+	return tex;
+}
+
+export function createStage(
+	canvas: HTMLCanvasElement,
+	opts: { fov?: number; background?: string; /** Gradient sky colour at the top; the horizon is `background`. */ skyTop?: string } = {}
+): Stage {
 	const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'low-power' });
 	renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+	// Neutral tone mapping keeps the bright toy colours saturated (AgX/ACES wash them out)
+	// while still rolling off highlights softly instead of clipping to flat white.
+	renderer.toneMapping = THREE.NeutralToneMapping;
+	renderer.toneMappingExposure = 0.9;
 	renderer.shadowMap.enabled = true;
 	renderer.shadowMap.type = THREE.PCFShadowMap;
 
 	const scene = new THREE.Scene();
-	scene.background = new THREE.Color(opts.background ?? '#FFF9F0');
+	const background = opts.background ?? '#FFF9F0';
+	const sky = opts.skyTop ? skyTexture(opts.skyTop, background) : null;
+	scene.background = sky ?? new THREE.Color(background);
 	const camera = new THREE.PerspectiveCamera(opts.fov ?? 45, 1, 0.1, 200);
 
-	scene.add(new THREE.HemisphereLight('#ffffff', '#d9cbb3', 1.6));
-	const sun = new THREE.DirectionalLight('#ffffff', 1.6);
+	// Soft studio reflections: plastic toys pick up gentle highlights instead of looking flat.
+	const pmrem = new THREE.PMREMGenerator(renderer);
+	const envScene = new RoomEnvironment();
+	const envMap = pmrem.fromScene(envScene, 0.04).texture;
+	envScene.dispose();
+	pmrem.dispose();
+	scene.environment = envMap;
+	scene.environmentIntensity = 0.35;
+
+	scene.add(new THREE.HemisphereLight('#ffffff', '#d9cbb3', 0.8));
+	const sun = new THREE.DirectionalLight('#fff6e8', 2.0);
 	sun.position.set(6, 12, 8);
 	sun.castShadow = true;
-	sun.shadow.mapSize.set(1024, 1024);
+	sun.shadow.mapSize.set(2048, 2048);
+	sun.shadow.bias = -0.0004;
+	sun.shadow.normalBias = 0.02;
+	sun.shadow.radius = 3; // soft shadow edges (PCF filter radius)
 	Object.assign(sun.shadow.camera, { left: -14, right: 14, top: 14, bottom: -14 });
 	scene.add(sun);
 
@@ -93,6 +132,8 @@ export function createStage(canvas: HTMLCanvasElement, opts: { fov?: number; bac
 					m.dispose();
 				}
 			});
+			envMap.dispose();
+			sky?.dispose();
 			renderer.dispose();
 			renderer.forceContextLoss();
 		}
@@ -147,9 +188,10 @@ export function toyBlock(glyph: string, color: string, size = 1.6): THREE.Mesh {
 /** Rumi's toy car: chunky body, cabin, four wheels, and a little tiger head peeking out. */
 export function toyCar(color = '#3478D4', furColor = '#E3B48A'): THREE.Group {
 	const car = new THREE.Group();
-	const paint = new THREE.MeshStandardMaterial({ color, roughness: 0.45 });
+	// Glossy toy paint: a clear-coat layer catches the environment like shiny plastic.
+	const paint = new THREE.MeshPhysicalMaterial({ color, roughness: 0.4, clearcoat: 0.8, clearcoatRoughness: 0.15 });
 	const dark = new THREE.MeshStandardMaterial({ color: '#263238', roughness: 0.8 });
-	const glass = new THREE.MeshStandardMaterial({ color: '#cfe8f7', roughness: 0.2 });
+	const glass = new THREE.MeshPhysicalMaterial({ color: '#cfe8f7', roughness: 0.08, clearcoat: 1, clearcoatRoughness: 0.05 });
 	const fur = new THREE.MeshStandardMaterial({ color: furColor, roughness: 0.8 });
 
 	const body = new THREE.Mesh(new RoundedBoxGeometry(1.6, 0.55, 2.6, 4, 0.2), paint);
@@ -192,6 +234,152 @@ export function toyTree(): THREE.Group {
 	tree.add(trunk, top);
 	tree.traverse((o) => ((o as THREE.Mesh).castShadow = true));
 	return tree;
+}
+
+export interface Confetti {
+	/** Throw `count` pieces up and out from `at`. Does nothing when reduced motion is on. */
+	burst(at: THREE.Vector3, count: number, colors?: readonly string[], opts?: { speed?: number; up?: number; size?: number }): void;
+	/** Step the pieces; `driftZ` moves them with a scrolling world (the race road). */
+	update(dt: number, driftZ?: number): void;
+	clear(): void;
+	dispose(): void;
+}
+
+/**
+ * Celebration confetti: flat paper squares that flutter down slowly and little gems that
+ * fall faster. Pieces settle on the ground and shrink away softly (no popping, no flashing).
+ */
+export function createConfetti(scene: THREE.Scene, reduced: boolean): Confetti {
+	const paperGeo = new THREE.PlaneGeometry(0.24, 0.16);
+	const gemGeo = new THREE.OctahedronGeometry(0.13);
+	const mats = new Map<string, THREE.MeshStandardMaterial>();
+	const matFor = (color: string) => {
+		let m = mats.get(color);
+		if (!m) {
+			m = new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.25, roughness: 0.5, side: THREE.DoubleSide });
+			mats.set(color, m);
+		}
+		return m;
+	};
+	interface Piece {
+		mesh: THREE.Mesh;
+		paper: boolean;
+		v: THREE.Vector3;
+		spin: THREE.Vector3;
+		phase: number;
+		life: number;
+		max: number;
+		size: number;
+	}
+	let pieces: Piece[] = [];
+	const remove = (p: Piece) => scene.remove(p.mesh);
+
+	return {
+		burst(at, count, colors = TOY_COLORS, opts = {}) {
+			if (reduced) return;
+			const speed = opts.speed ?? 1;
+			const up = opts.up ?? 1;
+			const size = opts.size ?? 1;
+			for (let i = 0; i < count; i++) {
+				const paper = i % 3 !== 0;
+				const mesh = new THREE.Mesh(paper ? paperGeo : gemGeo, matFor(colors[i % colors.length]!));
+				mesh.position.copy(at);
+				mesh.rotation.set(Math.random() * 6, Math.random() * 6, Math.random() * 6);
+				scene.add(mesh);
+				const ang = Math.random() * Math.PI * 2;
+				const sp = (1.5 + Math.random() * 3.5) * speed;
+				const max = 1.8 + Math.random() * 1;
+				pieces.push({
+					mesh,
+					paper,
+					v: new THREE.Vector3(Math.cos(ang) * sp, (4 + Math.random() * 4) * up, Math.sin(ang) * sp),
+					spin: new THREE.Vector3(Math.random() * 8 - 4, Math.random() * 8 - 4, Math.random() * 4 - 2),
+					phase: Math.random() * 6,
+					life: max,
+					max,
+					size
+				});
+			}
+		},
+		update(dt, driftZ = 0) {
+			for (const p of pieces) {
+				p.life -= dt;
+				const m = p.mesh;
+				const grounded = m.position.y <= 0.06;
+				if (!grounded) {
+					p.v.y -= 9 * dt;
+					// Paper has air drag: it slows sideways and drifts down gently, swaying.
+					if (p.paper) {
+						const drag = Math.max(0, 1 - 1.6 * dt);
+						p.v.x *= drag;
+						p.v.z *= drag;
+						if (p.v.y < -1.8) p.v.y = -1.8;
+						m.position.x += Math.sin((p.max - p.life) * 7 + p.phase) * 0.9 * dt;
+					}
+					m.position.addScaledVector(p.v, dt);
+					m.rotation.x += p.spin.x * dt;
+					m.rotation.y += p.spin.y * dt;
+					m.rotation.z += p.spin.z * dt;
+					if (m.position.y < 0.05) m.position.y = 0.05;
+				}
+				m.position.z += driftZ;
+				// Shrink away during the last 0.4 s.
+				m.scale.setScalar(p.size * Math.min(1, Math.max(0, p.life / 0.4)));
+			}
+			if (pieces.some((p) => p.life <= 0)) {
+				for (const p of pieces) if (p.life <= 0) remove(p);
+				pieces = pieces.filter((p) => p.life > 0);
+			}
+		},
+		clear() {
+			for (const p of pieces) remove(p);
+			pieces = [];
+		},
+		dispose() {
+			this.clear();
+			paperGeo.dispose();
+			gemGeo.dispose();
+			for (const m of mats.values()) m.dispose();
+			mats.clear();
+		}
+	};
+}
+
+/** Squash & stretch keyframes for a happy hop: [time s, vertical scale]. */
+const HOP_KEYS: [number, number][] = [
+	[0, 1],
+	[0.12, 0.78], // crouch
+	[0.2, 1.18], // spring up, stretched
+	[0.46, 1], // round at the top
+	[0.7, 1.12], // stretch while falling
+	[0.78, 0.8], // squash on landing
+	[0.9, 1.06], // little rebound
+	[1.0, 1]
+];
+const AIR_FROM = 0.16;
+const AIR_TO = 0.76;
+
+/**
+ * A cartoon hop at time `t` (seconds). `y` is the lift of the object's bottom; `sy`/`sxz`
+ * scale it (volume-preserving). Callers keep the bottom on the ground with
+ * `position.y = rest + y - (1 - sy) * height / 2`.
+ */
+export function squashHop(t: number, lift = 1.6): { y: number; sy: number; sxz: number; done: boolean } {
+	const end = HOP_KEYS[HOP_KEYS.length - 1]![0];
+	if (t >= end) return { y: 0, sy: 1, sxz: 1, done: true };
+	let sy = 1;
+	for (let i = 1; i < HOP_KEYS.length; i++) {
+		const [t1, v1] = HOP_KEYS[i]!;
+		if (t <= t1) {
+			const [t0, v0] = HOP_KEYS[i - 1]!;
+			const k = (t - t0) / (t1 - t0);
+			sy = v0 + (v1 - v0) * k * k * (3 - 2 * k);
+			break;
+		}
+	}
+	const air = (t - AIR_FROM) / (AIR_TO - AIR_FROM);
+	const y = air > 0 && air < 1 ? Math.sin(air * Math.PI) * lift : 0;
+	return { y, sy, sxz: 1 / Math.sqrt(sy), done: false };
 }
 
 export const easeOutBack = (t: number) => 1 + 2.7 * Math.pow(t - 1, 3) + 1.7 * Math.pow(t - 1, 2);
