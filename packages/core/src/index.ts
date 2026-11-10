@@ -25,3 +25,5 @@ export * from './flags/pictureFlags.ts';
 export * from './play3d/symbols.ts';
 // Rumi's Kitchen (Claude).
 export * from './kitchen/kitchen.ts';
+// Rumi's Highway (Claude).
+export * from './highway/highway.ts';

@@ -5,6 +5,7 @@ import { MINIGAME_NARRATION } from '../minigames/narration.ts';
 import { FLAG_NARRATION } from '../flags/pictureFlags.ts';
 import { PLAY3D_NARRATION } from '../play3d/symbols.ts';
 import { KITCHEN_NARRATION } from '../kitchen/kitchen.ts';
+import { HIGHWAY_NARRATION } from '../highway/highway.ts';
 import { VOICE_MANIFEST, type NarrationEntry } from './voiceManifest.ts';
 
 /**
@@ -18,7 +19,8 @@ export const NARRATION_CATALOG: readonly NarrationEntry[] = [
 	...MINIGAME_NARRATION,
 	...FLAG_NARRATION,
 	...PLAY3D_NARRATION,
-	...KITCHEN_NARRATION
+	...KITCHEN_NARRATION,
+	...HIGHWAY_NARRATION
 ];
 
 const BY_KEY = new Map<string, NarrationEntry>();

@@ -21,6 +21,8 @@ export default defineConfig({
 		command: 'node node_modules/vite/bin/vite.js dev --host 127.0.0.1 --port 5179 --strictPort',
 		url: baseURL,
 		reuseExistingServer: false,
-		timeout: 120_000
+		env: { VITE_CACHE_DIR: 'node_modules/.vite-e2e' },
+		// A cold test cache re-bundles dependencies; give it time on a busy machine.
+		timeout: 240_000
 	}
 });
