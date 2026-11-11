@@ -13,6 +13,7 @@
 		{ id: 'matching', key: 'mode.matching', href: '/matching', group: 'learn' },
 		{ id: 'numbers', key: 'mode.numbers', href: '/numbers', group: 'learn' },
 		{ id: 'abc3d', key: 'mode.abc3d', href: '/abc-123', group: 'learn' },
+		{ id: 'sorter', key: 'mode.sorter', href: '/shape-sorter', group: 'learn' },
 		{ id: 'flag', key: 'mode.flag', href: '/flag', group: 'learn' },
 		{ id: 'fruit', key: 'mode.fruit', href: '/fruit', group: 'learn' },
 		{ id: 'flower', key: 'mode.flower', href: '/flower', group: 'learn' },
@@ -24,12 +25,14 @@
 		{ id: 'bird', key: 'mode.bird', href: '/bird', group: 'play' },
 		{ id: 'kitchen', key: 'mode.kitchen', href: '/kitchen', group: 'play' },
 		{ id: 'teeth', key: 'mode.teeth', href: '/teeth', group: 'play' },
+		{ id: 'farm', key: 'mode.farm', href: '/farm', group: 'play' },
 		{ id: 'blocks3d', key: 'mode.blocks3d', href: '/blocks-3d', group: 'play' },
 		{ id: 'garden3d', key: 'mode.garden3d', href: '/garden-3d', group: 'play' },
 		{ id: 'car3d', key: 'mode.car3d', href: '/toy-car', group: 'drive' },
 		{ id: 'race3d', key: 'mode.race3d', href: '/race', group: 'drive' },
 		{ id: 'highway', key: 'mode.highway', href: '/highway', group: 'drive' },
 		{ id: 'bike', key: 'mode.bike', href: '/bike', group: 'drive' },
+		{ id: 'train', key: 'mode.rail', href: '/train', group: 'drive' },
 		{ id: 'city-bus-driver', key: 'mode.city-bus-driver', href: '/city-bus-driver', group: 'older' },
 		{ id: 'formula-circuit', key: 'mode.formula-circuit', href: '/formula-circuit', group: 'older' },
 		{ id: 'world-soccer', key: 'mode.world-soccer', href: '/world-soccer', group: 'older' },
@@ -108,6 +111,27 @@
 						<circle cx="118" cy="79" r="14" fill="var(--text-primary)" />
 						<circle cx="46" cy="79" r="5" fill="var(--surface)" />
 						<circle cx="118" cy="79" r="5" fill="var(--surface)" />
+				{:else if m.id === 'sorter'}
+						<rect x="24" y="40" width="112" height="58" rx="10" fill="#5EB5E8" stroke="var(--text-primary)" stroke-width="4" />
+						<rect x="18" y="28" width="124" height="18" rx="6" fill="var(--learn-yellow)" stroke="var(--text-primary)" stroke-width="4" />
+						<circle cx="52" cy="37" r="6" fill="var(--text-primary)" /><rect x="74" y="31" width="12" height="12" fill="var(--text-primary)" /><path d="M108 43 l7 -12 7 12z" fill="var(--text-primary)" />
+						<path d="M72 4 l6 12 13 1 -10 8 4 13 -13 -7 -12 7 4 -13 -10 -8 13 -1z" fill="var(--learn-red)" stroke="var(--text-primary)" stroke-width="3" stroke-linejoin="round" />
+				{:else if m.id === 'farm'}
+						<rect x="22" y="44" width="60" height="52" fill="var(--learn-red)" stroke="var(--text-primary)" stroke-width="4" />
+						<path d="M14 46 L52 16 L90 46 Z" fill="#6B4A3A" stroke="var(--text-primary)" stroke-width="4" stroke-linejoin="round" />
+						<path d="M40 96 V70 h24 v26 M40 70 l24 26 M64 70 l-24 26" fill="none" stroke="#ffffff" stroke-width="4" />
+						<ellipse cx="118" cy="76" rx="24" ry="18" fill="#ffffff" stroke="var(--text-primary)" stroke-width="4" />
+						<circle cx="118" cy="50" r="14" fill="#ffffff" stroke="var(--text-primary)" stroke-width="4" />
+						<ellipse cx="112" cy="76" rx="7" ry="6" fill="var(--text-primary)" /><ellipse cx="118" cy="56" rx="7" ry="5" fill="#F7B6C2" />
+				{:else if m.id === 'train'}
+						<path d="M6 96 H154" stroke="var(--text-primary)" stroke-width="5" stroke-linecap="round" />
+						<rect x="78" y="52" width="56" height="34" rx="8" fill="var(--learn-red)" stroke="var(--text-primary)" stroke-width="4" />
+						<rect x="112" y="30" width="28" height="56" rx="5" fill="var(--learn-blue)" stroke="var(--text-primary)" stroke-width="4" />
+						<rect x="86" y="34" width="12" height="20" fill="var(--text-primary)" />
+						<circle cx="80" cy="20" r="8" fill="#E6EEF2" /><circle cx="66" cy="12" r="6" fill="#E6EEF2" />
+						<rect x="14" y="58" width="56" height="28" rx="6" fill="var(--learn-yellow)" stroke="var(--text-primary)" stroke-width="4" />
+						<circle cx="30" cy="52" r="8" fill="#ffffff" stroke="var(--text-primary)" stroke-width="3" /><circle cx="52" cy="52" r="8" fill="var(--learn-orange)" stroke="var(--text-primary)" stroke-width="3" />
+						{#each [28, 56, 92, 124] as x (x)}<circle cx={x} cy="90" r="8" fill="var(--text-primary)" />{/each}
 				{:else if m.id === 'teeth'}
 						<circle cx="62" cy="56" r="38" fill="#7CD3A8" stroke="var(--text-primary)" stroke-width="4" />
 						<circle cx="50" cy="46" r="6" fill="var(--text-primary)" /><circle cx="74" cy="46" r="6" fill="var(--text-primary)" />

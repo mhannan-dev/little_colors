@@ -32,3 +32,7 @@ export * from './audio/picker.ts';
 export * from './bike/bike.ts';
 // Toothie's Morning Adventure (Claude).
 export * from './teeth/teeth.ts';
+// Rumi's Train, Rumi's Farm and the Shape Sorter (Claude).
+export * from './train/train.ts';
+export * from './farm/farm.ts';
+export * from './sorter/sorter.ts';
