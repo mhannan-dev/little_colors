@@ -6,6 +6,8 @@ import { FLAG_NARRATION } from '../flags/pictureFlags.ts';
 import { PLAY3D_NARRATION } from '../play3d/symbols.ts';
 import { KITCHEN_NARRATION } from '../kitchen/kitchen.ts';
 import { HIGHWAY_NARRATION } from '../highway/highway.ts';
+import { PICKER_NARRATION } from './picker.ts';
+import { BIKE_NARRATION } from '../bike/bike.ts';
 import { VOICE_MANIFEST, type NarrationEntry } from './voiceManifest.ts';
 
 /**
@@ -20,7 +22,9 @@ export const NARRATION_CATALOG: readonly NarrationEntry[] = [
 	...FLAG_NARRATION,
 	...PLAY3D_NARRATION,
 	...KITCHEN_NARRATION,
-	...HIGHWAY_NARRATION
+	...HIGHWAY_NARRATION,
+	...PICKER_NARRATION,
+	...BIKE_NARRATION
 ];
 
 const BY_KEY = new Map<string, NarrationEntry>();

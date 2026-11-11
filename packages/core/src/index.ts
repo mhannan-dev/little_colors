@@ -27,3 +27,6 @@ export * from './play3d/symbols.ts';
 export * from './kitchen/kitchen.ts';
 // Rumi's Highway (Claude).
 export * from './highway/highway.ts';
+export * from './audio/picker.ts';
+// Rumi's Bicycle (Claude).
+export * from './bike/bike.ts';
