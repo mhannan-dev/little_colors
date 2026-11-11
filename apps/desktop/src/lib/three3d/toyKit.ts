@@ -6,6 +6,9 @@
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { CameraFeedback } from '#lib/components/visuals/CameraFeedback.ts';
+import { ShaderEffectManager } from '#lib/components/visuals/ShaderEffectManager.ts';
+import { createSurfaceMaps, type Surface } from '#lib/components/visuals/surfaceMaps.ts';
 
 export { THREE };
 
@@ -18,6 +21,9 @@ export interface Stage {
 	/** Called every frame with seconds since the previous frame (not called while paused). */
 	onFrame(fn: (dt: number, t: number) => void): void;
 	setPaused(paused: boolean): void;
+	feedback(allowMotion: boolean): void;
+	surface(kind: Surface): ReturnType<typeof createSurfaceMaps>;
+	contactShadow(size: number): { mesh: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial>; dispose(): void };
 	/** Screen position (CSS px, relative to the canvas) of a world point. */
 	toScreen(v: THREE.Vector3): { x: number; y: number };
 	dispose(): void;
@@ -42,15 +48,14 @@ function skyTexture(top: string, horizon: string): THREE.CanvasTexture {
 
 export function createStage(
 	canvas: HTMLCanvasElement,
-	opts: { fov?: number; background?: string; /** Gradient sky colour at the top; the horizon is `background`. */ skyTop?: string } = {}
+	opts: { fov?: number; background?: string; skyTop?: string; bloom?: boolean } = {}
 ): Stage {
 	const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'low-power' });
-	renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-	// Neutral tone mapping keeps the bright toy colours saturated (AgX/ACES wash them out)
-	// while still rolling off highlights softly instead of clipping to flat white.
-	renderer.toneMapping = THREE.NeutralToneMapping;
-	renderer.toneMappingExposure = 0.9;
+	renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+	renderer.toneMapping = THREE.ACESFilmicToneMapping;
+	renderer.toneMappingExposure = 0.95;
 	renderer.shadowMap.enabled = true;
+	// PCFShadowMap is the soft filter supported by this Three.js version.
 	renderer.shadowMap.type = THREE.PCFShadowMap;
 
 	const scene = new THREE.Scene();
@@ -58,21 +63,28 @@ export function createStage(
 	const sky = opts.skyTop ? skyTexture(opts.skyTop, background) : null;
 	scene.background = sky ?? new THREE.Color(background);
 	const camera = new THREE.PerspectiveCamera(opts.fov ?? 45, 1, 0.1, 200);
+	const effects = new ShaderEffectManager(renderer, scene, camera, opts.bloom ?? false);
+	const cameraFeedback = new CameraFeedback();
+	const surfaces = new Map<Surface, ReturnType<typeof createSurfaceMaps>>();
+	const softShadowGeometry = new THREE.PlaneGeometry(1, 1);
+	const shadowMaterials = new Set<THREE.MeshBasicMaterial>();
+	let shadowTexture: THREE.CanvasTexture | undefined;
 
 	// Soft studio reflections: plastic toys pick up gentle highlights instead of looking flat.
 	const pmrem = new THREE.PMREMGenerator(renderer);
 	const envScene = new RoomEnvironment();
-	const envMap = pmrem.fromScene(envScene, 0.04).texture;
+	const environment = pmrem.fromScene(envScene, 0.04);
+	const envMap = environment.texture;
 	envScene.dispose();
 	pmrem.dispose();
 	scene.environment = envMap;
-	scene.environmentIntensity = 0.35;
+	scene.environmentIntensity = 0.42;
 
 	scene.add(new THREE.HemisphereLight('#ffffff', '#d9cbb3', 0.8));
 	const sun = new THREE.DirectionalLight('#fff6e8', 2.0);
 	sun.position.set(6, 12, 8);
 	sun.castShadow = true;
-	sun.shadow.mapSize.set(2048, 2048);
+	sun.shadow.mapSize.set(1024, 1024);
 	sun.shadow.bias = -0.0004;
 	sun.shadow.normalBias = 0.02;
 	sun.shadow.radius = 3; // soft shadow edges (PCF filter radius)
@@ -89,6 +101,7 @@ export function createStage(
 		const w = canvas.clientWidth || 1;
 		const h = canvas.clientHeight || 1;
 		renderer.setSize(w, h, false);
+		effects.resize(w, h);
 		camera.aspect = w / h;
 		camera.updateProjectionMatrix();
 	};
@@ -98,12 +111,21 @@ export function createStage(
 
 	const loop = (now: number) => {
 		raf = requestAnimationFrame(loop);
-		const dt = Math.min(0.05, (now - last) / 1000);
+		const frameTime = Math.max(0, (now - last) / 1000);
+		const dt = Math.min(0.05, frameTime);
 		last = now;
 		if (paused) return;
 		elapsed += dt;
 		for (const f of frames) f(dt, elapsed);
-		renderer.render(scene, camera);
+		effects.prepare();
+		const offset = cameraFeedback.update(dt);
+		const originalY = camera.position.y;
+		camera.position.y += offset;
+		try { effects.render(frameTime); }
+		finally {
+			camera.position.y = originalY;
+			if (offset) camera.updateMatrixWorld();
+		}
 	};
 	raf = requestAnimationFrame(loop);
 
@@ -115,6 +137,40 @@ export function createStage(
 		setPaused: (p) => {
 			paused = p;
 			last = performance.now();
+			if (p) { cameraFeedback.clear(); effects.clear(); }
+		},
+		feedback(allowMotion) {
+			if (paused || !allowMotion || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+			cameraFeedback.bump();
+			effects.pulse();
+		},
+		surface(kind) {
+			let maps = surfaces.get(kind);
+			if (!maps) { maps = createSurfaceMaps(kind); surfaces.set(kind, maps); }
+			return maps;
+		},
+		contactShadow(size) {
+			if (!shadowTexture) {
+				const image = document.createElement('canvas');
+				image.width = image.height = 64;
+				const context = image.getContext('2d')!;
+				const gradient = context.createRadialGradient(32, 32, 6, 32, 32, 32);
+				gradient.addColorStop(0, 'rgba(30, 23, 15, .72)');
+				gradient.addColorStop(0.55, 'rgba(30, 23, 15, .32)');
+				gradient.addColorStop(1, 'rgba(30, 23, 15, 0)');
+				context.fillStyle = gradient;
+				context.fillRect(0, 0, 64, 64);
+				shadowTexture = new THREE.CanvasTexture(image);
+				shadowTexture.colorSpace = THREE.SRGBColorSpace;
+			}
+			const material = new THREE.MeshBasicMaterial({ map: shadowTexture, transparent: true, depthWrite: false, opacity: 0.34 });
+			shadowMaterials.add(material);
+			const mesh = new THREE.Mesh(softShadowGeometry, material);
+			mesh.rotation.x = -Math.PI / 2;
+			mesh.scale.setScalar(size);
+			mesh.position.y = 0.007;
+			scene.add(mesh);
+			return { mesh, dispose() { scene.remove(mesh); shadowMaterials.delete(material); material.dispose(); } };
 		},
 		toScreen(v) {
 			const p = v.clone().project(camera);
@@ -123,8 +179,10 @@ export function createStage(
 		dispose() {
 			cancelAnimationFrame(raf);
 			observer.disconnect();
+			effects.dispose();
 			scene.traverse((o) => {
 				const mesh = o as THREE.Mesh;
+				if (mesh.geometry === softShadowGeometry) return;
 				mesh.geometry?.dispose();
 				const mats = Array.isArray(mesh.material) ? mesh.material : mesh.material ? [mesh.material] : [];
 				for (const m of mats) {
@@ -132,7 +190,12 @@ export function createStage(
 					m.dispose();
 				}
 			});
-			envMap.dispose();
+			for (const maps of surfaces.values()) { maps.normalMap.dispose(); maps.roughnessMap.dispose(); }
+			for (const material of shadowMaterials) material.dispose();
+			shadowTexture?.dispose();
+			softShadowGeometry.dispose();
+			sun.shadow.dispose();
+			environment.dispose();
 			sky?.dispose();
 			renderer.dispose();
 			renderer.forceContextLoss();
@@ -186,10 +249,10 @@ export function toyBlock(glyph: string, color: string, size = 1.6): THREE.Mesh {
 }
 
 /** Rumi's toy car: chunky body, cabin, four wheels, and a little tiger head peeking out. */
-export function toyCar(color = '#3478D4', furColor = '#E3B48A'): THREE.Group {
+export function toyCar(color = '#3478D4', furColor = '#E3B48A', surface?: ReturnType<typeof createSurfaceMaps>): THREE.Group {
 	const car = new THREE.Group();
 	// Glossy toy paint: a clear-coat layer catches the environment like shiny plastic.
-	const paint = new THREE.MeshPhysicalMaterial({ color, roughness: 0.4, clearcoat: 0.8, clearcoatRoughness: 0.15 });
+	const paint = new THREE.MeshPhysicalMaterial({ ...surface, color, roughness: 0.4, clearcoat: 0.8, clearcoatRoughness: 0.15 });
 	const dark = new THREE.MeshStandardMaterial({ color: '#263238', roughness: 0.8 });
 	const glass = new THREE.MeshPhysicalMaterial({ color: '#cfe8f7', roughness: 0.08, clearcoat: 1, clearcoatRoughness: 0.05 });
 	const fur = new THREE.MeshStandardMaterial({ color: furColor, roughness: 0.8 });
@@ -250,97 +313,102 @@ export interface Confetti {
  * fall faster. Pieces settle on the ground and shrink away softly (no popping, no flashing).
  */
 export function createConfetti(scene: THREE.Scene, reduced: boolean): Confetti {
-	const paperGeo = new THREE.PlaneGeometry(0.24, 0.16);
-	const gemGeo = new THREE.OctahedronGeometry(0.13);
-	const mats = new Map<string, THREE.MeshStandardMaterial>();
-	const matFor = (color: string) => {
-		let m = mats.get(color);
-		if (!m) {
-			m = new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.25, roughness: 0.5, side: THREE.DoubleSide });
-			mats.set(color, m);
-		}
-		return m;
-	};
-	interface Piece {
-		mesh: THREE.Mesh;
-		paper: boolean;
-		v: THREE.Vector3;
-		spin: THREE.Vector3;
-		phase: number;
-		life: number;
-		max: number;
-		size: number;
+	const capacity = 96;
+	const material = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide });
+	const papers = new THREE.InstancedMesh(new THREE.PlaneGeometry(0.24, 0.16), material, capacity);
+	const gems = new THREE.InstancedMesh(new THREE.OctahedronGeometry(0.13), material, capacity);
+	const meshes = [papers, gems];
+	for (const mesh of meshes) {
+		mesh.count = 0;
+		mesh.frustumCulled = false;
+		mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+		mesh.setColorAt(0, new THREE.Color());
+		mesh.instanceColor!.setUsage(THREE.DynamicDrawUsage);
+		mesh.visible = false;
+		scene.add(mesh);
 	}
-	let pieces: Piece[] = [];
-	const remove = (p: Piece) => scene.remove(p.mesh);
-
+	const transform = new THREE.Object3D();
+	const pieces = Array.from({ length: capacity }, () => ({
+		position: new THREE.Vector3(), rotation: new THREE.Euler(), color: new THREE.Color(),
+		velocity: new THREE.Vector3(), spin: new THREE.Vector3(), paper: true,
+		phase: 0, life: 0, duration: 0, size: 1
+	}));
+	let active = 0;
+	function clear() {
+		active = papers.count = gems.count = 0;
+		papers.visible = gems.visible = false;
+	}
 	return {
 		burst(at, count, colors = TOY_COLORS, opts = {}) {
 			if (reduced) return;
-			const speed = opts.speed ?? 1;
-			const up = opts.up ?? 1;
-			const size = opts.size ?? 1;
-			for (let i = 0; i < count; i++) {
-				const paper = i % 3 !== 0;
-				const mesh = new THREE.Mesh(paper ? paperGeo : gemGeo, matFor(colors[i % colors.length]!));
-				mesh.position.copy(at);
-				mesh.rotation.set(Math.random() * 6, Math.random() * 6, Math.random() * 6);
-				scene.add(mesh);
-				const ang = Math.random() * Math.PI * 2;
-				const sp = (1.5 + Math.random() * 3.5) * speed;
-				const max = 1.8 + Math.random() * 1;
-				pieces.push({
-					mesh,
-					paper,
-					v: new THREE.Vector3(Math.cos(ang) * sp, (4 + Math.random() * 4) * up, Math.sin(ang) * sp),
-					spin: new THREE.Vector3(Math.random() * 8 - 4, Math.random() * 8 - 4, Math.random() * 4 - 2),
-					phase: Math.random() * 6,
-					life: max,
-					max,
-					size
-				});
+			for (let i = 0; i < count && active < capacity; i++) {
+				const piece = pieces[active++];
+				piece.paper = i % 3 !== 0;
+				piece.color.set(colors[i % colors.length] ?? TOY_COLORS[0]).multiplyScalar(1.25);
+				piece.position.copy(at);
+				piece.rotation.set(Math.random() * 6, Math.random() * 6, Math.random() * 6);
+				const angle = Math.random() * Math.PI * 2;
+				const speed = (1.5 + Math.random() * 3.5) * (opts.speed ?? 1);
+				piece.velocity.set(Math.cos(angle) * speed, (4 + Math.random() * 4) * (opts.up ?? 1), Math.sin(angle) * speed);
+				piece.spin.set(Math.random() * 8 - 4, Math.random() * 8 - 4, Math.random() * 4 - 2);
+				piece.phase = Math.random() * 6;
+				piece.life = piece.duration = 1.8 + Math.random();
+				piece.size = opts.size ?? 1;
 			}
 		},
 		update(dt, driftZ = 0) {
-			for (const p of pieces) {
-				p.life -= dt;
-				const m = p.mesh;
-				const grounded = m.position.y <= 0.06;
-				if (!grounded) {
-					p.v.y -= 9 * dt;
-					// Paper has air drag: it slows sideways and drifts down gently, swaying.
-					if (p.paper) {
-						const drag = Math.max(0, 1 - 1.6 * dt);
-						p.v.x *= drag;
-						p.v.z *= drag;
-						if (p.v.y < -1.8) p.v.y = -1.8;
-						m.position.x += Math.sin((p.max - p.life) * 7 + p.phase) * 0.9 * dt;
-					}
-					m.position.addScaledVector(p.v, dt);
-					m.rotation.x += p.spin.x * dt;
-					m.rotation.y += p.spin.y * dt;
-					m.rotation.z += p.spin.z * dt;
-					if (m.position.y < 0.05) m.position.y = 0.05;
+			if (!active) return;
+			papers.count = gems.count = 0;
+			for (let i = active - 1; i >= 0; i--) {
+				const piece = pieces[i];
+				piece.life -= dt;
+				if (piece.life <= 0) {
+					pieces[i] = pieces[--active];
+					pieces[active] = piece;
+					continue;
 				}
-				m.position.z += driftZ;
-				// Shrink away during the last 0.4 s.
-				m.scale.setScalar(p.size * Math.min(1, Math.max(0, p.life / 0.4)));
+				if (piece.position.y > 0.06) {
+					piece.velocity.y -= 9 * dt;
+					if (piece.paper) {
+						const drag = Math.max(0, 1 - 1.6 * dt);
+						piece.velocity.x *= drag;
+						piece.velocity.z *= drag;
+						piece.velocity.y = Math.max(-1.8, piece.velocity.y);
+						piece.position.x += Math.sin((piece.duration - piece.life) * 7 + piece.phase) * 0.9 * dt;
+					}
+					piece.position.addScaledVector(piece.velocity, dt);
+					piece.position.y = Math.max(0.05, piece.position.y);
+					piece.rotation.x += piece.spin.x * dt;
+					piece.rotation.y += piece.spin.y * dt;
+					piece.rotation.z += piece.spin.z * dt;
+				}
+				piece.position.z += driftZ;
+				transform.position.copy(piece.position);
+				transform.rotation.copy(piece.rotation);
+				transform.scale.setScalar(piece.size * Math.min(1, piece.life / 0.4));
+				transform.updateMatrix();
+				const mesh = piece.paper ? papers : gems;
+				const index = mesh.count++;
+				mesh.setMatrixAt(index, transform.matrix);
+				mesh.setColorAt(index, piece.color);
 			}
-			if (pieces.some((p) => p.life <= 0)) {
-				for (const p of pieces) if (p.life <= 0) remove(p);
-				pieces = pieces.filter((p) => p.life > 0);
+			for (const mesh of meshes) {
+				mesh.visible = mesh.count > 0;
+				if (mesh.visible) {
+					mesh.instanceMatrix.needsUpdate = true;
+					mesh.instanceColor!.needsUpdate = true;
+				}
 			}
 		},
-		clear() {
-			for (const p of pieces) remove(p);
-			pieces = [];
-		},
+		clear,
 		dispose() {
-			this.clear();
-			paperGeo.dispose();
-			gemGeo.dispose();
-			for (const m of mats.values()) m.dispose();
-			mats.clear();
+			clear();
+			for (const mesh of meshes) {
+				scene.remove(mesh);
+				mesh.dispose();
+				mesh.geometry.dispose();
+			}
+			material.dispose();
 		}
 	};
 }
@@ -383,3 +451,61 @@ export function squashHop(t: number, lift = 1.6): { y: number; sy: number; sxz: 
 }
 
 export const easeOutBack = (t: number) => 1 + 2.7 * Math.pow(t - 1, 3) + 1.7 * Math.pow(t - 1, 2);
+
+/**
+ * Realistic sky lighting from an HDR photo of the sky (CC0, Poly Haven): image-based lighting and
+ * reflections for every material, and optionally the sky itself as the background.
+ * Returns a disposer; call it before stage.dispose().
+ */
+export async function useHdriSky(stage: Stage, url: string, opts: { background?: boolean; intensity?: number } = {}): Promise<() => void> {
+	const { HDRLoader } = await import('three/addons/loaders/HDRLoader.js');
+	const tex = await new HDRLoader().loadAsync(url);
+	tex.mapping = THREE.EquirectangularReflectionMapping;
+	const pmrem = new THREE.PMREMGenerator(stage.renderer);
+	const env = pmrem.fromEquirectangular(tex).texture;
+	pmrem.dispose();
+	const before = stage.scene.environment;
+	stage.scene.environment = env;
+	stage.scene.environmentIntensity = opts.intensity ?? 0.85;
+	if (opts.background) {
+		stage.scene.background = tex;
+		stage.scene.backgroundIntensity = 0.9;
+	}
+	return () => {
+		if (stage.scene.environment === env) stage.scene.environment = before;
+		env.dispose();
+		tex.dispose();
+	};
+}
+
+/** A tiled PBR material from colour / normal / roughness maps (CC0, ambientCG), with a scroll helper. */
+export function pbrMaterial(base: string, repeat: [number, number], tint?: string): { material: THREE.MeshStandardMaterial; scroll(v: number): void; dispose(): void } {
+	const loader = new THREE.TextureLoader();
+	const load = (suffix: string, srgb: boolean) => {
+		const t = loader.load(`${base}_${suffix}.jpg`);
+		t.wrapS = t.wrapT = THREE.RepeatWrapping;
+		t.repeat.set(repeat[0], repeat[1]);
+		t.anisotropy = 8;
+		if (srgb) t.colorSpace = THREE.SRGBColorSpace;
+		return t;
+	};
+	const map = load('color', true);
+	const normalMap = load('normal', false);
+	const roughnessMap = load('rough', false);
+	const material = new THREE.MeshStandardMaterial({ map, normalMap, roughnessMap, roughness: 1, color: tint ?? '#ffffff' });
+	return {
+		material,
+		scroll(v) {
+			for (const t of [map, normalMap, roughnessMap]) t.offset.y = v % 1;
+		},
+		dispose() {
+			for (const t of [map, normalMap, roughnessMap]) t.dispose();
+			material.dispose();
+		}
+	};
+}
+
+/** Car paint that picks up sky reflections (clear coat), for the realistic scenes. */
+export function carPaint(color: string): THREE.MeshPhysicalMaterial {
+	return new THREE.MeshPhysicalMaterial({ color, metalness: 0.35, roughness: 0.32, clearcoat: 1, clearcoatRoughness: 0.08 });
+}

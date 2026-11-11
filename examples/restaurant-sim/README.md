@@ -28,11 +28,7 @@ The Vite browser preview shows the shell and the desktop launch instruction. A T
 restaurant-sim/
   package.json             Svelte 5, Vite, TypeScript, and Tauri JavaScript API and CLI
   src/
-    App.svelte             Snapshot subscription, shift screen, and kitchen layout
-    CustomerCard.svelte    Order tickets and customer patience
-    StationCard.svelte     Station actions and preparation progress
-    kitchen.ts             Typed Tauri calls and game-state listener
-    model.ts               TypeScript representation of the Rust snapshot
+    main.ts                Mounts the shared Counter Rush screen
   src-tauri/
     Cargo.toml             Tauri, Serde, and Tokio
     tauri.conf.json         Window, development server, and production entry
@@ -42,6 +38,8 @@ restaurant-sim/
       engine.rs            Command mailbox, monotonic clock, and snapshot events
       game.rs              Domain types, rules, recipes, queue, and unit tests
 ```
+
+The shared Svelte screen, customer and station cards, and typed Tauri bridge live in [Rumi's Counter Rush feature](../../apps/desktop/src/lib/features/counter-rush). The standalone app and Rumi both compile the Rust engine from this example.
 
 ## State and event flow
 

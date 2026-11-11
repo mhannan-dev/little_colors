@@ -29,9 +29,20 @@ jobs:
           node-version: 24
           cache: pnpm
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
       - uses: swatinem/rust-cache@v2
         with:
-          workspaces: apps/desktop/src-tauri
+          workspaces: |
+            apps/desktop/src-tauri
+            examples/formula-circuit
+
+      - name: Install the Formula Circuit WASM binding tool
+        shell: pwsh
+        run: |
+          $match = [regex]::Match((Get-Content examples/formula-circuit/Cargo.lock -Raw), '(?m)^name = "wasm-bindgen"\r?\nversion = "([^"]+)"')
+          if (!$match.Success) { throw 'No wasm-bindgen version in Cargo.lock' }
+          cargo install wasm-bindgen-cli --locked --version $match.Groups[1].Value
 
       - run: pnpm install --frozen-lockfile
       - name: Tests must pass before shipping

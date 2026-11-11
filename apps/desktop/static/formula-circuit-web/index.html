@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Formula Circuit</title>
+		<style>
+			html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #182a39; }
+			#track { position: absolute; inset: 0; }
+			canvas { display: block; width: 100%; height: 100%; outline: none; }
+			#status {
+				position: absolute; z-index: 1; left: 50%; top: 50%; transform: translate(-50%, -50%);
+				width: max-content; max-width: 85%; margin: 0; padding: 18px;
+				border-radius: 12px; background: #142532; color: #eff8ff; font: 18px/1.5 system-ui, sans-serif;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="track"><canvas id="formula-canvas" tabindex="0" aria-label="Formula Circuit driving view"></canvas></div>
+		<p id="status" role="status">Loading Formula Circuit…</p>
+		<script type="module" src="./boot.js"></script>
+	</body>
+</html>

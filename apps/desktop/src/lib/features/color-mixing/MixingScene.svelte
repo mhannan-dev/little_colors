@@ -22,6 +22,7 @@
 	import PaintContainer from '#lib/components/paint/PaintContainer.svelte';
 	import GameButton from '#lib/components/ui/GameButton.svelte';
 	import TopBar from '#lib/components/ui/TopBar.svelte';
+	import ParticleCanvas, { type ParticleCue } from '#lib/components/visuals/ParticleCanvas.svelte';
 	import { instruct, leaveScreen, replayInstruction, say, setIdlePrompt, stopNarration } from '#lib/audio/narrator.ts';
 	import { firstTime, hideHand, showHand } from '#lib/game/hand.ts';
 	import { createScheduler, durations } from '#lib/game/scheduler.ts';
@@ -58,6 +59,8 @@
 	let wiggleColor = $state<Color | null>(null);
 	let kicked = $state(false);
 	let cancelWrongResult: (() => void) | null = null;
+	let particles = $state.raw<ParticleCue | null>(null);
+	let ball = $state<HTMLDivElement>();
 
 	const activity = $derived<MixingActivity | undefined>(round.activities[index]);
 	const locked = $derived(LOCKED.includes(mState));
@@ -87,6 +90,7 @@
 		wiggleColor = null;
 		kicked = false;
 		mascot = 'idle';
+		particles = null;
 	}
 
 	function runEffect(effect: MixingEffect) {
@@ -130,6 +134,7 @@
 				break;
 			case 'celebrate':
 				mascot = 'kick';
+				particles = { kind: 'confetti', anchor: ball, label: lang === 'bn-BD' ? 'দারুণ!' : 'Wonderful!' };
 				scheduler.after(d.reduced ? 0 : 350, () => (kicked = true));
 				scheduler.after(d.celebrate, () => m.send({ type: 'CELEBRATION_DONE' }));
 				break;
@@ -246,6 +251,7 @@
 <TopBar onreplay={replayInstruction} />
 
 <section class="scene" class:paused={$paused}>
+	<ParticleCanvas cue={particles} paused={$paused} reducedMotion={d.reduced || $settings.reducedMotion} ambient={!roundDone} />
 	{#if roundDone}
 		<div class="done">
 			<Mascot state="celebrate" size={240} />
@@ -263,7 +269,7 @@
 
 		<div class="field">
 			<div class="mascot"><Mascot state={mascot} size={220} /></div>
-			<div class="ball-wrap">
+			<div class="ball-wrap" bind:this={ball}>
 				<Football
 					color={ballColor}
 					mixing={mixTo !== null}
@@ -308,6 +314,8 @@
 
 <style>
 	.scene {
+		position: relative;
+		isolation: isolate;
 		flex: 1;
 		display: flex;
 		flex-direction: column;
@@ -315,6 +323,14 @@
 		justify-content: space-between;
 		padding: 0 24px 32px;
 		min-height: 0;
+	}
+	.scene::before {
+		content: '';
+		position: absolute;
+		inset: 0;
+		z-index: -1;
+		pointer-events: none;
+		background: radial-gradient(ellipse at 50% 50%, #f9dfbb94, transparent 54%), radial-gradient(ellipse at 75% 77%, #dce9d16b, transparent 45%);
 	}
 	.paused :global(*) {
 		animation-play-state: paused !important;
@@ -346,10 +362,11 @@
 	}
 	.ball-wrap {
 		align-self: end;
+		filter: drop-shadow(0 9px 6px #5146372e);
 	}
 	.goal {
 		justify-self: start;
-		transition: transform 400ms ease;
+		transition: transform 400ms var(--spring-settle);
 	}
 	.goal.scored {
 		transform: scale(1.06);

@@ -7,7 +7,7 @@
     "frontendDist": "../build",
     "devUrl": "http://localhost:5173",
     "beforeDevCommand": "pnpm dev",
-    "beforeBuildCommand": "pnpm build"
+    "beforeBuildCommand": "pnpm build:formula && pnpm build"
   },
   "app": {
     "windows": [
@@ -23,7 +23,7 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self'; img-src 'self' data: blob:; media-src 'self' data: blob:; font-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self' ipc: http://ipc.localhost"
+      "csp": "default-src 'self'; img-src 'self' data: blob:; media-src 'self' data: blob:; font-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'wasm-unsafe-eval'; connect-src 'self' ipc: http://ipc.localhost"
     }
   },
   "bundle": {

@@ -3,9 +3,10 @@
 	import { isTauri } from '@tauri-apps/api/core';
 	import CustomerCard from './CustomerCard.svelte';
 	import StationCard from './StationCard.svelte';
-	import { kitchen, subscribeToKitchen } from './kitchen';
+	import { kitchen, setKitchenVisible, subscribeToKitchen } from './kitchen';
 	import type { Snapshot } from './model';
 
+	let { embedded = false }: { embedded?: boolean } = $props();
 	let game = $state<Snapshot>();
 	let selectedId = $state<number>();
 	let error = $state('');
@@ -18,13 +19,15 @@
 
 	onMount(() => {
 		if (!isTauri()) {
-			error = 'Open this kitchen with npm run tauri dev.';
+			error = embedded ? 'Open the Rumi desktop app to play Counter Rush.' : 'Open this kitchen with npm run tauri dev.';
 			return;
 		}
 		let disposed = false;
 		let unsubscribe: (() => void) | undefined;
 		void (async () => {
 			try {
+				if (embedded) await setKitchenVisible(true);
+				if (disposed) return;
 				const stop = await subscribeToKitchen(snapshot => { if (!disposed) apply(snapshot); });
 				if (disposed) {
 					stop();
@@ -40,6 +43,7 @@
 		return () => {
 			disposed = true;
 			unsubscribe?.();
+			if (embedded) void setKitchenVisible(false).catch(() => {});
 		};
 	});
 
@@ -57,7 +61,7 @@
 	}
 </script>
 
-<main>
+<div class="counter-rush">
 	<header>
 		<div><p class="eyebrow">Restaurant simulator</p><h1>Counter Rush</h1></div>
 		{#if game}
@@ -109,16 +113,16 @@
 			</div>
 		</section>
 	{/if}
-</main>
+</div>
 
 <style>
-	:global(*) { box-sizing: border-box; }
-	:global(body) { margin: 0; background: #f3e9d6; color: #263e35; font: 16px/1.45 system-ui, sans-serif; }
-	:global(button) { font: inherit; color: inherit; padding: 9px 14px; border: 2px solid #b7c9bb; border-radius: 9px; background: #f5fbf5; cursor: pointer; }
-	:global(button.primary) { background: #14634c; border-color: #14634c; color: white; font-weight: 700; }
-	:global(button:disabled) { opacity: .65; cursor: default; }
-	:global(:focus-visible) { outline: 3px solid #143baa; outline-offset: 3px; }
-	main { max-width: 1120px; margin: 0 auto; padding: 24px; }
+	.counter-rush { min-height: 100%; padding: 24px; background: #f3e9d6; color: #263e35; font: 16px/1.45 system-ui, sans-serif; }
+	.counter-rush :global(*) { box-sizing: border-box; }
+	.counter-rush :global(button) { font: inherit; color: inherit; padding: 9px 14px; border: 2px solid #b7c9bb; border-radius: 9px; background: #f5fbf5; cursor: pointer; }
+	.counter-rush :global(button.primary) { background: #14634c; border-color: #14634c; color: white; font-weight: 700; }
+	.counter-rush :global(button:disabled) { opacity: .65; cursor: default; }
+	.counter-rush :global(:focus-visible) { outline: 3px solid #143baa; outline-offset: 3px; }
+	.counter-rush > :global(*) { max-width: 1120px; margin-inline: auto; }
 	header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 16px 22px; background: #d7eadc; border-radius: 16px; }
 	h1 { margin: 0; font-size: clamp(32px, 5vw, 48px); }
 	h2 { margin-bottom: 10px; }

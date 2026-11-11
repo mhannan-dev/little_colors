@@ -3,6 +3,10 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
 	plugins: [svelte()],
-	server: { host: '127.0.0.1', port: 1420, strictPort: true },
+	resolve: { dedupe: ['svelte', '@tauri-apps/api'] },
+	server: {
+		host: '127.0.0.1', port: 1420, strictPort: true,
+		fs: { allow: ['.', '../../apps/desktop/src/lib/features/counter-rush'] }
+	},
 	clearScreen: false
 });

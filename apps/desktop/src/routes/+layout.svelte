@@ -3,6 +3,8 @@
 	import favicon from '#lib/assets/favicon.svg';
 	import { toCssVariables } from '@little-colors/design-tokens';
 	import { onMount } from 'svelte';
+	import { navigating, page } from '$app/state';
+	import RumiLoading from '#lib/components/ui/RumiLoading.svelte';
 	import { installDesktopBehavior } from '#lib/desktop.ts';
 	import GhostHand from '#lib/components/GhostHand.svelte';
 	import { restoreLanguage, settings } from '#lib/stores/settings.ts';
@@ -18,6 +20,7 @@
 	const BASE_H = 800;
 	let scale = $state(1);
 	let viewportH = $state(800);
+	const layoutScale = $derived(page.route.id === '/world-soccer' || page.route.id === '/tic-tac-toe' ? 1 : scale);
 	function fit() {
 		viewportH = window.innerHeight;
 		scale = Math.max(
@@ -47,8 +50,10 @@
 	{@html tokens}
 </svelte:head>
 
-<main style:zoom={scale} style:height="{viewportH / scale}px">
+<main style:zoom={layoutScale} style:height="{viewportH / layoutScale}px">
 	{@render children()}
+	<!-- Slow screens (a big game or the 3D kit) show Rumi instead of a blank page. -->
+	{#if navigating.to}<RumiLoading overlay />{/if}
 </main>
 
 <!-- Outside <main> so it uses unzoomed viewport coordinates. -->
@@ -56,6 +61,7 @@
 
 <style>
 	main {
+		position: relative;
 		height: 100vh;
 		min-height: 0;
 		overflow-x: hidden;

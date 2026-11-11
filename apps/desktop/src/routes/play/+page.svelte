@@ -5,26 +5,45 @@
 	import { say } from '#lib/audio/narrator.ts';
 	import { settings } from '#lib/stores/settings.ts';
 	import { t } from '#lib/i18n.ts';
+	import { PICKER_GROUPS } from '@little-colors/core';
 
+	// Grouped so a child sees a few big choices at a time (visual audit 2026-11-10).
 	const modes = [
-		{ id: 'mixing', key: 'mode.mixing', href: '/mixing' },
-		{ id: 'matching', key: 'mode.matching', href: '/matching' },
-		{ id: 'numbers', key: 'mode.numbers', href: '/numbers' },
-		{ id: 'football', key: 'mode.football', href: '/football' },
-		{ id: 'car', key: 'mode.car', href: '/car' },
-		{ id: 'garden3d', key: 'mode.garden3d', href: '/garden-3d' },
-		{ id: 'blocks3d', key: 'mode.blocks3d', href: '/blocks-3d' },
-		{ id: 'color-blocks', key: 'mode.color-blocks', href: '/color-blocks' },
-		{ id: 'abc3d', key: 'mode.abc3d', href: '/abc-123' },
-		{ id: 'car3d', key: 'mode.car3d', href: '/toy-car' },
-		{ id: 'race3d', key: 'mode.race3d', href: '/race' },
-		{ id: 'flag', key: 'mode.flag', href: '/flag' },
-		{ id: 'bird', key: 'mode.bird', href: '/bird' },
-		{ id: 'holy-puzzle', key: 'mode.holy-puzzle', href: '/holy-puzzle' },
-		{ id: 'fruit', key: 'mode.fruit', href: '/fruit' },
-		{ id: 'flower', key: 'mode.flower', href: '/flower' },
-		{ id: 'animals', key: 'mode.animals', href: '/animals' }
+		{ id: 'mixing', key: 'mode.mixing', href: '/mixing', group: 'learn' },
+		{ id: 'matching', key: 'mode.matching', href: '/matching', group: 'learn' },
+		{ id: 'numbers', key: 'mode.numbers', href: '/numbers', group: 'learn' },
+		{ id: 'abc3d', key: 'mode.abc3d', href: '/abc-123', group: 'learn' },
+		{ id: 'flag', key: 'mode.flag', href: '/flag', group: 'learn' },
+		{ id: 'fruit', key: 'mode.fruit', href: '/fruit', group: 'learn' },
+		{ id: 'flower', key: 'mode.flower', href: '/flower', group: 'learn' },
+		{ id: 'animals', key: 'mode.animals', href: '/animals', group: 'learn' },
+		{ id: 'color-blocks', key: 'mode.color-blocks', href: '/color-blocks', group: 'learn' },
+		{ id: 'holy-puzzle', key: 'mode.holy-puzzle', href: '/holy-puzzle', group: 'learn' },
+		{ id: 'football', key: 'mode.football', href: '/football', group: 'play' },
+		{ id: 'car', key: 'mode.car', href: '/car', group: 'play' },
+		{ id: 'bird', key: 'mode.bird', href: '/bird', group: 'play' },
+		{ id: 'kitchen', key: 'mode.kitchen', href: '/kitchen', group: 'play' },
+		{ id: 'blocks3d', key: 'mode.blocks3d', href: '/blocks-3d', group: 'play' },
+		{ id: 'garden3d', key: 'mode.garden3d', href: '/garden-3d', group: 'play' },
+		{ id: 'car3d', key: 'mode.car3d', href: '/toy-car', group: 'drive' },
+		{ id: 'race3d', key: 'mode.race3d', href: '/race', group: 'drive' },
+		{ id: 'highway', key: 'mode.highway', href: '/highway', group: 'drive' },
+		{ id: 'bike', key: 'mode.bike', href: '/bike', group: 'drive' },
+		{ id: 'city-bus-driver', key: 'mode.city-bus-driver', href: '/city-bus-driver', group: 'older' },
+		{ id: 'formula-circuit', key: 'mode.formula-circuit', href: '/formula-circuit', group: 'older' },
+		{ id: 'world-soccer', key: 'mode.world-soccer', href: '/world-soccer', group: 'older' },
+		{ id: 'tic-tac-toe', key: 'mode.tic-tac-toe', href: '/tic-tac-toe', group: 'older' }
 	] as const;
+
+	// Search (for grown-ups): matches a game's Bengali or English name, or its id.
+	let query = $state('');
+	const norm = (x: string) => x.toLowerCase().normalize('NFC').replace(/s+/g, ' ').trim();
+	const matches = (m: (typeof modes)[number]) => {
+		const q = norm(query);
+		if (!q) return true;
+		return [narrationText(m.key, 'bn-BD', true), narrationText(m.key, 'en-US', true), m.id.replace(/-/g, ' ')].some((n) => norm(n).includes(q));
+	};
+	const shown = $derived(modes.filter(matches));
 
 	const label = (key: string) =>
 		narrationText(key, $settings.language, $settings.islamicExpressionsEnabled);
@@ -32,7 +51,7 @@
 	// SC-11: a tap opens the mode and speaks its label; keyboard focus alone speaks it.
 	function open(m: (typeof modes)[number]) {
 		say(m.key, { interrupt: true });
-		goto(m.href);
+		void goto(m.href);
 	}
 </script>
 
@@ -40,10 +59,27 @@
 
 <section>
 	<h2>{t('chooseMode', $settings.language)}</h2>
-	<div class="cards">
-		{#each modes as m (m.id)}
+	<div class="search" role="search">
+		<span class="glass" aria-hidden="true">🔍</span>
+		<input
+			type="search"
+			data-testid="game-search"
+			bind:value={query}
+			placeholder={$settings.language === 'bn-BD' ? 'খেলা খুঁজি… (যেমন: গাড়ি, ফুল, ABC)' : 'Search games… (e.g. car, flower, ABC)'}
+			aria-label={$settings.language === 'bn-BD' ? 'খেলা খুঁজি' : 'Search games'}
+			onkeydown={(e) => e.key === 'Escape' && (query = '')}
+		/>
+		{#if query}<button class="clear" aria-label={$settings.language === 'bn-BD' ? 'মুছে দিই' : 'Clear'} onclick={() => (query = '')}>✕</button>{/if}
+	</div>
+	{#if shown.length === 0}
+		<p class="nothing" data-testid="no-results"><span aria-hidden="true">🙈</span> {$settings.language === 'bn-BD' ? 'কিছু পাওয়া যায়নি। অন্য নাম লিখে দেখি।' : 'Nothing found. Try another name.'}</p>
+	{/if}
+	{#each PICKER_GROUPS.filter((g) => shown.some((m) => m.group === g.id)) as g (g.id)}
+	<h3 class="group-title" data-group={g.id}><span aria-hidden="true">{g.icon}</span> {label(`picker.group.${g.id}`)}</h3>
+	<div class="cards" data-group={g.id}>
+		{#each shown.filter((m) => m.group === g.id) as m (m.id)}
 			<button class="card" onclick={() => open(m)} onfocus={() => say(m.key, { interrupt: true })}>
-				<svg viewBox="0 0 160 110" width="200" height="140" aria-hidden="true">
+				<svg viewBox="0 0 160 110" width="160" height="112" aria-hidden="true">
 					{#if m.id === 'mixing'}
 						<circle cx="80" cy="45" r="32" fill="var(--learn-orange)" stroke="var(--text-primary)" stroke-width="4" />
 						<polygon points="80,30 90,37 86,48 74,48 70,37" fill="var(--text-primary)" />
@@ -57,6 +93,33 @@
 							<circle cx={x} cy="40" r="20" fill="var(--learn-blue)" stroke="var(--text-primary)" stroke-width="3" />
 						{/each}
 						<text x="80" y="104" text-anchor="middle" font-size="40" font-weight="700" fill="var(--text-primary)">৩</text>
+					{:else if m.id === 'city-bus-driver'}
+						<rect x="16" y="25" width="128" height="64" rx="14" fill="var(--learn-yellow)" stroke="var(--text-primary)" stroke-width="4" />
+						<path d="M26 40h94v25H26z" fill="var(--learn-blue)" stroke="var(--text-primary)" stroke-width="3" />
+						<path d="M52 40v25m29-25v25m22-25v43" stroke="var(--text-primary)" stroke-width="3" />
+						<circle cx="42" cy="86" r="12" fill="var(--text-primary)" />
+						<circle cx="117" cy="86" r="12" fill="var(--text-primary)" />
+					{:else if m.id === 'formula-circuit'}
+						<path d="M15 71h130v21H15z" fill="var(--text-primary)" />
+						<path d="M19 67 57 58 66 43 92 43 103 57 143 65v13H19z" fill="var(--learn-red)" stroke="var(--text-primary)" stroke-width="4" />
+						<path d="M72 43v-9h16v9m37 17V49h17" fill="none" stroke="var(--text-primary)" stroke-width="5" />
+						<circle cx="46" cy="79" r="14" fill="var(--text-primary)" />
+						<circle cx="118" cy="79" r="14" fill="var(--text-primary)" />
+						<circle cx="46" cy="79" r="5" fill="var(--surface)" />
+						<circle cx="118" cy="79" r="5" fill="var(--surface)" />
+				{:else if m.id === 'kitchen'}
+						<path d="M27 64h106q-3 28-20 28H47Q30 92 27 64Z" fill="var(--learn-orange)" stroke="var(--text-primary)" stroke-width="4" />
+						<path d="M20 61h120M56 47q-9-10 0-19m24 19q-9-12 0-25m24 25q-9-10 0-19" fill="none" stroke="var(--text-primary)" stroke-width="5" stroke-linecap="round" />
+					{:else if m.id === 'tic-tac-toe'}
+						<rect x="34" y="9" width="92" height="92" rx="15" fill="#e0edce" stroke="var(--text-primary)" stroke-width="3" />
+						<path d="M66 17v76m28-76v76M42 41h76M42 69h76" stroke="#69836b" stroke-width="3" />
+						<path d="m46 22 14 14m0-14L46 36m27 12 14 14m0-14L73 62m27 12 14 14m0-14-14 14" stroke="#ab4d3d" stroke-width="4" stroke-linecap="round" />
+						<g fill="none" stroke="#285d94" stroke-width="4"><circle cx="106" cy="29" r="8" /><circle cx="53" cy="81" r="8" /></g>
+					{:else if m.id === 'world-soccer'}
+						<rect x="20" y="12" width="120" height="86" rx="13" fill="#459462" stroke="#20483f" stroke-width="4" />
+						<path d="M34 24h92v62H34z M34 55h92 M59 24v15h42V24 M59 86V71h42v15" fill="none" stroke="#edf5df" stroke-width="3" />
+						<circle cx="80" cy="55" r="15" fill="#faf4de" stroke="#20483f" stroke-width="3" />
+						<path d="M80 46l8 6-3 9H75l-3-9Z" fill="#20483f" />
 					{:else if m.id === 'football'}
 						<circle cx="80" cy="50" r="32" fill="var(--learn-orange)" stroke="var(--text-primary)" stroke-width="4" />
 						<polygon points="80,30 90,39 84,52 72,52 66,39" fill="var(--text-primary)" />
@@ -102,6 +165,18 @@
 						<circle cx="80" cy="52" r="7" fill="var(--mascot-fur-light)" stroke="var(--text-primary)" stroke-width="2" />
 						<circle cx="58" cy="96" r="9" fill="var(--text-primary)" />
 						<circle cx="102" cy="96" r="9" fill="var(--text-primary)" />
+					{:else if m.id === 'bike'}
+						<circle cx="40" cy="78" r="22" fill="none" stroke="var(--text-primary)" stroke-width="6" />
+						<circle cx="120" cy="78" r="22" fill="none" stroke="var(--text-primary)" stroke-width="6" />
+						<path d="M40 78 L66 46 L104 46 L120 78 M66 46 L80 78 L104 46 M58 38 H76 M104 46 L98 30 H112" fill="none" stroke="var(--learn-blue)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" />
+						<path d="M106 18 h18 l-4 12 h-12 z" fill="#C79A55" stroke="var(--text-primary)" stroke-width="2.5" />
+						<circle cx="111" cy="16" r="4.5" fill="var(--learn-red)" /><circle cx="119" cy="16" r="4.5" fill="var(--learn-yellow)" />
+					{:else if m.id === 'highway'}
+						<path d="M58 10 L102 10 L150 104 L10 104 Z" fill="#4A5058" />
+						<path d="M80 16 v10 M80 38 v14 M80 64 v18 M80 92 v10" stroke="#F4F4F0" stroke-width="4" stroke-linecap="round" />
+						<rect x="92" y="30" width="20" height="26" rx="5" fill="var(--learn-blue)" stroke="var(--text-primary)" stroke-width="2.5" />
+						<rect x="44" y="66" width="32" height="34" rx="7" fill="var(--learn-red)" stroke="var(--text-primary)" stroke-width="3" />
+						<circle cx="60" cy="64" r="7" fill="var(--mascot-fur-light)" stroke="var(--text-primary)" stroke-width="2" />
 					{:else if m.id === 'race3d'}
 						<rect x="74" y="6" width="4" height="44" fill="var(--text-primary)" />
 						{#each [0, 1, 2, 3] as i (i)}
@@ -152,6 +227,7 @@
 			</button>
 		{/each}
 	</div>
+	{/each}
 	<button class="thinking-link" onclick={() => { say('thinking.title', { interrupt: true }); goto('/thinking'); }}>
 		<span>{label('thinking.title')}</span>
 		<small>{$settings.language === 'bn-BD' ? '৫–১০ বছরের জন্য চারটি নতুন পাঠ' : 'Four new lessons for ages 5–10'}</small>
@@ -170,31 +246,91 @@
 		flex-direction: column;
 		align-items: center;
 		justify-content: safe center;
-		gap: 32px;
+		gap: 14px;
 		padding: 0 24px 48px;
 	}
 	h2 {
 		margin: 0;
 		font-size: 40px;
 	}
+	.search {
+		position: relative;
+		display: flex;
+		align-items: center;
+		width: min(560px, 100%);
+	}
+	.search input {
+		width: 100%;
+		min-height: 56px;
+		padding: 8px 56px 8px 56px;
+		border: 3px solid var(--border-soft);
+		border-radius: 28px;
+		background: var(--surface);
+		font: inherit;
+		font-size: 22px;
+		color: var(--text-primary);
+	}
+	/* Our own big clear button replaces the small browser one. */
+	.search input::-webkit-search-cancel-button {
+		display: none;
+	}
+	.search input:focus {
+		outline: none;
+		border-color: var(--focus);
+	}
+	.search .glass {
+		position: absolute;
+		left: 18px;
+		font-size: 24px;
+		pointer-events: none;
+	}
+	.search .clear {
+		position: absolute;
+		right: 8px;
+		width: 42px;
+		height: 42px;
+		border: 0;
+		border-radius: 50%;
+		background: var(--bg-secondary);
+		font-size: 20px;
+		cursor: pointer;
+	}
+	.nothing {
+		margin: 20px 0;
+		font-size: 24px;
+		color: var(--text-secondary);
+	}
+	.group-title {
+		margin: 10px 0 0;
+		width: min(1180px, 100%);
+		font-size: 28px;
+		color: var(--text-secondary);
+	}
+	.group-title span {
+		font-size: 34px;
+	}
 	.cards {
 		display: flex;
 		flex-wrap: wrap;
-		justify-content: center;
-		gap: 32px;
+		justify-content: flex-start;
+		gap: 20px;
+		width: min(1180px, 100%);
+	}
+	.cards[data-group='older'] .card {
+		background: var(--bg-secondary);
 	}
 	.card {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
 		gap: 12px;
-		width: clamp(160px, 24vw, 260px);
-		padding: 28px 20px 24px;
+		width: clamp(150px, 17vw, 210px);
+		padding: 18px 14px 16px;
 		border: 4px solid var(--border-soft);
 		border-radius: var(--radius-xl);
 		background: var(--surface);
 		cursor: pointer;
-		font-size: 30px;
+		font-size: 24px;
 		font-weight: 700;
 		transition: transform 200ms ease, border-color 200ms ease;
 	}

@@ -186,11 +186,12 @@
 			}
 		}
 
-		car = kit.toyCar('#E5484D');
+		const paint = stage.surface('plastic');
+		car = kit.toyCar('#E5484D', undefined, paint);
 		stage.scene.add(car);
 		// Friends: a blue car with a bear, a yellow car with a bunny-white friend.
 		for (const [i, [color, fur]] of ([['#3478D4', '#9B7653'], ['#F2C94C', '#F5EFE6']] as const).entries()) {
-			const f = kit.toyCar(color, fur);
+			const f = kit.toyCar(color, fur, paint);
 			f.position.x = FRIEND_X[i]!;
 			stage.scene.add(f);
 			friends.push({ car: f, phase: i * 2.1 });
@@ -476,6 +477,8 @@
 				p.t += dt;
 				if (p.mode === 'burst') {
 					const k = Math.min(1, p.t / 0.35);
+					const glow = d.reduced || $settings.reducedMotion ? 0 : 1 - k;
+					mat.emissive.setRGB(glow * 1.15, glow * 0.78, glow * 0.32);
 					p.block.scale.setScalar(1 + k * 0.6);
 					p.block.position.y = 1.6 + k * 1.2;
 					if (k >= 1) p.block.visible = false;
@@ -587,8 +590,9 @@
 				hintId = null;
 				if (effect.correct) {
 					animatePad(effect.optionId, 'burst');
+					stage?.feedback(!d.reduced && !$settings.reducedMotion);
 					const p = padFor(effect.optionId);
-					if (p) burst(new kit!.THREE.Vector3(p.group.position.x, 1.8, p.group.position.z), 26, kit!.TOY_COLORS);
+					if (p && !$settings.reducedMotion) burst(new kit!.THREE.Vector3(p.group.position.x, 1.8, p.group.position.z), 26, kit!.TOY_COLORS);
 					boostT = d.reduced ? 0 : 2.2;
 					phase = 'boost';
 				} else {

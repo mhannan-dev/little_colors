@@ -59,6 +59,8 @@
 	interface Block {
 		id: string;
 		mesh: Kit.THREE.Mesh;
+		shadow: ReturnType<Kit.Stage['contactShadow']>;
+		size: number;
 		baseX: number;
 		/** Resting turn, so a hop lands facing the same way. */
 		rotY: number;
@@ -94,7 +96,7 @@
 		if (!canvas || destroyed) return;
 		const { THREE } = kit;
 		try {
-			stage = kit.createStage(canvas, { fov: 40 });
+			stage = kit.createStage(canvas, { fov: 40, bloom: !d.reduced && !$settings.reducedMotion });
 		} catch {
 			failed = true;
 			return;
@@ -104,7 +106,7 @@
 
 		const mat = new THREE.Mesh(
 			new THREE.CylinderGeometry(7.5, 7.5, 0.3, 48),
-			new THREE.MeshStandardMaterial({ color: '#F6E7CF', roughness: 0.9 })
+			new THREE.MeshStandardMaterial({ color: '#F6E7CF', roughness: 0.96, ...stage.surface('wood') })
 		);
 		mat.position.y = -0.15;
 		mat.receiveShadow = true;
@@ -120,6 +122,7 @@
 	function clearBlocks() {
 		if (!stage) return;
 		for (const b of blocks) {
+			b.shadow.dispose();
 			stage.scene.remove(b.mesh);
 			b.mesh.geometry.dispose();
 			const m = b.mesh.material as Kit.THREE.MeshStandardMaterial;
@@ -136,14 +139,18 @@
 		const n = activity.options.length;
 		const gap = n >= 5 ? 2.3 : n === 4 ? 2.6 : 2.9;
 		const size = n >= 5 ? 1.65 : n === 4 ? 1.85 : 2.05;
+		const surface = stage.surface('plastic');
 		blocks = activity.options.map((o, i) => {
 			const mesh = kit!.toyBlock(glyphFor(s, o.symbol!), kit!.TOY_COLORS[i % kit!.TOY_COLORS.length], size);
 			const baseX = (i - (n - 1) / 2) * gap;
 			mesh.position.set(baseX, size / 2 + 0.4, 0);
 			const rotY = (i - (n - 1) / 2) * -0.12;
 			mesh.rotation.y = rotY;
+			Object.assign(mesh.material, surface);
+			const shadow = stage!.contactShadow(size * 1.5);
+			shadow.mesh.position.x = baseX;
 			stage!.scene.add(mesh);
-			return { id: o.id, mesh, baseX, rotY, phase: i * 1.3, mode: d.reduced ? '' : 'hop', t: -i * 0.08 } satisfies Block;
+			return { id: o.id, mesh, shadow, size, baseX, rotY, phase: i * 1.3, mode: d.reduced ? '' : 'hop', t: -i * 0.08 } satisfies Block;
 		});
 		placeButtons();
 	}
@@ -151,7 +158,7 @@
 	function frame(dt: number, time: number) {
 		for (const b of blocks) {
 			const m = b.mesh;
-			const size = (m.geometry as Kit.THREE.BufferGeometry & { parameters?: { width: number } }).parameters?.width ?? 1.6;
+			const size = b.size;
 			const rest = size / 2 + 0.4;
 			const bob = d.reduced ? 0 : Math.sin(time * 1.6 + b.phase) * 0.08;
 			m.position.x = b.baseX;
@@ -163,6 +170,8 @@
 				b.t += dt;
 				const p = Math.max(0, b.t);
 				if (b.mode === 'jump') {
+					const glow = $settings.reducedMotion ? 0 : Math.max(0, 1 - p / 0.48);
+					mat.emissive.setRGB(glow * 1.15, glow * 0.78, glow * 0.32);
 					// Cartoon hop: crouch, stretch up, spin in the air, squash on landing.
 					const h = kit!.squashHop(p);
 					m.position.y = rest + h.y - ((1 - h.sy) * size) / 2;
@@ -185,6 +194,10 @@
 					if (k >= 1) b.mode = '';
 				}
 			}
+			const lift = Math.max(0, m.position.y - rest);
+			b.shadow.mesh.position.x = m.position.x;
+			b.shadow.mesh.scale.setScalar(size * (1.5 + lift * 0.22));
+			b.shadow.mesh.material.opacity = 0.34 / (1 + lift);
 		}
 		confetti?.update(dt);
 		// Keep the tap targets over the blocks (cheap: a handful of projections).
@@ -235,7 +248,10 @@
 			case 'animate':
 				hintId = null;
 				animateBlock(effect.optionId, effect.correct ? 'jump' : 'wobble');
-				if (effect.correct) popConfetti(effect.optionId, 40);
+				if (effect.correct && !$settings.reducedMotion) {
+					stage?.feedback(!d.reduced);
+					popConfetti(effect.optionId, 40);
+				}
 				mascot = 'thinking';
 				scheduler.after(d.reduced ? 300 : ANIM_MS, () => m.send({ type: 'ANIM_DONE' }));
 				break;
@@ -261,7 +277,7 @@
 				mascot = 'celebrate';
 				for (const b of blocks) if (b.id === ctx?.activity.answerId) {
 					animateBlock(b.id, 'jump');
-					popConfetti(b.id, 18);
+					if (!$settings.reducedMotion) popConfetti(b.id, 18);
 				}
 				scheduler.after(d.celebrate, () => m.send({ type: 'CELEBRATION_DONE' }));
 				break;

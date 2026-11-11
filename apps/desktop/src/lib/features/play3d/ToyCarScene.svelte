@@ -151,7 +151,7 @@
 			}
 		}
 
-		car = kit.toyCar('#E5484D');
+		car = kit.toyCar('#E5484D', undefined, stage.surface('plastic'));
 		stage.scene.add(car);
 
 		confetti = kit.createConfetti(stage.scene, d.reduced);
@@ -274,6 +274,8 @@
 			s.t += dt;
 			if (s.mode === 'win') {
 				const k = Math.min(1, s.t / 1.2);
+				const glow = d.reduced || $settings.reducedMotion ? 0 : Math.max(0, 1 - s.t / 0.48);
+				mat.emissive.setRGB(glow * 1.15, glow * 0.78, glow * 0.32);
 				s.board.position.y = 3.4 + (d.reduced ? 0 : Math.sin(k * Math.PI) * 1.2);
 				s.board.rotation.y = d.reduced ? 0 : k * Math.PI * 2;
 				s.board.scale.setScalar(1 + 0.2 * Math.sin(k * Math.PI));
@@ -406,7 +408,10 @@
 				scheduler.after(d.reduced ? 320 : ANIM_MS + 20, () => {
 					phase = 'arrived';
 					animateSign(effect.optionId, effect.correct ? 'win' : 'wobble');
-					if (effect.correct) popConfetti(effect.optionId);
+					if (effect.correct && !$settings.reducedMotion) {
+						stage?.feedback(!d.reduced);
+						popConfetti(effect.optionId);
+					}
 					m.send({ type: 'ANIM_DONE' });
 				});
 				break;

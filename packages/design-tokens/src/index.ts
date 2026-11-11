@@ -46,6 +46,12 @@ export const size = {
 
 export type LearningColorName = keyof typeof learning;
 
+const effects = {
+	'spring-out': 'cubic-bezier(.22, 1.25, .4, 1)',
+	'spring-settle': 'cubic-bezier(.3, .85, .35, 1.08)',
+	'contact-shadow': '0 5px 8px rgba(43, 49, 42, .15), 0 13px 20px rgba(43, 49, 42, .07)'
+} as const;
+
 /** CSS custom properties for :root (light) — consumed by the desktop UI. */
 export function toCssVariables(theme: 'light' | 'dark' = 'light'): string {
 	const n = theme === 'dark' ? neutralDark : neutral;
@@ -53,7 +59,8 @@ export function toCssVariables(theme: 'light' | 'dark' = 'light'): string {
 		...Object.entries(n),
 		...Object.entries(learning).map(([k, v]) => [`learn-${k}`, v] as [string, string]),
 		...Object.entries(mascot).map(([k, v]) => [`mascot-${k}`, v] as [string, string]),
-		...Object.entries(size)
+		...Object.entries(size),
+		...Object.entries(effects)
 	];
 	return entries.map(([k, v]) => `--${k}: ${v};`).join('\n');
 }

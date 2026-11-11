@@ -31,6 +31,8 @@
 	import { paused } from '#lib/stores/pause.ts';
 	import { settings } from '#lib/stores/settings.ts';
 	import { t } from '#lib/i18n.ts';
+	import ParticleCanvas, { type ParticleCue } from '#lib/components/visuals/ParticleCanvas.svelte';
+	import { chime } from '#lib/game/chime.ts';
 
 	let { game }: { game: MiniGame } = $props();
 
@@ -50,6 +52,9 @@
 	let ctx = $state<ChoiceContext | null>(null);
 
 	let mascot = $state<MascotAnimation>('idle');
+	/** Confetti on a right answer, stars when Rumi celebrates (shared particle layer). */
+	let particles = $state.raw<ParticleCue | null>(null);
+	let mascotEl = $state<HTMLElement | null>(null);
 	let hintId = $state<string | null>(null);
 	/** Moving piece (ball / car) offset toward the chosen option. */
 	let moveX = $state(0);
@@ -113,6 +118,12 @@
 					});
 				} else if (m.state === 'CORRECT') {
 					mascot = 'celebrate';
+					chime();
+					particles = {
+						kind: 'confetti',
+						anchor: document.querySelector(`[data-option-id="${m.context.chosenId}"]`),
+						label: lang === 'bn-BD' ? 'দারুণ!' : 'Great!'
+					};
 				}
 				break;
 			case 'hint':
@@ -122,6 +133,7 @@
 				break;
 			case 'celebrate':
 				mascot = 'celebrate';
+				particles = { kind: 'stars', anchor: mascotEl };
 				scheduler.after(d.celebrate, () => m.send({ type: 'CELEBRATION_DONE' }));
 				break;
 			case 'cancelAll':
@@ -218,7 +230,7 @@
 </script>
 
 {#snippet goalArt(o: ChoiceOption)}
-	<svg viewBox="0 0 120 100" width="150" height="125" aria-hidden="true">
+	<svg viewBox="0 0 120 100" width="230" height="192" aria-hidden="true">
 		<path d="M8 96 V10 H112 V96" fill="none" stroke={o.color ? `var(--learn-${o.color})` : 'var(--text-primary)'} stroke-width="10" stroke-linecap="round" stroke-linejoin="round" />
 		<path d="M14 34 H106 M14 58 H106 M14 82 H106 M38 14 V96 M60 14 V96 M82 14 V96" stroke="var(--border-soft)" stroke-width="3" />
 		{#if o.number !== undefined}
@@ -229,7 +241,7 @@
 {/snippet}
 
 {#snippet ballArt()}
-	<svg viewBox="0 0 100 100" width="96" height="96" aria-hidden="true">
+	<svg viewBox="0 0 100 100" width="128" height="128" aria-hidden="true">
 		<circle cx="50" cy="50" r="44" fill="var(--surface)" stroke="var(--text-primary)" stroke-width="4" />
 		<polygon points="50,30 63,39 58,54 42,54 37,39" fill="var(--text-primary)" />
 		<path d="M50 30 V8 M63 39 L84 30 M58 54 L70 74 M42 54 L30 74 M37 39 L16 30" stroke="var(--text-primary)" stroke-width="3" fill="none" />
@@ -237,7 +249,7 @@
 {/snippet}
 
 {#snippet carArt(color: string, passengers: number)}
-	<svg viewBox="0 0 160 100" width="170" height="106" aria-hidden="true">
+	<svg viewBox="0 0 160 100" width="250" height="156" aria-hidden="true">
 		<path d="M14 66 Q14 50 30 48 L46 46 L62 24 Q66 20 72 20 H106 Q114 20 118 28 L128 46 L140 48 Q150 50 150 64 V72 Q150 78 144 78 H20 Q14 78 14 72 Z" fill={`var(--learn-${color})`} stroke="var(--text-primary)" stroke-width="4" stroke-linejoin="round" />
 		<path d="M66 28 H86 V46 H54 Z M92 28 H110 L120 46 H92 Z" fill="var(--bg-secondary)" stroke="var(--text-primary)" stroke-width="3" stroke-linejoin="round" />
 		{#each Array.from({ length: passengers }, (_, i) => i) as i (i)}
@@ -251,7 +263,7 @@
 {/snippet}
 
 {#snippet garageArt(o: ChoiceOption)}
-	<svg viewBox="0 0 140 120" width="170" height="146" aria-hidden="true">
+	<svg viewBox="0 0 140 120" width="232" height="199" aria-hidden="true">
 		<path d="M8 50 L70 8 L132 50 V114 H8 Z" fill={o.color ? `var(--learn-${o.color})` : 'var(--surface)'} fill-opacity={o.color ? 0.85 : 1} stroke="var(--text-primary)" stroke-width="4" stroke-linejoin="round" />
 		<rect x="28" y="58" width="84" height="56" rx="4" fill="var(--bg-secondary)" stroke="var(--text-primary)" stroke-width="4" />
 		<path d="M28 72 H112 M28 86 H112 M28 100 H112" stroke="var(--border-soft)" stroke-width="3" />
@@ -263,7 +275,7 @@
 {/snippet}
 
 {#snippet birdArt(color: string)}
-	<svg viewBox="0 0 60 50" width="62" height="52" aria-hidden="true">
+	<svg viewBox="0 0 60 50" width="90" height="75" aria-hidden="true">
 		<ellipse cx="28" cy="30" rx="20" ry="15" fill={`var(--learn-${color})`} stroke="var(--text-primary)" stroke-width="3" />
 		<circle cx="44" cy="18" r="10" fill={`var(--learn-${color})`} stroke="var(--text-primary)" stroke-width="3" />
 		<circle cx="47" cy="16" r="2.5" fill="var(--text-primary)" />
@@ -276,6 +288,27 @@
 <TopBar onreplay={replayInstruction} />
 
 <section class="scene {game}" class:paused={$paused}>
+	<ParticleCanvas cue={particles} paused={$paused} reducedMotion={d.reduced} />
+	<div class="backdrop {game}" aria-hidden="true">
+		<span class="sun"></span>
+		{#if game === 'birds'}
+			<span class="cloud c1"></span><span class="cloud c2"></span><span class="cloud c3"></span>
+			<span class="hill h1"></span><span class="hill h2"></span>
+			<span class="trunk"></span>
+		{:else if game === 'garage'}
+			<span class="cloud c1"></span><span class="cloud c2"></span>
+			<svg class="city" viewBox="0 0 1200 220" preserveAspectRatio="none">
+				<path d="M0 220V120h70V70h60v50h40V40h80v80h50V90h70v130zM400 220V100h60V60h90v60h40V30h70v90h60V80h80v140zM900 220V110h50V60h80v50h40V20h70v100h60v100z" fill="#c9d6e3" />
+				<path d="M0 220V160h90v-30h70v30h60v-50h80v50h70v-20h90v40h80v-60h70v60h90v-40h80v40h70v-30h90v30h80v-50h80v70z" fill="#b3c4d4" />
+			</svg>
+			<span class="sidewalk"></span>
+			<span class="road"></span>
+		{:else}
+			<span class="cloud c1"></span><span class="cloud c2"></span>
+			<span class="treeline"></span>
+			<span class="pitch"><span class="lines"></span></span>
+		{/if}
+	</div>
 	{#if roundDone}
 		<div class="done">
 			<Mascot state="celebrate" size={240} />
@@ -292,7 +325,7 @@
 		</div>
 
 		<div class="field">
-			<div class="mascot"><Mascot state={mascot} size={170} /></div>
+			<div class="mascot" bind:this={mascotEl}><Mascot state={mascot} size={190} /></div>
 
 			{#if game === 'football'}
 				{@const fd = a.data as FootballData}
@@ -362,6 +395,8 @@
 
 <style>
 	.scene {
+		position: relative;
+		isolation: isolate;
 		flex: 1;
 		display: flex;
 		flex-direction: column;
@@ -559,5 +594,162 @@
 		.mascot {
 			display: none;
 		}
+	}
+
+	/* ── Scenery (decorative, behind everything; calm, no flashing) ── */
+	.backdrop {
+		position: absolute;
+		inset: 0;
+		z-index: -1;
+		overflow: hidden;
+		pointer-events: none;
+		background: linear-gradient(#cfe9fb 0%, #eaf6fd 46%, #fff9f0 100%);
+	}
+	.sun {
+		position: absolute;
+		top: 7%;
+		right: 9%;
+		width: 86px;
+		height: 86px;
+		border-radius: 50%;
+		background: radial-gradient(circle, #fff6c9 0 55%, #ffe58f 56% 100%);
+		box-shadow: 0 0 0 18px #fff1b455, 0 0 0 40px #fff1b422;
+	}
+	.cloud {
+		position: absolute;
+		width: 170px;
+		height: 46px;
+		border-radius: 30px;
+		background: #ffffff;
+		opacity: 0.92;
+		animation: drift 60s linear infinite;
+	}
+	.cloud::before,
+	.cloud::after {
+		content: '';
+		position: absolute;
+		border-radius: 50%;
+		background: #ffffff;
+	}
+	.cloud::before { width: 70px; height: 70px; left: 26px; top: -34px; }
+	.cloud::after { width: 54px; height: 54px; left: 86px; top: -22px; }
+	.c1 { top: 15%; left: 6%; }
+	.c2 { top: 9%; left: 46%; transform: scale(0.75); animation-duration: 80s; }
+	.c3 { top: 24%; left: 70%; transform: scale(0.6); animation-duration: 95s; }
+	/* Football: a striped pitch with field lines and a treeline. */
+	.backdrop.football .treeline {
+		position: absolute;
+		left: -5%;
+		right: -5%;
+		bottom: 70%;
+		height: 60px;
+		background: radial-gradient(circle at 20px 60px, #5fa86e 0 34px, transparent 35px) 0 0 / 70px 60px repeat-x;
+	}
+	.backdrop.football .pitch {
+		position: absolute;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		height: 72%;
+		background: repeating-linear-gradient(90deg, #8fcf72 0 90px, #84c567 90px 180px);
+		box-shadow: inset 0 14px 22px #5b8f4c40;
+	}
+	.backdrop.football .lines {
+		position: absolute;
+		inset: 8% 6% -10% 6%;
+		border: 5px solid #ffffffb3;
+		border-radius: 6px;
+	}
+	.backdrop.football .lines::after {
+		content: '';
+		position: absolute;
+		left: 50%;
+		top: 38%;
+		width: 170px;
+		height: 170px;
+		border: 5px solid #ffffffb3;
+		border-radius: 50%;
+		transform: translate(-50%, -50%);
+	}
+	/* Garage: a little town street. */
+	.backdrop.garage .city {
+		position: absolute;
+		left: 0;
+		bottom: 34%;
+		width: 100%;
+		height: 30%;
+	}
+	.backdrop.garage .sidewalk {
+		position: absolute;
+		left: 0;
+		right: 0;
+		bottom: 26%;
+		height: 9%;
+		background: repeating-linear-gradient(90deg, #e3ddd2 0 120px, #d7d0c3 120px 124px);
+	}
+	.backdrop.garage .road {
+		position: absolute;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		height: 27%;
+		background: repeating-linear-gradient(90deg, #f4f4f0 0 70px, transparent 70px 140px) 0 50% / 100% 8px no-repeat, #6c737b;
+		box-shadow: inset 0 8px 0 #565c63;
+	}
+	/* Birds: hills, a big tree trunk, drifting clouds. */
+	.backdrop.birds .hill {
+		position: absolute;
+		bottom: -40%;
+		border-radius: 50%;
+	}
+	.backdrop.birds .h1 { left: -10%; width: 70%; height: 70%; background: #a7d88c; }
+	.backdrop.birds .h2 { right: -15%; width: 75%; height: 62%; background: #94cc7a; }
+	.backdrop.birds .trunk {
+		position: absolute;
+		right: 6%;
+		bottom: 0;
+		width: 70px;
+		height: 78%;
+		border-radius: 30px 30px 0 0;
+		background: linear-gradient(90deg, #8a6a52, #a07c60 60%, #8a6a52);
+	}
+	.backdrop.birds .trunk::before {
+		content: '';
+		position: absolute;
+		top: -120px;
+		left: -120px;
+		width: 310px;
+		height: 220px;
+		border-radius: 50%;
+		background: radial-gradient(circle at 40% 40%, #6fbf73, #4e9f68 70%);
+	}
+	/* Gentle idle life so the scene never looks frozen. */
+	.mover.ball:not(.hit):not(.miss):not(.back) {
+		animation: idle-bounce 1.6s ease-in-out infinite;
+	}
+	.mover.car:not(.hit):not(.miss):not(.back) {
+		animation: idle-rumble 0.9s ease-in-out infinite;
+	}
+	.bird {
+		animation: land 600ms ease-out backwards, breathe 2.4s ease-in-out 600ms infinite;
+	}
+	@keyframes drift {
+		from { translate: 0 0; }
+		to { translate: 110vw 0; }
+	}
+	@keyframes idle-bounce {
+		0%, 100% { translate: 0 0; }
+		50% { translate: 0 -10px; }
+	}
+	@keyframes idle-rumble {
+		0%, 100% { translate: 0 0; }
+		50% { translate: 0 -2px; }
+	}
+	@keyframes breathe {
+		0%, 100% { scale: 1; }
+		50% { scale: 1.04; }
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.cloud, .mover.ball, .mover.car, .bird { animation: none !important; }
 	}
 </style>

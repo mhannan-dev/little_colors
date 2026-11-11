@@ -1,0 +1,4 @@
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; background: #101e2a; color-scheme: dark; }
+#app { display: flex; flex-direction: column; min-height: 100dvh; }
+#app [lang='bn-BD'] { font-family: 'Hind Siliguri', system-ui, sans-serif; }

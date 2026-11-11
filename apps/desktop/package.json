@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
+    "build:formula": "node src-tauri/build-formula-wasm.mjs",
+    "build:soccer-android": "node soccer-android/build-apk.mjs",
     "preview": "vite preview",
     "prepare": "svelte-kit sync || echo ''",
     "typecheck": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",

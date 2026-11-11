@@ -5,10 +5,21 @@ edition = "2024"
 
 [dependencies]
 bevy = { version = "=0.18.1", default-features = false, features = [
-    "std", "async_executor", "multi_threaded", "bevy_log", "bevy_winit",
-    "bevy_pbr", "bevy_gizmos_render", "bevy_ui_render", "default_font", "x11",
+    "std", "async_executor", "bevy_log", "bevy_winit",
+    "bevy_pbr", "bevy_gizmos_render", "bevy_ui_render", "default_font",
 ] }
 bevy_rapier3d = { version = "=0.33.0", default-features = false, features = ["dim3", "debug-render-3d"] }
 
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+bevy = { version = "=0.18.1", default-features = false, features = ["multi_threaded", "x11"] }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+bevy = { version = "=0.18.1", default-features = false, features = ["webgl2"] }
+
 [profile.dev]
 debug = 0
+
+[profile.wasm]
+inherits = "release"
+opt-level = 2
+strip = "debuginfo"

@@ -14,6 +14,8 @@ cargo run --locked
 
 If your Windows default is the GNU toolchain, run `cargo +stable-x86_64-pc-windows-msvc run --locked` after installing the MSVC Rust toolchain.
 
+To play in Rumi's window, use the [same-window build instructions](../../docs/agents/codex-report-city-bus-driver.md#formula-circuit-and-counter-rush). The web target uses the same scene, controls, and physics as the native target.
+
 Use **W / ↑** to accelerate, **S / ↓** to brake and then reverse, and **A / ←** and **D / →** to steer. **R** returns the car to the grid. **F3** toggles the Rapier collider overlay. Use `cargo run --release --locked` for representative performance.
 
 ```sh

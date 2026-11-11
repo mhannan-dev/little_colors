@@ -31,6 +31,8 @@
 	import { createScheduler, durations } from '#lib/game/scheduler.ts';
 	import { paused } from '#lib/stores/pause.ts';
 	import { settings } from '#lib/stores/settings.ts';
+	import ParticleCanvas, { type ParticleCue } from '#lib/components/visuals/ParticleCanvas.svelte';
+	import { chime } from '#lib/game/chime.ts';
 
 	const d = durations();
 	const scheduler = createScheduler();
@@ -51,6 +53,7 @@
 	let served = $state<Order[]>([]);
 	let mascot = $state<MascotAnimation>('idle');
 	let bump = $state<StationId | null>(null);
+	let particles = $state.raw<ParticleCue | null>(null);
 
 	const order = $derived<Order | undefined>(round.orders[index]);
 	const bn = $derived($settings.language === 'bn-BD');
@@ -122,6 +125,8 @@
 			mascot = 'celebrate';
 			served = [...served, order];
 			say('kitchen.thanks', { interrupt: true });
+			chime();
+			particles = { kind: 'confetti', anchor: document.querySelector('.friend-face'), label: bn ? 'ধন্যবাদ!' : 'Thank you!' };
 			setIdlePrompt(null);
 			scheduler.after(d.reduced ? 900 : THANKS_MS, next);
 			return;
@@ -149,6 +154,8 @@
 			mascot = 'celebrate';
 			setIdlePrompt(null);
 			say('kitchen.done', { interrupt: true });
+			chime('big');
+			particles = { kind: 'stars', anchor: null };
 			return;
 		}
 		index += 1;
@@ -182,6 +189,7 @@
 
 <TopBar onreplay={() => order && !roundDone && speakOrder(order, true)} />
 
+<ParticleCanvas cue={particles} paused={$paused} reducedMotion={d.reduced} />
 <section class="kitchen" class:paused={$paused} data-phase={roundDone ? 'done' : phase} data-index={index}>
 	{#if roundDone}
 		<div class="finale">

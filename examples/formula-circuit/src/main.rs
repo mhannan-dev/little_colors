@@ -21,6 +21,9 @@ fn main() {
                 title: "Formula Circuit".into(),
                 resolution: (1280, 800).into(),
                 present_mode: PresentMode::AutoVsync,
+                canvas: cfg!(target_arch = "wasm32").then(|| "#formula-canvas".into()),
+                fit_canvas_to_parent: cfg!(target_arch = "wasm32"),
+                prevent_default_event_handling: cfg!(target_arch = "wasm32"),
                 ..default()
             }),
             ..default()

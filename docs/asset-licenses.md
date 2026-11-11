@@ -33,3 +33,15 @@ Narration MP3s in `apps/desktop/src/lib/assets/audio/` are generated with **Azur
 | `mohish-20211115090834.webp` | buffalo | Provided by the product owner | Free to use (confirmed by the product owner, 2026-11-06) | Source URL not recorded |
 
 The Pexels License allows free use and modification in an app without attribution. It does not allow selling unaltered copies or implying endorsement. The product owner confirmed on 2026-11-06 that all photos are free to use. Adding each photo's page URL is still recommended, so the source can be shown if anyone asks.
+
+## 3D realism assets (Rumi's Highway pilot, 2026-11-11)
+
+All CC0 (public domain): free for any use, no attribution required. Credited anyway.
+
+| File | Source | Author | License |
+|---|---|---|---|
+| `apps/desktop/static/hdri/sky_partly_cloudy_2k.hdr` | [Poly Haven: Kloofendal 48d Partly Cloudy (Pure Sky)](https://polyhaven.com/a/kloofendal_48d_partly_cloudy_puresky), 2k HDR | Greg Zaal, Jarod Guest | CC0 1.0 |
+| `apps/desktop/static/textures/highway/asphalt_{color,normal,rough}.jpg` | [ambientCG: Asphalt025C](https://ambientcg.com/view?id=Asphalt025C), 1K-JPG, resized to 512 px | ambientCG (Lennart Demes) | CC0 1.0 |
+| `apps/desktop/static/textures/highway/grass_{color,normal,rough}.jpg` | [ambientCG: Grass004](https://ambientcg.com/view?id=Grass004), 1K-JPG, resized to 512 px | ambientCG (Lennart Demes) | CC0 1.0 |
+
+The vehicles, trees, hills and Rumi's car are built in code (no downloaded models).

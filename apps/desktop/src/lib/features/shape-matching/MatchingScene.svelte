@@ -22,6 +22,7 @@
 	import Shape from '#lib/components/shapes/Shape.svelte';
 	import GameButton from '#lib/components/ui/GameButton.svelte';
 	import TopBar from '#lib/components/ui/TopBar.svelte';
+	import ParticleCanvas, { type ParticleCue } from '#lib/components/visuals/ParticleCanvas.svelte';
 	import { instruct, leaveScreen, replayInstruction, say, setIdlePrompt, stopNarration } from '#lib/audio/narrator.ts';
 	import { firstTime, hideHand, showHand } from '#lib/game/hand.ts';
 	import { createScheduler, durations } from '#lib/game/scheduler.ts';
@@ -50,6 +51,8 @@
 	let hintTarget = $state<string | null>(null);
 	let hintItem = $state<string | null>(null);
 	let returning = $state<string | null>(null);
+	let particles = $state.raw<ParticleCue | null>(null);
+	let field = $state<HTMLDivElement>();
 
 	// Drag state
 	let dragId = $state<string | null>(null);
@@ -57,6 +60,7 @@
 	let dragDY = $state(0);
 	let pointer: { id: number; itemId: string; x0: number; y0: number; moved: boolean } | null = null;
 	let suppressClick = false;
+	let lastDust: { x: number; y: number; at: number } | null = null;
 
 	const activity = $derived<MatchingActivity | undefined>(round.activities[index]);
 	const lang = $derived($settings.language);
@@ -86,6 +90,8 @@
 		dragDX = 0;
 		dragDY = 0;
 		pointer = null;
+		lastDust = null;
+		particles = null;
 	}
 
 	function runEffect(effect: MatchingEffect) {
@@ -100,6 +106,11 @@
 				dragDX = dragDY = 0;
 				hintTarget = hintItem = null;
 				mascot = 'celebrate';
+				particles = {
+					kind: 'stars',
+					anchor: field?.querySelector(`[data-target-id="${CSS.escape(effect.targetId)}"]`),
+					label: lang === 'bn-BD' ? 'দারুণ মিলেছে!' : 'Nice match!'
+				};
 				scheduler.after(SNAP_MS, () => m.send({ type: 'SNAP_DONE' }));
 				scheduler.after(SNAP_MS + 900, () => {
 					if (m.state !== 'CELEBRATING' && m.state !== 'COMPLETE') mascot = 'idle';
@@ -183,6 +194,7 @@
 		// A fresh press is a new gesture: never let a previous drag swallow this tap
 		// (after a drop the dragged button may be gone, and touch drags emit no click).
 		suppressClick = false;
+		lastDust = null;
 		pointer = { id: e.pointerId, itemId: item.id, x0: e.clientX, y0: e.clientY, moved: false };
 		(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
 	}
@@ -201,6 +213,11 @@
 			dragId = pointer.itemId;
 		}
 		if (pointer.moved) {
+			if (!d.reduced && !$settings.reducedMotion && (!lastDust ||
+				(e.timeStamp - lastDust.at > 120 && Math.hypot(e.clientX - lastDust.x, e.clientY - lastDust.y) > 30))) {
+				lastDust = { x: e.clientX, y: e.clientY, at: e.timeStamp };
+				particles = { kind: 'dust', point: lastDust };
+			}
 			const zoom = Number(getComputedStyle(document.querySelector('main')!).zoom) || 1;
 			dragDX = dx / zoom;
 			dragDY = dy / zoom;
@@ -316,7 +333,10 @@
 
 <TopBar onreplay={replayInstruction} />
 
-<section class="scene" class:paused={$paused}>
+<section class="scene" class:paused={$paused} class:reduced={$settings.reducedMotion}
+	style:--drift-x="{Math.max(-12, Math.min(12, dragDX * 0.055))}px"
+	style:--drift-y="{Math.max(-8, Math.min(8, dragDY * 0.04))}px">
+	<ParticleCanvas cue={particles} paused={$paused} reducedMotion={d.reduced || $settings.reducedMotion} />
 	{#if roundDone}
 		<div class="done">
 			<Mascot state="celebrate" size={240} />
@@ -352,7 +372,7 @@
 		</div>
 
 		<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-		<div class="field" onclick={onFieldClick}>
+		<div class="field" bind:this={field} onclick={onFieldClick}>
 			<div class="mascot"><Mascot state={mascot} size={170} /></div>
 
 			<div class="sources" onclick={onFieldClick}>
@@ -413,6 +433,8 @@
 
 <style>
 	.scene {
+		position: relative;
+		isolation: isolate;
 		flex: 1;
 		display: flex;
 		flex-direction: column;
@@ -420,6 +442,16 @@
 		justify-content: space-between;
 		padding: 0 24px 24px;
 		min-height: 0;
+	}
+	.scene::before {
+		content: '';
+		position: absolute;
+		inset: 0;
+		z-index: -1;
+		pointer-events: none;
+		background: radial-gradient(ellipse at 24% 62%, #f6dbc17d, transparent 47%), radial-gradient(ellipse at 80% 62%, #cae3d695, transparent 52%);
+		translate: var(--drift-x) var(--drift-y);
+		transition: translate 260ms var(--spring-settle);
 	}
 	.paused :global(*) {
 		animation-play-state: paused !important;
@@ -474,7 +506,8 @@
 	.targets {
 		padding: 20px;
 		border-radius: var(--radius-xl);
-		background: var(--bg-secondary);
+		background: linear-gradient(160deg, #edf5ee, #dfece3);
+		box-shadow: inset 0 2px 9px #47624e1f, 0 8px 20px #394f3410;
 	}
 	.source,
 	.target {
@@ -489,26 +522,31 @@
 	.source {
 		border: 4px solid transparent;
 		background: var(--surface);
-		box-shadow: 0 6px 0 var(--border-soft);
-		transition: transform 300ms ease, border-color 200ms ease;
+		box-shadow: var(--contact-shadow);
+		transition: scale 200ms var(--spring-out), translate 200ms var(--spring-out), box-shadow 200ms ease, border-color 200ms ease;
 	}
+	.source:hover { translate: 0 -3px; }
+	.source:active { scale: .98; }
 	.source.dragging {
-		transition: none;
+		transition: scale 160ms var(--spring-out);
 		z-index: 10;
 		cursor: grabbing;
+		translate: 0;
+		scale: 1.045;
 		box-shadow: 0 14px 24px rgba(0, 0, 0, 0.15);
 	}
 	.source.returning {
-		transition: transform 400ms cubic-bezier(0.3, 0.7, 0.3, 1);
+		transition: transform 400ms var(--spring-settle), scale 400ms var(--spring-settle);
+		scale: 1;
 	}
 	.source.selected {
 		border-color: var(--text-primary);
-		transform: translateY(-6px);
+		translate: 0 -5px;
 	}
 	.target {
 		border: 4px solid transparent;
 		background: var(--surface);
-		transition: border-color 300ms ease, transform 300ms ease;
+		transition: border-color 300ms ease, transform 300ms var(--spring-out);
 	}
 	.target.filled {
 		border-color: var(--text-primary);
@@ -519,7 +557,7 @@
 		inset: 0;
 		display: grid;
 		place-items: center;
-		animation: pop 450ms ease-out;
+		animation: pop 450ms var(--spring-out);
 	}
 	.hinted {
 		animation: glow 1.2s ease-in-out 2;
@@ -552,6 +590,15 @@
 		gap: 24px;
 		flex-wrap: wrap;
 		justify-content: center;
+	}
+	.reduced::before { translate: none; transition: none; }
+	.reduced .source { scale: 1; translate: none; transition: none; }
+	.reduced .target { transition: none; }
+	.reduced .snapped { animation: none; }
+	@media (prefers-reduced-motion: reduce) {
+		.scene::before, .source { translate: none; scale: 1; transition: none; }
+		.target { transition: none; }
+		.snapped { animation: none; }
 	}
 	@media (max-width: 900px) {
 		.field {

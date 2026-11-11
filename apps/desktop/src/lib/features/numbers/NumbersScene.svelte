@@ -28,6 +28,8 @@
 	import { paused } from '#lib/stores/pause.ts';
 	import { settings } from '#lib/stores/settings.ts';
 	import { t } from '#lib/i18n.ts';
+	import ParticleCanvas, { type ParticleCue } from '#lib/components/visuals/ParticleCanvas.svelte';
+	import { chime } from '#lib/game/chime.ts';
 
 	const STEP_MS = 650; // NC-13: one number per highlighted object
 	const FEEDBACK_MS = 1200;
@@ -45,6 +47,8 @@
 	let ctx = $state<CountingContext | null>(null);
 
 	let mascot = $state<MascotAnimation>('idle');
+	let particles = $state.raw<ParticleCue | null>(null);
+	let playEl = $state<HTMLElement | null>(null);
 	/** Number shown above each object (taps, hints, explanations). */
 	let numbers = $state<Record<string, number>>({});
 	let activeObject = $state<string | null>(null);
@@ -160,6 +164,8 @@
 				break;
 			case 'celebrate':
 				mascot = 'kick';
+				chime('big');
+				particles = { kind: 'confetti', anchor: playEl?.querySelector('.answer.right, .objects') ?? playEl, label: lang === 'bn-BD' ? 'ঠিক হয়েছে!' : 'Well done!' };
 				scheduler.after(d.celebrate, () => m.send({ type: 'CELEBRATION_DONE' }));
 				break;
 			case 'complete':
@@ -294,7 +300,9 @@
 
 <TopBar onreplay={replayInstruction} />
 
-<section class="scene" class:paused={$paused}>
+<section class="scene" class:paused={$paused} bind:this={playEl}>
+	<ParticleCanvas cue={particles} paused={$paused} reducedMotion={d.reduced} />
+	<div class="playroom" aria-hidden="true"><span class="window"></span><span class="floor"></span><span class="rug"></span></div>
 	{#if roundDone}
 		<div class="done">
 			<Mascot state="celebrate" size={240} />
@@ -315,7 +323,7 @@
 
 			<div class="play">
 				{#if q.kind === 'count'}
-					{@render objects(q.objects, 84, true)}
+					{@render objects(q.objects, 112, true)}
 					<div class="numeral" class:show={total !== null}>{total !== null ? num(total) : ''}</div>
 				{:else if q.kind === 'numeral-to-quantity'}
 					<div class="numeral show big" data-testid="target-number">{num(q.quantity)}</div>
@@ -329,7 +337,7 @@
 								aria-disabled={locked}
 								onclick={() => choose(o.id)}
 							>
-								{@render objects(g.objects, 44, false)}
+								{@render objects(g.objects, 56, false)}
 							</button>
 						{/each}
 					</div>
@@ -345,7 +353,7 @@
 								aria-disabled={locked}
 								onclick={() => choose(o.id)}
 							>
-								{@render objects(g.objects, 52, false)}
+								{@render objects(g.objects, 66, false)}
 							</button>
 						{/each}
 					</div>
@@ -357,9 +365,9 @@
 					{/if}
 				{:else if q.kind === 'add'}
 					<div class="sum" class:together={explaining}>
-						<div class="group" data-count={q.left.objects.length}>{@render objects(q.left.objects, 60, false)}</div>
+						<div class="group" data-count={q.left.objects.length}>{@render objects(q.left.objects, 78, false)}</div>
 						<span class="op" aria-hidden="true">{q.showPlus ? '+' : ''}</span>
-						<div class="group" data-count={q.right.objects.length}>{@render objects(q.right.objects, 60, false)}</div>
+						<div class="group" data-count={q.right.objects.length}>{@render objects(q.right.objects, 78, false)}</div>
 					</div>
 					<div class="answers">
 						{#each q.options as o (o.id)}
@@ -409,6 +417,8 @@
 
 <style>
 	.scene {
+		position: relative;
+		isolation: isolate;
 		flex: 1;
 		display: flex;
 		flex-direction: column;
@@ -653,5 +663,51 @@
 		.mascot {
 			display: none;
 		}
+	}
+	/* A calm playroom behind the counting table. */
+	.playroom {
+		position: absolute;
+		inset: 0;
+		z-index: -1;
+		pointer-events: none;
+		overflow: hidden;
+		background: linear-gradient(#fdf1e3, #fbe7d3 62%);
+	}
+	.playroom .window {
+		position: absolute;
+		top: 10%;
+		right: 7%;
+		width: 190px;
+		height: 150px;
+		border: 10px solid #ffffff;
+		border-radius: 18px;
+		background: radial-gradient(circle at 70% 30%, #fff3b8 0 18px, transparent 19px), linear-gradient(#bfe3f7, #e5f4fc);
+		box-shadow: 0 6px 0 #ecd7bf;
+	}
+	.playroom .window::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+		background: linear-gradient(90deg, transparent 47%, #ffffff 47% 53%, transparent 53%), linear-gradient(transparent 47%, #ffffff 47% 53%, transparent 53%);
+	}
+	.playroom .floor {
+		position: absolute;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		height: 38%;
+		background: repeating-linear-gradient(90deg, #e9c9a1 0 160px, #e2bf95 160px 164px);
+		box-shadow: inset 0 10px 0 #dcb487;
+	}
+	.playroom .rug {
+		position: absolute;
+		left: 50%;
+		bottom: 6%;
+		width: 62%;
+		height: 24%;
+		transform: translateX(-50%);
+		border-radius: 50%;
+		background: radial-gradient(ellipse, #f6dbe6 0 45%, #cfe3f4 46% 62%, #d9eccd 63% 80%, #f6e2b2 81%);
+		opacity: 0.85;
 	}
 </style>

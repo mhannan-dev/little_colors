@@ -34,6 +34,7 @@
 		type TrafficVehicle
 	} from '@little-colors/core';
 	import GameButton from '#lib/components/ui/GameButton.svelte';
+	import RumiLoading from '#lib/components/ui/RumiLoading.svelte';
 	import TopBar from '#lib/components/ui/TopBar.svelte';
 	import { instruct, leaveScreen, say, setIdlePrompt, speakLabel, stopNarration } from '#lib/audio/narrator.ts';
 	import { hideHand, showHand, firstTime } from '#lib/game/hand.ts';
@@ -73,9 +74,13 @@
 
 	let canvas = $state<HTMLCanvasElement | null>(null);
 	let kit: typeof Kit | null = null;
+	let roundedBox: typeof import('three/addons/geometries/RoundedBoxGeometry.js') | null = null;
 	let stage: Kit.Stage | null = null;
 	let confetti: Kit.Confetti | null = null;
 	let destroyed = false;
+	/** Realistic look (pilot): HDR sky lighting, PBR road/grass, clear-coat cars. */
+	let disposeSky: (() => void) | null = null;
+	let surfaces: { scroll(v: number): void; dispose(): void; tile: number }[] = [];
 	/** A released WebGL context cannot be reused: each new place gets a fresh canvas. */
 	let canvasKey = $state(0);
 	let canvasUsed = false;
@@ -113,6 +118,7 @@
 		if (!kit) {
 			try {
 				kit = await import('#lib/three3d/toyKit.ts');
+				roundedBox = await import('three/addons/geometries/RoundedBoxGeometry.js');
 			} catch {
 				failed = true;
 				return;
@@ -133,20 +139,42 @@
 			failed = true;
 			return;
 		}
-		stage.scene.fog = new THREE.Fog(look.horizon, look.fog[0], look.fog[1]);
+		stage.scene.fog = new THREE.Fog(loc === 'sunset' ? look.horizon : '#dde6ec', look.fog[0] + 20, look.fog[1] + 70);
+		if (loc !== 'sunset') {
+			try {
+				disposeSky = await kit.useHdriSky(stage, '/hdri/sky_partly_cloudy_2k.hdr', { background: true, intensity: 0.9 });
+			} catch {
+				/* keep the painted sky */
+			}
+		}
+		if (destroyed || !stage) return;
 		world = new THREE.Group();
 		stage.scene.add(world);
 
-		const ground = new THREE.Mesh(new THREE.PlaneGeometry(160, 260), new THREE.MeshStandardMaterial({ color: look.ground, roughness: 1 }));
+		const tex = '/textures/highway'; // static/, served at the app root (also inside Tauri)
+		const groundPbr = loc === 'green' ? kit.pbrMaterial(`${tex}/grass`, [27, 43]) : loc === 'city' ? kit.pbrMaterial(`${tex}/asphalt`, [40, 65], '#d3d7dc') : null;
+		const roadPbr = kit.pbrMaterial(`${tex}/asphalt`, [3, 65], '#9aa0a6');
+		surfaces = [{ ...roadPbr, tile: 260 / 65 }, ...(groundPbr ? [{ ...groundPbr, tile: 260 / 43 }] : [])];
+		const ground = new THREE.Mesh(new THREE.PlaneGeometry(160, 260), groundPbr?.material ?? new THREE.MeshStandardMaterial({ color: look.ground, roughness: 1 }));
 		ground.rotation.x = -Math.PI / 2;
 		ground.position.set(0, -0.02, -90);
 		ground.receiveShadow = true;
 		const roadW = HIGHWAY_LANES * LANE_W + 1.6;
-		const road = new THREE.Mesh(new THREE.PlaneGeometry(roadW, 260), new THREE.MeshStandardMaterial({ color: '#4A5058', roughness: 0.95 }));
+		const road = new THREE.Mesh(new THREE.PlaneGeometry(roadW, 260), roadPbr.material);
 		road.rotation.x = -Math.PI / 2;
 		road.position.set(0, 0, -90);
 		road.receiveShadow = true;
 		world.add(ground, road);
+		// Distant hills / mesas give the view depth (they sit in the fog, so they never pop).
+		const hillColor = loc === 'sunset' ? '#B98557' : loc === 'city' ? '#AEB8C2' : '#7FA77A';
+		for (let i = 0; i < 9; i++) {
+			const hill = new THREE.Mesh(
+				loc === 'city' ? new THREE.BoxGeometry(10 + (i % 3) * 6, 14 + (i % 4) * 9, 10) : new THREE.ConeGeometry(16 + (i % 3) * 8, 10 + (i % 4) * 5, 7),
+				new THREE.MeshStandardMaterial({ color: hillColor, roughness: 1 })
+			);
+			hill.position.set(-80 + i * 20 + (i % 2) * 6, loc === 'city' ? 7 : 4, -150 - (i % 3) * 12);
+			world.add(hill);
+		}
 		const white = new THREE.MeshStandardMaterial({ color: '#F4F4F0' });
 		for (const x of [-roadW / 2 + 0.35, roadW / 2 - 0.35]) {
 			const edge = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.02, 260), white);
@@ -184,7 +212,7 @@
 			}
 		}
 
-		car = kit.toyCar('#E5484D');
+		car = realCar('#E5484D', true);
 		car.rotation.y = Math.PI;
 		world.add(car);
 		confetti = kit.createConfetti(stage.scene, d.reduced);
@@ -197,8 +225,22 @@
 	function roadside(loc: HighwayLocation, k: number, side: number): Kit.THREE.Group {
 		const { THREE } = kit!;
 		if (loc === 'green') {
-			const t = kit!.toyTree();
-			t.scale.setScalar(1.1 + (k % 3) * 0.3);
+			// A fuller tree: a trunk with a few overlapping leafy clumps in varied greens.
+			const { THREE } = kit!;
+			const t = new THREE.Group();
+			const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.26, 2.2, 8), new THREE.MeshStandardMaterial({ color: '#6f5440', roughness: 1 }));
+			trunk.position.y = 1.1;
+			t.add(trunk);
+			const greens = ['#4f8f4a', '#5c9e52', '#477f43', '#66a85b'];
+			const clumps: [number, number, number, number][] = [[0, 2.7, 0, 1.25], [0.75, 2.3, 0.2, 0.9], [-0.7, 2.4, -0.15, 0.95], [0.1, 3.4, -0.1, 0.85]];
+			clumps.forEach(([x, y, z, r], i) => {
+				const leaf = new THREE.Mesh(new THREE.IcosahedronGeometry(r, 1), new THREE.MeshStandardMaterial({ color: greens[(i + k) % greens.length], roughness: 0.9, flatShading: true }));
+				leaf.position.set(x, y, z);
+				leaf.rotation.set(k * 0.7, i, 0);
+				t.add(leaf);
+			});
+			t.scale.setScalar(1 + (k % 3) * 0.25);
+			t.traverse((o) => ((o as Kit.THREE.Mesh).castShadow = true));
 			return t;
 		}
 		const g = new THREE.Group();
@@ -227,44 +269,121 @@
 		return g;
 	}
 
+	/** A real-looking car (metres, then scaled): clear-coat paint, tinted glass, rims, lights. */
+	function realCar(hex: string, rumi = false): Kit.THREE.Group {
+		const { THREE } = kit!;
+		const { RoundedBoxGeometry } = roundedBox!;
+		const g = new THREE.Group();
+		const paint = kit!.carPaint(hex);
+		const glass = new THREE.MeshPhysicalMaterial({ color: '#1d2a33', metalness: 0.6, roughness: 0.06, clearcoat: 1 });
+		const rubber = new THREE.MeshStandardMaterial({ color: '#1b1f22', roughness: 0.9 });
+		const chrome = new THREE.MeshStandardMaterial({ color: '#d9dde1', metalness: 1, roughness: 0.18 });
+		const trim = new THREE.MeshStandardMaterial({ color: '#2b3136', roughness: 0.6 });
+		const body = new THREE.Mesh(new RoundedBoxGeometry(1.84, 0.72, 4.4, 5, 0.26), paint);
+		body.position.y = 0.66;
+		const cabin = new THREE.Mesh(new RoundedBoxGeometry(1.62, 0.66, 2.3, 5, 0.3), glass);
+		cabin.position.set(0, 1.25, 0.25);
+		const roof = new THREE.Mesh(new RoundedBoxGeometry(1.56, 0.1, 1.9, 4, 0.05), paint);
+		roof.position.set(0, 1.6, 0.3);
+		const bumperF = new THREE.Mesh(new RoundedBoxGeometry(1.86, 0.26, 0.24, 3, 0.1), trim);
+		bumperF.position.set(0, 0.42, -2.2);
+		const bumperB = bumperF.clone();
+		bumperB.position.z = 2.2;
+		g.add(body, cabin, roof, bumperF, bumperB);
+		for (const x of [-0.62, 0.62]) {
+			const head = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.14, 0.06), new THREE.MeshStandardMaterial({ color: '#fffbe8', emissive: '#fff3c4', emissiveIntensity: location === 'sunset' ? 1.4 : 0.4 }));
+			head.position.set(x, 0.78, -2.21);
+			const tail = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.12, 0.06), new THREE.MeshStandardMaterial({ color: '#7a1010', emissive: '#E5484D', emissiveIntensity: location === 'sunset' ? 1.6 : 0.6 }));
+			tail.position.set(x, 0.8, 2.21);
+			g.add(head, tail);
+		}
+		const tyreGeo = new THREE.CylinderGeometry(0.36, 0.36, 0.26, 24);
+		const rimGeo = new THREE.CylinderGeometry(0.22, 0.22, 0.27, 16);
+		for (const z of [-1.4, 1.35]) {
+			for (const x of [-0.84, 0.84]) {
+				const tyre = new THREE.Mesh(tyreGeo, rubber);
+				tyre.rotation.z = Math.PI / 2;
+				tyre.position.set(x, 0.36, z);
+				const rim = new THREE.Mesh(rimGeo, chrome);
+				rim.rotation.z = Math.PI / 2;
+				rim.position.set(x * 1.01, 0.36, z);
+				g.add(tyre, rim);
+			}
+		}
+		if (rumi) {
+			// Rumi pops out of the sunroof, so the child always knows which car is theirs.
+			const fur = new THREE.MeshStandardMaterial({ color: '#E3B48A', roughness: 0.8 });
+			const headR = new THREE.Mesh(new THREE.SphereGeometry(0.36, 20, 16), fur);
+			headR.position.set(0, 2.0, 0.45);
+			const scarf = new THREE.Mesh(new THREE.TorusGeometry(0.28, 0.07, 8, 20), new THREE.MeshStandardMaterial({ color: '#5E8C6A' }));
+			scarf.rotation.x = Math.PI / 2;
+			scarf.position.set(0, 1.7, 0.45);
+			g.add(headR, scarf);
+			for (const x of [-0.24, 0.24]) {
+				const ear = new THREE.Mesh(new THREE.SphereGeometry(0.12, 10, 8), fur);
+				ear.position.set(x, 2.3, 0.45);
+				g.add(ear);
+			}
+		}
+		g.scale.setScalar(U);
+		g.traverse((o) => {
+			const m = o as Kit.THREE.Mesh;
+			if (m.isMesh) m.castShadow = true;
+		});
+		return g;
+	}
+
+	/** Trucks and buses in the same real style. */
 	function vehicleModel(v: TrafficVehicle): Kit.THREE.Group {
 		const { THREE } = kit!;
 		const hex = VEHICLE_COLORS[v.color].hex;
-		if (v.kind === 'car') {
-			const furs = ['#9B7653', '#F5EFE6', '#E3B48A', '#8A8F98'];
-			const g = kit!.toyCar(hex, furs[v.id % furs.length]);
-			g.rotation.y = Math.PI;
-			return g;
-		}
+		if (v.kind === 'car') return realCar(hex);
+		const { RoundedBoxGeometry } = roundedBox!;
 		const g = new THREE.Group();
-		const paint = new THREE.MeshStandardMaterial({ color: hex, roughness: 0.5 });
-		const dark = new THREE.MeshStandardMaterial({ color: '#263238', roughness: 0.8 });
-		const glass = new THREE.MeshStandardMaterial({ color: '#cfe8f7', roughness: 0.2 });
-		const len = VEHICLE_KINDS[v.kind].length * U;
+		const paint = kit!.carPaint(hex);
+		const white = new THREE.MeshStandardMaterial({ color: '#f1f1ee', roughness: 0.55 });
+		const glass = new THREE.MeshPhysicalMaterial({ color: '#1d2a33', metalness: 0.6, roughness: 0.06, clearcoat: 1 });
+		const rubber = new THREE.MeshStandardMaterial({ color: '#1b1f22', roughness: 0.9 });
+		const chrome = new THREE.MeshStandardMaterial({ color: '#d9dde1', metalness: 1, roughness: 0.2 });
+		const len = VEHICLE_KINDS[v.kind].length;
+		let axles: number[];
 		if (v.kind === 'truck') {
-			const cab = new THREE.Mesh(new THREE.BoxGeometry(2, 1.7, 1.6), paint);
-			cab.position.set(0, 1.25, -len / 2 + 0.8);
-			const box = new THREE.Mesh(new THREE.BoxGeometry(2.1, 2.2, len - 1.8), new THREE.MeshStandardMaterial({ color: '#F4F4F0', roughness: 0.7 }));
-			box.position.set(0, 1.5, 0.9);
-			const stripe = new THREE.Mesh(new THREE.BoxGeometry(2.12, 0.35, len - 1.8), paint);
-			stripe.position.set(0, 1.2, 0.9);
-			g.add(cab, box, stripe);
+			const cab = new THREE.Mesh(new RoundedBoxGeometry(2.4, 2.5, 2.2, 4, 0.22), paint);
+			cab.position.set(0, 1.55, -len / 2 + 1.1);
+			const wind = new THREE.Mesh(new RoundedBoxGeometry(2.2, 0.9, 0.1, 3, 0.04), glass);
+			wind.position.set(0, 2.15, -len / 2 - 0.01);
+			const cargo = new THREE.Mesh(new RoundedBoxGeometry(2.5, 2.9, len - 2.6, 3, 0.1), white);
+			cargo.position.set(0, 1.95, 1.2);
+			const stripe = new THREE.Mesh(new THREE.BoxGeometry(2.52, 0.45, len - 2.7), paint);
+			stripe.position.set(0, 1.4, 1.2);
+			g.add(cab, wind, cargo, stripe);
+			axles = [-len / 2 + 1.2, len / 2 - 2.6, len / 2 - 1.2];
 		} else {
-			const body = new THREE.Mesh(new THREE.BoxGeometry(2.1, 2.1, len), paint);
-			body.position.y = 1.4;
-			const windows = new THREE.Mesh(new THREE.BoxGeometry(2.14, 0.6, len - 1), glass);
-			windows.position.y = 1.85;
-			g.add(body, windows);
+			const body = new THREE.Mesh(new RoundedBoxGeometry(2.5, 2.9, len, 4, 0.3), paint);
+			body.position.y = 1.85;
+			const band = new THREE.Mesh(new RoundedBoxGeometry(2.54, 0.9, len - 1.4, 3, 0.1), glass);
+			band.position.set(0, 2.35, 0.2);
+			const wind = new THREE.Mesh(new RoundedBoxGeometry(2.3, 1.2, 0.1, 3, 0.04), glass);
+			wind.position.set(0, 2.2, -len / 2 - 0.01);
+			const skirt = new THREE.Mesh(new THREE.BoxGeometry(2.52, 0.5, len - 0.6), white);
+			skirt.position.y = 0.85;
+			g.add(body, band, wind, skirt);
+			axles = [-len / 2 + 2.2, len / 2 - 2.4];
 		}
-		const wheelGeo = new THREE.CylinderGeometry(0.4, 0.4, 0.3, 16);
-		for (const z of [-len / 2 + 0.9, len / 2 - 0.9]) {
-			for (const x of [-1, 1]) {
-				const w = new THREE.Mesh(wheelGeo, dark);
-				w.rotation.z = Math.PI / 2;
-				w.position.set(x, 0.4, z);
-				g.add(w);
+		const tyreGeo = new THREE.CylinderGeometry(0.52, 0.52, 0.34, 24);
+		const rimGeo = new THREE.CylinderGeometry(0.3, 0.3, 0.35, 16);
+		for (const z of axles) {
+			for (const x of [-1.15, 1.15]) {
+				const tyre = new THREE.Mesh(tyreGeo, rubber);
+				tyre.rotation.z = Math.PI / 2;
+				tyre.position.set(x, 0.52, z);
+				const rim = new THREE.Mesh(rimGeo, chrome);
+				rim.rotation.z = Math.PI / 2;
+				rim.position.set(x * 1.01, 0.52, z);
+				g.add(tyre, rim);
 			}
 		}
+		g.scale.setScalar(U);
 		g.traverse((o) => ((o as Kit.THREE.Mesh).castShadow = true));
 		return g;
 	}
@@ -308,6 +427,10 @@
 	}
 
 	function disposeStage() {
+		disposeSky?.();
+		disposeSky = null;
+		for (const sf of surfaces) sf.dispose();
+		surfaces = [];
 		confetti?.dispose();
 		confetti = null;
 		stage?.dispose();
@@ -421,6 +544,7 @@
 		}
 
 		for (const s of scenery) s.obj.position.z = wrapZ(s.base + offset, s.span);
+		for (const sf of surfaces) sf.scroll(offset / sf.tile);
 
 		// Rumi's car: glide between lanes, gentle bounce when moving.
 		const tx = laneX(lane);
@@ -431,7 +555,7 @@
 		confetti?.update(dt, moved * 0.5);
 
 		const cam = stage!.camera;
-		const pose = camera === 'high' ? [carX * 0.5, 13, 13, -10] : camera === 'bumper' ? [carX, 1.6, 2.6, -20] : [carX * 0.6, 4.6, 9.5, -14];
+		const pose = camera === 'high' ? [carX * 0.5, 13, 13, -10] : camera === 'bumper' ? [carX, 1.6, 2.6, -20] : [carX * 0.6, 2.9, 7.2, -14];
 		cam.position.x += (pose[0]! - cam.position.x) * Math.min(1, dt * 5);
 		cam.position.y += (pose[1]! - cam.position.y) * Math.min(1, dt * 5);
 		cam.position.z += (pose[2]! - cam.position.z) * Math.min(1, dt * 5);
@@ -640,6 +764,7 @@
 	<div class="drive" class:hidden={!location}>
 		<div class="view">
 			{#key canvasKey}<canvas bind:this={canvas} aria-hidden="true"></canvas>{/key}
+			{#if location && !ready && !failed}<RumiLoading overlay delay={150} />{/if}
 			{#if failed}
 				<div class="failed"><p>🚗</p><GameButton action="choose-game" onclick={() => goto('/play')} /></div>
 			{/if}

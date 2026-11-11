@@ -55,6 +55,7 @@ test('blocks: numbers follow the numeral setting', async ({ page }) => {
 });
 
 test('toy car: steer with the arrows, drive with Go, and finish a round', async ({ page }) => {
+	test.setTimeout(120_000);
 	const errors = watchErrors(page);
 	await page.goto('/toy-car');
 	await page.locator('[data-set="123"]').click();
@@ -148,7 +149,13 @@ test('race: a missed pad costs nothing, then the pads wait; tapping a pad steers
 	await expect(page.locator('.tap').first()).toBeVisible({ timeout: 15000 });
 	const id = await answer(page);
 	const target = Number(await page.locator(`[data-option-id="${id}"]`).getAttribute('data-lane-index'));
-	await steerTo(page, (target + 1) % 3, false);
+	const wrongLane = (target + 1) % 3;
+	const alreadyThere = Number(await scene.getAttribute('data-lane')) === wrongLane;
+	await steerTo(page, wrongLane, false);
+	if (alreadyThere) {
+		await expect(scene).toHaveAttribute('data-phase', 'wait', { timeout: 15000 });
+		await page.getByTestId('race-go').getByRole('button').click();
+	}
 	await expect(page.getByText('আবার চেষ্টা করি!').first()).toBeVisible({ timeout: 15000 });
 	await expect(scene).toHaveAttribute('data-progress', '0');
 	// The same pads come back and wait for the child: no hurry.

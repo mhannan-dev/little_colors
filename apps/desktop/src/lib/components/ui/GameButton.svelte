@@ -64,6 +64,7 @@
 <button
 	class="game-button {tone} {size}"
 	class:has-icon={!!spec}
+	class:reduced={$settings.reducedMotion}
 	aria-label={text}
 	data-action={action}
 	onclick={() => {
@@ -91,13 +92,20 @@
 		border-radius: var(--radius-xl);
 		cursor: pointer;
 		font-weight: 700;
-		transition: transform 150ms ease;
+		transition: transform 180ms var(--spring-out), box-shadow 180ms ease;
 	}
 	.game-button:hover {
 		transform: translateY(-2px);
+		box-shadow: var(--contact-shadow);
 	}
 	.game-button:active {
-		transform: translateY(1px);
+		transform: translateY(1px) scale(.98);
+	}
+	.game-button.reduced { transition: none; }
+	.game-button.reduced:hover, .game-button.reduced:active { transform: none; }
+	@media (prefers-reduced-motion: reduce) {
+		.game-button:hover, .game-button:active { transform: none; }
+		.game-button { transition: none; }
 	}
 	.large {
 		min-height: var(--target-game);
