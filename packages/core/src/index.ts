@@ -30,3 +30,5 @@ export * from './highway/highway.ts';
 export * from './audio/picker.ts';
 // Rumi's Bicycle (Claude).
 export * from './bike/bike.ts';
+// Toothie's Morning Adventure (Claude).
+export * from './teeth/teeth.ts';

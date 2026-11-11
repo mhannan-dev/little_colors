@@ -8,6 +8,7 @@ import { KITCHEN_NARRATION } from '../kitchen/kitchen.ts';
 import { HIGHWAY_NARRATION } from '../highway/highway.ts';
 import { PICKER_NARRATION } from './picker.ts';
 import { BIKE_NARRATION } from '../bike/bike.ts';
+import { TEETH_NARRATION } from '../teeth/teeth.ts';
 import { VOICE_MANIFEST, type NarrationEntry } from './voiceManifest.ts';
 
 /**
@@ -24,7 +25,8 @@ export const NARRATION_CATALOG: readonly NarrationEntry[] = [
 	...KITCHEN_NARRATION,
 	...HIGHWAY_NARRATION,
 	...PICKER_NARRATION,
-	...BIKE_NARRATION
+	...BIKE_NARRATION,
+	...TEETH_NARRATION
 ];
 
 const BY_KEY = new Map<string, NarrationEntry>();

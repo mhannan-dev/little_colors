@@ -23,6 +23,7 @@
 		{ id: 'car', key: 'mode.car', href: '/car', group: 'play' },
 		{ id: 'bird', key: 'mode.bird', href: '/bird', group: 'play' },
 		{ id: 'kitchen', key: 'mode.kitchen', href: '/kitchen', group: 'play' },
+		{ id: 'teeth', key: 'mode.teeth', href: '/teeth', group: 'play' },
 		{ id: 'blocks3d', key: 'mode.blocks3d', href: '/blocks-3d', group: 'play' },
 		{ id: 'garden3d', key: 'mode.garden3d', href: '/garden-3d', group: 'play' },
 		{ id: 'car3d', key: 'mode.car3d', href: '/toy-car', group: 'drive' },
@@ -107,6 +108,14 @@
 						<circle cx="118" cy="79" r="14" fill="var(--text-primary)" />
 						<circle cx="46" cy="79" r="5" fill="var(--surface)" />
 						<circle cx="118" cy="79" r="5" fill="var(--surface)" />
+				{:else if m.id === 'teeth'}
+						<circle cx="62" cy="56" r="38" fill="#7CD3A8" stroke="var(--text-primary)" stroke-width="4" />
+						<circle cx="50" cy="46" r="6" fill="var(--text-primary)" /><circle cx="74" cy="46" r="6" fill="var(--text-primary)" />
+						<path d="M42 64 Q62 90 82 64 Z" fill="#7A2335" stroke="var(--text-primary)" stroke-width="3" />
+						<path d="M46 66 h32 l-3 7 h-26z" fill="#ffffff" />
+						<rect x="96" y="30" width="12" height="66" rx="6" fill="var(--learn-blue)" stroke="var(--text-primary)" stroke-width="3" transform="rotate(20 102 63)" />
+						<rect x="98" y="14" width="20" height="20" rx="5" fill="#ffffff" stroke="var(--text-primary)" stroke-width="3" transform="rotate(20 108 24)" />
+						<path d="M128 20 l4 8 8 4 -8 4 -4 8 -4 -8 -8 -4 8 -4z" fill="var(--learn-yellow)" />
 				{:else if m.id === 'kitchen'}
 						<path d="M27 64h106q-3 28-20 28H47Q30 92 27 64Z" fill="var(--learn-orange)" stroke="var(--text-primary)" stroke-width="4" />
 						<path d="M20 61h120M56 47q-9-10 0-19m24 19q-9-12 0-25m24 25q-9-10 0-19" fill="none" stroke="var(--text-primary)" stroke-width="5" stroke-linecap="round" />
