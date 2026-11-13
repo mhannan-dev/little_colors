@@ -1,4 +1,5 @@
 export * from './mathLogic.ts';
+export * from './simpleMath.ts';
 export * from './numerals.ts';
 export * from './numberVocabulary.ts';
 export * from './patterns.ts';
