@@ -5,29 +5,30 @@
 	import { say } from '#lib/audio/narrator.ts';
 	import { settings } from '#lib/stores/settings.ts';
 	import { t } from '#lib/i18n.ts';
-	import { PICKER_GROUPS } from '@little-colors/core';
+	import { PICKER_GROUPS, type PickerGroup } from '@little-colors/core';
 
 	// Grouped so a child sees a few big choices at a time (visual audit 2026-11-10).
 	const modes = [
-		{ id: 'mixing', key: 'mode.mixing', href: '/mixing', group: 'learn' },
-		{ id: 'matching', key: 'mode.matching', href: '/matching', group: 'learn' },
-		{ id: 'numbers', key: 'mode.numbers', href: '/numbers', group: 'learn' },
-		{ id: 'abc3d', key: 'mode.abc3d', href: '/abc-123', group: 'learn' },
-		{ id: 'sorter', key: 'mode.sorter', href: '/shape-sorter', group: 'learn' },
-		{ id: 'flag', key: 'mode.flag', href: '/flag', group: 'learn' },
-		{ id: 'fruit', key: 'mode.fruit', href: '/fruit', group: 'learn' },
-		{ id: 'flower', key: 'mode.flower', href: '/flower', group: 'learn' },
-		{ id: 'animals', key: 'mode.animals', href: '/animals', group: 'learn' },
-		{ id: 'color-blocks', key: 'mode.color-blocks', href: '/color-blocks', group: 'learn' },
-		{ id: 'holy-puzzle', key: 'mode.holy-puzzle', href: '/holy-puzzle', group: 'learn' },
-		{ id: 'football', key: 'mode.football', href: '/football', group: 'play' },
-		{ id: 'car', key: 'mode.car', href: '/car', group: 'play' },
-		{ id: 'bird', key: 'mode.bird', href: '/bird', group: 'play' },
-		{ id: 'kitchen', key: 'mode.kitchen', href: '/kitchen', group: 'play' },
-		{ id: 'teeth', key: 'mode.teeth', href: '/teeth', group: 'play' },
-		{ id: 'farm', key: 'mode.farm', href: '/farm', group: 'play' },
-		{ id: 'blocks3d', key: 'mode.blocks3d', href: '/blocks-3d', group: 'play' },
-		{ id: 'garden3d', key: 'mode.garden3d', href: '/garden-3d', group: 'play' },
+		{ id: 'mixing', key: 'mode.mixing', href: '/mixing', group: 'shapes' },
+		{ id: 'matching', key: 'mode.matching', href: '/matching', group: 'shapes' },
+		{ id: 'numbers', key: 'mode.numbers', href: '/numbers', group: 'letters' },
+		{ id: 'simple-math', key: 'mode.simple-math', href: '/simple-math', group: 'letters' },
+		{ id: 'abc3d', key: 'mode.abc3d', href: '/abc-123', group: 'letters' },
+		{ id: 'sorter', key: 'mode.sorter', href: '/shape-sorter', group: 'shapes' },
+		{ id: 'flag', key: 'mode.flag', href: '/flag', group: 'world' },
+		{ id: 'fruit', key: 'mode.fruit', href: '/fruit', group: 'world' },
+		{ id: 'flower', key: 'mode.flower', href: '/flower', group: 'world' },
+		{ id: 'animals', key: 'mode.animals', href: '/animals', group: 'world' },
+		{ id: 'color-blocks', key: 'mode.color-blocks', href: '/color-blocks', group: 'shapes' },
+		{ id: 'holy-puzzle', key: 'mode.holy-puzzle', href: '/holy-puzzle', group: 'faith' },
+		{ id: 'football', key: 'mode.football', href: '/football', group: 'fun' },
+		{ id: 'car', key: 'mode.car', href: '/car', group: 'fun' },
+		{ id: 'bird', key: 'mode.bird', href: '/bird', group: 'fun' },
+		{ id: 'kitchen', key: 'mode.kitchen', href: '/kitchen', group: 'habits' },
+		{ id: 'teeth', key: 'mode.teeth', href: '/teeth', group: 'habits' },
+		{ id: 'farm', key: 'mode.farm', href: '/farm', group: 'world' },
+		{ id: 'blocks3d', key: 'mode.blocks3d', href: '/blocks-3d', group: 'build' },
+		{ id: 'garden3d', key: 'mode.garden3d', href: '/garden-3d', group: 'build' },
 		{ id: 'car3d', key: 'mode.car3d', href: '/toy-car', group: 'drive' },
 		{ id: 'race3d', key: 'mode.race3d', href: '/race', group: 'drive' },
 		{ id: 'highway', key: 'mode.highway', href: '/highway', group: 'drive' },
@@ -41,13 +42,20 @@
 
 	// Search (for grown-ups): matches a game's Bengali or English name, or its id.
 	let query = $state('');
-	const norm = (x: string) => x.toLowerCase().normalize('NFC').replace(/s+/g, ' ').trim();
+	const norm = (x: string) => x.toLowerCase().normalize('NFC').replace(/\s+/g, ' ').trim();
 	const matches = (m: (typeof modes)[number]) => {
 		const q = norm(query);
 		if (!q) return true;
 		return [narrationText(m.key, 'bn-BD', true), narrationText(m.key, 'en-US', true), m.id.replace(/-/g, ' ')].some((n) => norm(n).includes(q));
 	};
-	const shown = $derived(modes.filter(matches));
+	/** Tap a category button to see only that kind of game ('all' shows everything). */
+	let only = $state<PickerGroup | 'all'>('all');
+	const shown = $derived(modes.filter((m) => matches(m) && (only === 'all' || m.group === only)));
+	const groupsWithGames = PICKER_GROUPS.filter((g) => modes.some((m) => m.group === g.id));
+	function pick(g: PickerGroup | 'all') {
+		only = only === g ? 'all' : g;
+		say(only === 'all' ? 'picker.all' : `picker.group.${only}`, { interrupt: true });
+	}
 
 	const label = (key: string) =>
 		narrationText(key, $settings.language, $settings.islamicExpressionsEnabled);
@@ -75,6 +83,12 @@
 		/>
 		{#if query}<button class="clear" aria-label={$settings.language === 'bn-BD' ? 'মুছে দিই' : 'Clear'} onclick={() => (query = '')}>✕</button>{/if}
 	</div>
+	<div class="chips" role="group" aria-label={label('picker.all')}>
+		<button class="chip" data-chip="all" aria-pressed={only === 'all'} onclick={() => pick('all')}><span aria-hidden="true">✨</span> {label('picker.all')}</button>
+		{#each groupsWithGames as g (g.id)}
+			<button class="chip" data-chip={g.id} aria-pressed={only === g.id} onclick={() => pick(g.id)}><span aria-hidden="true">{g.icon}</span> {label(`picker.group.${g.id}`)}</button>
+		{/each}
+	</div>
 	{#if shown.length === 0}
 		<p class="nothing" data-testid="no-results"><span aria-hidden="true">🙈</span> {$settings.language === 'bn-BD' ? 'কিছু পাওয়া যায়নি। অন্য নাম লিখে দেখি।' : 'Nothing found. Try another name.'}</p>
 	{/if}
@@ -92,6 +106,9 @@
 					{:else if m.id === 'matching'}
 						<circle cx="40" cy="55" r="26" fill="var(--learn-green)" stroke="var(--text-primary)" stroke-width="4" />
 						<polygon points="120,22 129,46 154,46 134,61 141,86 120,71 99,86 106,61 86,46 111,46" fill="none" stroke="var(--text-primary)" stroke-width="4" stroke-dasharray="8 6" stroke-linejoin="round" />
+					{:else if m.id === 'simple-math'}
+						<rect x="22" y="14" width="116" height="82" rx="18" fill="var(--surface)" stroke="var(--text-primary)" stroke-width="4" />
+						<path d="M40 42h30m-15-15v30m35-15h30M40 74h30m20 0h30" stroke="var(--learn-blue)" stroke-width="7" stroke-linecap="round" />
 					{:else if m.id === 'numbers'}
 						{#each [30, 80, 130] as x (x)}
 							<circle cx={x} cy="40" r="20" fill="var(--learn-blue)" stroke="var(--text-primary)" stroke-width="3" />
@@ -332,6 +349,43 @@
 		margin: 20px 0;
 		font-size: 24px;
 		color: var(--text-secondary);
+	}
+	.chips {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
+		gap: 10px;
+		width: min(1180px, 100%);
+	}
+	.chip {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		min-height: 52px;
+		padding: 6px 16px;
+		border: 3px solid var(--border-soft);
+		border-radius: 999px;
+		background: var(--surface);
+		color: var(--text-primary);
+		font-size: 19px;
+		font-weight: 700;
+		cursor: pointer;
+		transition: transform 150ms ease;
+	}
+	.chip span {
+		font-size: 24px;
+	}
+	.chip:hover {
+		transform: translateY(-2px);
+	}
+	.chip[aria-pressed='true'] {
+		border-color: var(--text-primary);
+		background: var(--text-primary);
+		color: var(--surface);
+	}
+	.chip:focus-visible {
+		outline: 4px solid var(--text-primary);
+		outline-offset: 3px;
 	}
 	.group-title {
 		margin: 10px 0 0;
