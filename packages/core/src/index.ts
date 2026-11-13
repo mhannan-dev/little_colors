@@ -36,3 +36,5 @@ export * from './teeth/teeth.ts';
 export * from './train/train.ts';
 export * from './farm/farm.ts';
 export * from './sorter/sorter.ts';
+// Rumi's Helicopter (Claude).
+export * from './heli/heli.ts';

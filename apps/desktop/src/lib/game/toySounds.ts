@@ -129,3 +129,8 @@ export function boing(): void {
 
 /** The call each animal makes when tapped. */
 export const ANIMAL_CALL: Record<string, () => void> = { cow: moo, hen: cluck, duck: quack, goat: baa, sheep: baa, cat: meow, dog: woof, rabbit: squeak };
+
+/** One soft "whup" of the rotor; `lift` (0–1) makes it a little higher and stronger. */
+export function whup(lift = 0): void {
+	hiss(0, 0.09, 180 + lift * 90, 0.09 + lift * 0.05, 0.9);
+}

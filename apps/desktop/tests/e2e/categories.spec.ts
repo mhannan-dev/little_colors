@@ -11,7 +11,7 @@ test('category buttons show one kind of game at a time', async ({ page }) => {
 	await page.locator('[data-chip="drive"]').click();
 	await expect(page.locator('[data-chip="drive"]')).toHaveAttribute('aria-pressed', 'true');
 	await expect(page.locator('.cards')).toHaveCount(1);
-	await expect(page.locator('.cards[data-group="drive"] button.card')).toHaveCount(5);
+	await expect(page.locator('.cards[data-group="drive"] button.card')).toHaveCount(6);
 	await page.screenshot({ path: 'test-results/categories-drive.png' });
 
 	await page.locator('[data-chip="habits"]').click();

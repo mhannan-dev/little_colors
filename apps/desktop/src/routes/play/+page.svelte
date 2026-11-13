@@ -34,6 +34,7 @@
 		{ id: 'highway', key: 'mode.highway', href: '/highway', group: 'drive' },
 		{ id: 'bike', key: 'mode.bike', href: '/bike', group: 'drive' },
 		{ id: 'train', key: 'mode.rail', href: '/train', group: 'drive' },
+		{ id: 'heli', key: 'mode.heli', href: '/helicopter', group: 'drive' },
 		{ id: 'city-bus-driver', key: 'mode.city-bus-driver', href: '/city-bus-driver', group: 'older' },
 		{ id: 'formula-circuit', key: 'mode.formula-circuit', href: '/formula-circuit', group: 'older' },
 		{ id: 'world-soccer', key: 'mode.world-soccer', href: '/world-soccer', group: 'older' },
@@ -140,6 +141,14 @@
 						<ellipse cx="118" cy="76" rx="24" ry="18" fill="#ffffff" stroke="var(--text-primary)" stroke-width="4" />
 						<circle cx="118" cy="50" r="14" fill="#ffffff" stroke="var(--text-primary)" stroke-width="4" />
 						<ellipse cx="112" cy="76" rx="7" ry="6" fill="var(--text-primary)" /><ellipse cx="118" cy="56" rx="7" ry="5" fill="#F7B6C2" />
+				{:else if m.id === 'heli'}
+						<path d="M22 18 H138" stroke="var(--text-primary)" stroke-width="6" stroke-linecap="round" />
+						<rect x="76" y="18" width="8" height="14" fill="var(--text-primary)" />
+						<path d="M40 60 H18 M18 50 v20" stroke="var(--learn-yellow)" stroke-width="8" stroke-linecap="round" />
+						<ellipse cx="86" cy="58" rx="42" ry="28" fill="var(--learn-yellow)" stroke="var(--text-primary)" stroke-width="4" />
+						<path d="M96 36 a26 24 0 0 1 30 26 H96Z" fill="#BFE7FA" stroke="var(--text-primary)" stroke-width="3" />
+						<circle cx="108" cy="52" r="8" fill="var(--mascot-fur-light)" stroke="var(--text-primary)" stroke-width="2" />
+						<path d="M62 92 H116 M72 86 v6 M106 86 v6" stroke="var(--text-primary)" stroke-width="5" stroke-linecap="round" />
 				{:else if m.id === 'train'}
 						<path d="M6 96 H154" stroke="var(--text-primary)" stroke-width="5" stroke-linecap="round" />
 						<rect x="78" y="52" width="56" height="34" rx="8" fill="var(--learn-red)" stroke="var(--text-primary)" stroke-width="4" />

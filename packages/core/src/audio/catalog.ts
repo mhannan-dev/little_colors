@@ -12,6 +12,7 @@ import { TEETH_NARRATION } from '../teeth/teeth.ts';
 import { RAIL_NARRATION } from '../train/train.ts';
 import { FARM_NARRATION } from '../farm/farm.ts';
 import { SORTER_NARRATION } from '../sorter/sorter.ts';
+import { HELI_NARRATION } from '../heli/heli.ts';
 import { VOICE_MANIFEST, type NarrationEntry } from './voiceManifest.ts';
 
 /**
@@ -32,7 +33,8 @@ export const NARRATION_CATALOG: readonly NarrationEntry[] = [
 	...TEETH_NARRATION,
 	...RAIL_NARRATION,
 	...FARM_NARRATION,
-	...SORTER_NARRATION
+	...SORTER_NARRATION,
+	...HELI_NARRATION
 ];
 
 const BY_KEY = new Map<string, NarrationEntry>();
