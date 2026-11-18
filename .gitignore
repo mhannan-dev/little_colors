@@ -1,18 +1,23 @@
 # ── Dependencies ───────────────────────────────
 node_modules/
 .pnpm-store/
+.npm-cache/
 .pnpm-debug.log*
 
 # ── Build output ───────────────────────────────
 dist/
 build/
 .svelte-kit/
+.vite/
+.cache/
 *.tsbuildinfo
 vite.config.*.timestamp-*
 
 # ── Rust / Tauri ───────────────────────────────
 target/
 apps/desktop/src-tauri/gen/
+# Obsolete native launcher output from before the same-window integration.
+/apps/desktop/src-tauri/companion-games/
 *.pdb
 
 # ── Tests ──────────────────────────────────────
@@ -21,14 +26,24 @@ test-results/
 playwright-report/
 blob-report/
 playwright/.cache/
+# Local browser-check configurations and helper servers.
+/apps/desktop/playwright.*.local.config.ts
+/apps/desktop/playwright.*.verify.config.ts
+/apps/desktop/playwright.tmp-*.config.ts
+/apps/desktop/*-static.local.mjs
 # Note: docs/ui/*.png (UI gallery) IS committed on purpose.
 
 # ── Environment / secrets ──────────────────────
 .env
 .env.*
 !.env.example
+!.env.*.example
 *.pem
 *.key
+*.keystore
+*.jks
+*.p12
+*.pfx
 
 # ── Logs ───────────────────────────────────────
 *.log
