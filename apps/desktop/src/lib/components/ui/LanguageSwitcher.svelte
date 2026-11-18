@@ -34,6 +34,7 @@
 		border: 3px solid var(--border-soft);
 		border-radius: var(--radius-lg);
 		background: var(--surface);
+		box-shadow: inset 0 2px 5px color-mix(in srgb, var(--text-primary) 6%, transparent);
 	}
 	button {
 		min-height: 44px;
@@ -48,5 +49,6 @@
 	button[aria-pressed='true'] {
 		border-color: var(--text-primary);
 		background: var(--bg-secondary);
+		box-shadow: 0 2px 5px color-mix(in srgb, var(--text-primary) 10%, transparent);
 	}
 </style>

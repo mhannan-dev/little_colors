@@ -1,0 +1,23 @@
+/* Opt-in surfaces: keep canvas dimensions and projected tap targets unchanged. */
+.game-viewport {
+	outline: 1px solid color-mix(in srgb, var(--text-primary) 12%, transparent);
+	outline-offset: -1px;
+	box-shadow: var(--panel-shadow);
+	background: var(--bg-secondary);
+}
+.game-progress {
+	align-self: center;
+	padding: 8px 16px;
+	border-radius: 999px;
+	background: var(--surface);
+	box-shadow: 0 2px 8px color-mix(in srgb, var(--text-primary) 6%, transparent);
+}
+.game-progress > span.pdot, .game-progress > span.dot {
+	border-color: color-mix(in srgb, var(--learn-green) 25%, var(--border-soft));
+	background: var(--bg-secondary);
+}
+.game-progress > span.pdot.filled, .game-progress > span.dot.filled {
+	border-color: var(--learn-green);
+	background: var(--learn-green);
+	box-shadow: inset 0 2px 0 #ffffff50;
+}

@@ -26,6 +26,11 @@ export const NUMBERS_NARRATION: NarrationEntry[] = [
 	...FLOWER_NARRATION,
 	...ANIMAL_NARRATION,
 	...COLOR_BLOCKS_NARRATION,
+	{ key: 'mode.table-tennis', bn: 'থ্রিডি টেবিল টেনিস', en: '3D Table Tennis' },
+	{ key: 'table-tennis.intro', bn: 'লাল প্যাডল সরিয়ে বল ফেরত দাও! শুরু করতে বল ছাড়ো বোতাম চাপো।', en: 'Move your red paddle to return the ball! Tap Serve to begin.' },
+	{ key: 'table-tennis.ready', bn: 'বল ছাড়ো, একসঙ্গে খেলি!', en: 'Serve when you are ready. Let’s play together!' },
+	{ key: 'table-tennis.return', bn: 'দারুণ! বল ফেরত দিয়েছ!', en: 'Lovely return! Keep playing!' },
+	{ key: 'table-tennis.again', bn: 'আবার বল ছাড়ি! প্যাডলটি বলের সামনে রাখো।', en: 'Let’s serve again! Move your paddle in front of the ball.' },
 	// Simple Math (Codex, finished by Claude): no stars or score (PR-07), gentle retries (PR-08).
 	{ key: "mode.simple-math", bn: "সহজ অঙ্ক", en: "Simple Math" },
 	{ key: "simple-math.intro", bn: "আপেল গুনি আর যোগ-বিয়োগ করি! ঠিক সংখ্যাটায় ট্যাপ করো।", en: "Let's count apples and add or take away! Tap the right number." },

@@ -346,7 +346,7 @@
 			</div>
 		</div>
 	{:else if activity && ctx}
-		<div class="progress" aria-hidden="true">
+		<div class="progress game-progress" aria-hidden="true">
 			{#each round.activities as a, i (a.id)}
 				<span class="dot" class:filled={i < index || (i === index && mState === 'COMPLETE')}></span>
 			{/each}

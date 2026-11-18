@@ -150,6 +150,10 @@
 </div>
 
 <style>
+	.game { --hud-surface: #241538; --hud-ink: #faf2ff; }
+	.options { padding: 18px; border: 1px solid #72518d66; border-radius: 22px; background: linear-gradient(150deg, #302044b3, #160e2be6); box-shadow: 0 16px 36px #07031b40; }
+	.player { box-shadow: inset 0 1px 0 #ffffff12, 0 5px 12px #07031b30; }
+	.variants button { min-height: 54px; }
 	.game { display: flex; flex: 1; flex-direction: column; min-height: 100%; color: #faf2ff; background: radial-gradient(ellipse at 10% 0%, #42205a, transparent 58%), radial-gradient(ellipse at 85% 100%, #152f54, transparent 45%), #130d2b; }
 	.game > :global(header .icon), .game > :global(header .language-switcher) { background: #241538; border-color: #624783; }
 	.game > :global(header .language-switcher button) { background: #241538; }

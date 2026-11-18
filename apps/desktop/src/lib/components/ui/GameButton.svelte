@@ -92,14 +92,16 @@
 		border-radius: var(--radius-xl);
 		cursor: pointer;
 		font-weight: 700;
+		box-shadow: var(--control-shadow), inset 0 2px 0 #ffffff38;
 		transition: transform 180ms var(--spring-out), box-shadow 180ms ease;
 	}
 	.game-button:hover {
 		transform: translateY(-2px);
-		box-shadow: var(--contact-shadow);
+		box-shadow: var(--contact-shadow), inset 0 2px 0 #ffffff38;
 	}
 	.game-button:active {
 		transform: translateY(1px) scale(.98);
+		box-shadow: inset 0 2px 5px #26323820;
 	}
 	.game-button.reduced { transition: none; }
 	.game-button.reduced:hover, .game-button.reduced:active { transform: none; }
@@ -125,7 +127,7 @@
 		font-size: 18px;
 	}
 	.primary {
-		background: var(--text-primary);
+		background: linear-gradient(160deg, color-mix(in srgb, var(--text-primary) 85%, var(--learn-blue)), var(--text-primary));
 		color: var(--bg-primary);
 	}
 	.secondary {
@@ -135,8 +137,9 @@
 	}
 	/* "Go" actions (play, next) are always the green arrow, a cue Rumi can name aloud. */
 	.go {
-		background: var(--learn-green);
+		background: linear-gradient(165deg, var(--learn-green), color-mix(in srgb, var(--learn-green) 78%, #15472e));
 		border-color: var(--text-primary);
 		color: #fff;
 	}
+	@media(max-width:700px) { .large, .has-icon.large { padding-inline: 22px; } }
 </style>

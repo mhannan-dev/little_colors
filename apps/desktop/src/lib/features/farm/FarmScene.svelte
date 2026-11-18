@@ -647,7 +647,7 @@
 	data-suggest={suggest ?? ''}
 	data-done={done}
 >
-	<div class="view">
+	<div class="view game-viewport">
 		{#key canvasKey}<canvas bind:this={canvas} aria-hidden="true"></canvas>{/key}
 		{#if failed}
 			<div class="flat">
@@ -736,6 +736,8 @@
 		border-radius: 999px;
 		background: rgba(255, 255, 255, 0.82);
 		box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+		border: 1px solid #ffffffb3;
+		backdrop-filter: blur(12px);
 	}
 	.job-chip {
 		position: relative;
@@ -755,6 +757,7 @@
 	}
 	.job-chip.done {
 		background: #d8f3dc;
+		box-shadow: inset 0 0 0 2px #83bd92;
 	}
 	.job-chip b {
 		position: absolute;
@@ -786,6 +789,8 @@
 		border-radius: var(--radius-xl);
 		background: rgba(255, 255, 255, 0.88);
 		box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+		border: 1px solid #ffffffc9;
+		backdrop-filter: blur(12px);
 	}
 	.flat {
 		position: absolute;

@@ -762,7 +762,7 @@
 	{/if}
 
 	<div class="drive" class:hidden={!location}>
-		<div class="view">
+		<div class="view game-viewport">
 			{#key canvasKey}<canvas bind:this={canvas} aria-hidden="true"></canvas>{/key}
 			{#if location && !ready && !failed}<RumiLoading overlay delay={150} />{/if}
 			{#if failed}

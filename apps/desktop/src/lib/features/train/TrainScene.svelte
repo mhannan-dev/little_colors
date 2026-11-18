@@ -800,7 +800,7 @@
 	data-whistles={whistles}
 	data-done={finished}
 >
-	<div class="view">
+	<div class="view game-viewport">
 		{#key canvasKey}<canvas bind:this={canvas} aria-hidden="true"></canvas>{/key}
 		{#if station && (phase === 'board' || phase === 'aboard')}
 			<div class="station-card" style:--c={STATION_COLORS[station.color].hex} aria-hidden="true">

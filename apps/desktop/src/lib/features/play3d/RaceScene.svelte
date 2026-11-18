@@ -836,7 +836,7 @@
 				</div>
 			</div>
 		{/if}
-		<div class="view" data-answer={a?.answerId}>
+		<div class="view game-viewport" data-answer={a?.answerId}>
 			<canvas bind:this={canvas} aria-hidden="true"></canvas>
 			{#if failed && set && a && !roundDone}
 				<div class="flat-options">

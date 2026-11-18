@@ -582,13 +582,13 @@
 
 	<div class="stage" class:hidden={!set || roundDone}>
 		{#if set && round && !roundDone}
-			<div class="progress" aria-hidden="true">
+			<div class="progress game-progress" aria-hidden="true">
 				{#each round.activities as x, i (x.id)}
 					<span class="pdot" class:filled={i < index || (i === index && mState === 'COMPLETE')}></span>
 				{/each}
 			</div>
 		{/if}
-		<div class="view" data-answer={a?.answerId}>
+		<div class="view game-viewport" data-answer={a?.answerId}>
 			<canvas bind:this={canvas} aria-hidden="true"></canvas>
 			{#if failed && set && a && !roundDone}
 				<div class="flat-options">

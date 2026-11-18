@@ -205,7 +205,7 @@
 			</div>
 		</div>
 	{:else if order}
-		<div class="progress" aria-hidden="true">
+		<div class="progress game-progress" aria-hidden="true">
 			{#each round.orders as o, i (o.id)}
 				<span class="pdot" class:filled={i < index || (i === index && phase === 'thanks')}></span>
 			{/each}

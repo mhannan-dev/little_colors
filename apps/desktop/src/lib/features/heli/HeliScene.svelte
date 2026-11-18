@@ -781,7 +781,7 @@
 	data-floor={floorAt(hx).toFixed(2)}
 	data-done={finished}
 >
-	<div class="view">
+	<div class="view game-viewport">
 		{#key canvasKey}<canvas bind:this={canvas} aria-hidden="true"></canvas>{/key}
 		{#if mode === 'pick'}
 			<div class="picker">

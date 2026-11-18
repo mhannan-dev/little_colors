@@ -224,7 +224,12 @@
 </section>
 
 <style>
-	.soccer { flex: 1; min-height: 100%; padding: 20px clamp(12px, 3vw, 40px) 24px; background: #101e2a; color: #eff8f0; font: 16px/1.35 system-ui, sans-serif; }
+	.brand-ball { box-shadow: inset 0 1px 0 #ffffff28, 0 6px 20px #060f1838; }
+	.panel { box-shadow: 0 16px 40px #060f1838; }
+	.scoreboard { box-shadow: inset 0 1px 0 #ffffff10, 0 8px 20px #060f1830; }
+	.pitch { border-radius: 18px; box-shadow: 0 16px 40px #060f1840; }
+	.primary { box-shadow: 0 4px 0 #89aa68, 0 8px 18px #060f1830; }
+	.soccer { flex: 1; min-height: 100%; padding: 20px clamp(12px, 3vw, 40px) 24px; background: radial-gradient(ellipse at 30% 0%, #294c4259, transparent 65%), #101e2a; color: #eff8f0; font: 16px/1.35 system-ui, sans-serif; }
 	.masthead { display: flex; align-items: center; gap: 12px; max-width: 1120px; margin: 0 auto 18px; }
 	.brand { display: flex; align-items: center; gap: 12px; flex: 1; }
 	.brand-ball { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; background: #2d4c45; font-size: 26px; }
@@ -243,7 +248,7 @@
 	.goals { display: flex; gap: 8px; align-items: center; font-weight: 800; font-size: 22px; font-variant-numeric: tabular-nums; }
 	.goals b { color: #9bc3b0; }
 	.pitch { display: block; width: 100%; max-width: 540px; max-height: calc(100dvh - 152px); min-height: 220px; height: auto; touch-action: none; user-select: none; }
-	.panel { display: flex; flex-direction: column; gap: 10px; background: #1b303d; border: 1px solid #355259; padding: 20px; border-radius: 16px; }
+	.panel { display: flex; flex-direction: column; gap: 10px; background: linear-gradient(145deg, #29445166, transparent), #1b303d; border: 1px solid #355259; padding: 20px; border-radius: 16px; }
 	.panel h2 { margin: 0 0 3px; font-size: 25px; line-height: 1.1; }
 	.panel label { font-size: 14px; color: #c7d8d1; }
 	.detail { margin: 0; color: #c7d8d1; font-size: 14px; line-height: 1.45; }

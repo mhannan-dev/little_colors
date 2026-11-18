@@ -22,15 +22,18 @@
 		{ id: 'color-blocks', key: 'mode.color-blocks', href: '/color-blocks', group: 'shapes' },
 		{ id: 'holy-puzzle', key: 'mode.holy-puzzle', href: '/holy-puzzle', group: 'faith' },
 		{ id: 'football', key: 'mode.football', href: '/football', group: 'fun' },
+		{ id: 'table-tennis', key: 'mode.table-tennis', href: '/table-tennis', group: 'fun' },
 		{ id: 'car', key: 'mode.car', href: '/car', group: 'fun' },
 		{ id: 'bird', key: 'mode.bird', href: '/bird', group: 'fun' },
 		{ id: 'kitchen', key: 'mode.kitchen', href: '/kitchen', group: 'habits' },
 		{ id: 'teeth', key: 'mode.teeth', href: '/teeth', group: 'habits' },
 		{ id: 'farm', key: 'mode.farm', href: '/farm', group: 'world' },
+		{ id: 'animal-safari', key: 'mode.animal-safari', href: '/animal-safari', group: 'world' },
 		{ id: 'blocks3d', key: 'mode.blocks3d', href: '/blocks-3d', group: 'build' },
 		{ id: 'garden3d', key: 'mode.garden3d', href: '/garden-3d', group: 'build' },
 		{ id: 'car3d', key: 'mode.car3d', href: '/toy-car', group: 'drive' },
 		{ id: 'race3d', key: 'mode.race3d', href: '/race', group: 'drive' },
+		{ id: 'learning-runner', key: 'mode.learning-runner', href: '/learning-runner', group: 'drive' },
 		{ id: 'highway', key: 'mode.highway', href: '/highway', group: 'drive' },
 		{ id: 'bike', key: 'mode.bike', href: '/bike', group: 'drive' },
 		{ id: 'train', key: 'mode.rail', href: '/train', group: 'drive' },
@@ -47,7 +50,7 @@
 	const matches = (m: (typeof modes)[number]) => {
 		const q = norm(query);
 		if (!q) return true;
-		return [narrationText(m.key, 'bn-BD', true), narrationText(m.key, 'en-US', true), m.id.replace(/-/g, ' ')].some((n) => norm(n).includes(q));
+		return [modeText(m.key, 'bn-BD'), modeText(m.key, 'en-US'), m.id.replace(/-/g, ' ')].some((n) => norm(n).includes(q));
 	};
 	/** Tap a category button to see only that kind of game ('all' shows everything). */
 	let only = $state<PickerGroup | 'all'>('all');
@@ -58,12 +61,17 @@
 		say(only === 'all' ? 'picker.all' : `picker.group.${only}`, { interrupt: true });
 	}
 
-	const label = (key: string) =>
-		narrationText(key, $settings.language, $settings.islamicExpressionsEnabled);
+	function modeText(key: string, language: 'bn-BD' | 'en-US') {
+		if (key === 'mode.animal-safari') return language === 'bn-BD' ? 'রুমির প্রাণী সাফারি থ্রিডি' : 'Rumi’s Animal Safari 3D';
+		if (key === 'mode.learning-runner') return language === 'bn-BD' ? 'রুমির শেখার পথ' : 'Rumi’s Learning Trail';
+		return narrationText(key, language, $settings.islamicExpressionsEnabled);
+	}
+	const label = (key: string) => modeText(key, $settings.language);
+	const speakMode = (key: string) => say(key === 'mode.learning-runner' ? 'match.instruction.both' : key === 'mode.animal-safari' ? 'mode.animals' : key, { interrupt: true });
 
 	// SC-11: a tap opens the mode and speaks its label; keyboard focus alone speaks it.
 	function open(m: (typeof modes)[number]) {
-		say(m.key, { interrupt: true });
+		speakMode(m.key);
 		void goto(m.href);
 	}
 </script>
@@ -97,9 +105,25 @@
 	<h3 class="group-title" data-group={g.id}><span aria-hidden="true">{g.icon}</span> {label(`picker.group.${g.id}`)}</h3>
 	<div class="cards" data-group={g.id}>
 		{#each shown.filter((m) => m.group === g.id) as m (m.id)}
-			<button class="card" onclick={() => open(m)} onfocus={() => say(m.key, { interrupt: true })}>
+			<button class="card" onclick={() => open(m)} onfocus={() => speakMode(m.key)}>
 				<svg viewBox="0 0 160 110" width="160" height="112" aria-hidden="true">
-					{#if m.id === 'mixing'}
+					{#if m.id === 'animal-safari'}
+						<path d="M8 99Q80 42 152 99" fill="#c9dfa7" />
+						<path d="M14 105Q45 54 111 73" fill="none" stroke="#dfc498" stroke-width="15" />
+						<ellipse cx="105" cy="44" rx="28" ry="22" fill="#aabcc3" /><circle cx="82" cy="35" r="18" fill="#b6c7cc" /><ellipse cx="95" cy="33" rx="10" ry="15" fill="#c6d3d6" />
+						<path d="M70 43q-8 26 5 24" fill="none" stroke="#aabcc3" stroke-width="9" stroke-linecap="round" /><circle cx="76" cy="32" r="2.5" fill="#263238" />
+						<path d="M101 59v15m19-15v15" stroke="#aabcc3" stroke-width="9" stroke-linecap="round" />
+						<rect x="26" y="77" width="48" height="21" rx="5" fill="#5b9574" /><path d="M32 77V63h30v14" fill="#f4d27a" /><circle cx="36" cy="99" r="7" fill="#34433d" /><circle cx="64" cy="99" r="7" fill="#34433d" />
+						<path d="M142 63V29" stroke="#9c7854" stroke-width="6" /><ellipse cx="139" cy="22" rx="21" ry="12" fill="#559578" />
+					{:else if m.id === 'learning-runner'}
+						<path d="M20 106Q28 67 67 69T111 29" stroke="#b2cfa3" stroke-width="28" fill="none" />
+						<path d="M20 106Q28 67 67 69T111 29" stroke="#e6cfa4" stroke-width="17" fill="none" />
+						<circle cx="61" cy="28" r="14" fill="var(--mascot-fur)" stroke="var(--text-primary)" stroke-width="3" />
+						<path d="m59 44 7 24m-7-15-16 9m19-6 17-9m-14 21-15 19m16-19 15 16" stroke="var(--mascot-fur)" stroke-width="10" stroke-linecap="round" />
+						<path d="m52 45 20-2" stroke="var(--mascot-scarf)" stroke-width="6" stroke-linecap="round" />
+						<circle cx="119" cy="23" r="10" fill="var(--learn-red)" stroke="var(--text-primary)" stroke-width="2" />
+						<path d="m134 50 12 23h-24Z" fill="var(--learn-yellow)" stroke="var(--text-primary)" stroke-width="2" />
+					{:else if m.id === 'mixing'}
 						<circle cx="80" cy="45" r="32" fill="var(--learn-orange)" stroke="var(--text-primary)" stroke-width="4" />
 						<polygon points="80,30 90,37 86,48 74,48 70,37" fill="var(--text-primary)" />
 						<rect x="14" y="70" width="34" height="34" rx="8" fill="var(--learn-red)" stroke="var(--text-primary)" stroke-width="3" />
@@ -179,6 +203,12 @@
 						<path d="M34 24h92v62H34z M34 55h92 M59 24v15h42V24 M59 86V71h42v15" fill="none" stroke="#edf5df" stroke-width="3" />
 						<circle cx="80" cy="55" r="15" fill="#faf4de" stroke="#20483f" stroke-width="3" />
 						<path d="M80 46l8 6-3 9H75l-3-9Z" fill="#20483f" />
+					{:else if m.id === 'table-tennis'}
+						<rect x="18" y="25" width="124" height="62" rx="8" fill="var(--learn-blue)" stroke="var(--text-primary)" stroke-width="4" />
+						<path d="M80 25v62m-62-31h124" stroke="var(--surface)" stroke-width="3" />
+						<circle cx="42" cy="69" r="17" fill="var(--learn-red)" stroke="var(--text-primary)" stroke-width="3" />
+						<path d="M42 86v15" stroke="var(--text-primary)" stroke-width="8" />
+						<circle cx="109" cy="37" r="8" fill="var(--surface)" stroke="var(--text-primary)" stroke-width="2" />
 					{:else if m.id === 'football'}
 						<circle cx="80" cy="50" r="32" fill="var(--learn-orange)" stroke="var(--text-primary)" stroke-width="4" />
 						<polygon points="80,30 90,39 84,52 72,52 66,39" fill="var(--text-primary)" />

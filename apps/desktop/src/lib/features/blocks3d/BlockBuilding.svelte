@@ -476,6 +476,16 @@
 </section>
 
 <style>
+	aside { box-shadow: var(--panel-shadow); }
+	.board { box-shadow: var(--panel-shadow); }
+	.board-label { border: 1px solid #ffffffbf; box-shadow: 0 4px 12px #35534318; backdrop-filter: blur(8px); }
+	.view-tools { padding: 8px 12px; border: 1px solid var(--border-soft); border-radius: 20px; background: var(--surface); box-shadow: 0 4px 14px #3553430d; }
+	.mode-tabs { padding: 4px; border-radius: 16px; background: #e9efe5; }
+	.mode-tabs button.tab-active { box-shadow: 0 3px 6px #35534330; }
+	.tools button[aria-pressed='true'] { box-shadow: inset 0 0 0 1px #526e63; }
+	.mission-card.active-card { border-left-width: 5px; }
+	.bottom-bar { padding: 10px 14px; border: 1px solid var(--border-soft); border-radius: 20px; background: #ffffffb3; }
+	@media(max-width:900px) { .bottom-bar { flex-wrap: wrap; } .history { flex-wrap: wrap; } .view-tools { gap: 6px; padding: 7px; } .view-tools .divider { margin-inline: 2px; } }
 	.builder { display:flex; flex-direction:column; flex:1; min-height:0; width:100%; max-width:1560px; padding:0 28px 12px; margin:auto; gap:12px; }
 	.heading { display:flex; align-items:center; justify-content:space-between; gap:16px; }
 	h1 { margin:0; font-size:34px; line-height:1.2; } .eyebrow { margin:0 0 4px; font-size:14px; color:var(--text-secondary); letter-spacing:0.1em; }
@@ -491,7 +501,7 @@
 	.meter-bar { height:100%; background:#4e9949; border-radius:6px; transition:width 300ms ease-out; }
 	.exit-mission { font-size:14px; padding:4px 10px; min-height:36px; border-radius:10px; background:#fff; border:1px solid #c2d4bc; }
 	.workspace { display:flex; gap:20px; flex:1; min-height:0; }
-	aside { display:flex; flex-direction:column; width:262px; flex-shrink:0; gap:10px; padding:12px; border:2px solid var(--border-soft); border-radius:24px; background:var(--surface); overflow-y:auto; min-height:0; line-height:1.2; }
+	aside { display:flex; flex-direction:column; width:262px; flex-shrink:0; gap:10px; padding:12px; border:2px solid var(--border-soft); border-radius:24px; background:linear-gradient(145deg, var(--surface), #f3f8f1); overflow-y:auto; min-height:0; line-height:1.2; }
 	.mode-tabs { display:flex; gap:6px; margin-bottom:4px; }
 	.mode-tabs button { flex:1; padding:6px 4px; font-size:15px; min-height:40px; border-radius:12px; border:1px solid var(--border-soft); background:#f7f9f3; }
 	.mode-tabs button.tab-active { background:#4f7061; color:#fff; border-color:#3e584c; font-weight:700; }

@@ -318,7 +318,7 @@
 			</div>
 		</div>
 	{:else if a && ctx}
-		<div class="progress" aria-hidden="true">
+		<div class="progress game-progress" aria-hidden="true">
 			{#each round.activities as x, i (x.id)}
 				<span class="pdot" class:filled={i < index || (i === index && mState === 'COMPLETE')}></span>
 			{/each}
@@ -453,6 +453,7 @@
 		border-radius: var(--radius-xl);
 		background: var(--surface);
 		cursor: pointer;
+		box-shadow: var(--control-shadow), inset 0 2px 0 #ffffffa3;
 		transition: transform 250ms ease, border-color 250ms ease;
 	}
 	.option:hover:not([aria-disabled='true']) {
@@ -462,10 +463,11 @@
 		cursor: default;
 	}
 	.option.chosen {
-		border-color: var(--text-secondary);
+		border-color: var(--focus);
 	}
 	.option.won {
-		border-color: var(--text-primary);
+		border-color: var(--learn-green);
+		background: color-mix(in srgb, var(--learn-green) 10%, var(--surface));
 		border-width: 5px;
 		animation: pop 500ms ease-out;
 	}

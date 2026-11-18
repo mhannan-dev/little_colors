@@ -502,7 +502,7 @@
 <TopBar onreplay={() => say(lifted ? 'sorter.pick' : 'sorter.start', { interrupt: true })} />
 
 <section class="sorter" class:paused={$paused} data-ready={ready || failed} data-left={left} data-lifted={lifted ?? ''} data-done={done} data-tries={tries} data-busy={busy} data-hint={hintHole ?? ''}>
-	<div class="view">
+	<div class="view game-viewport">
 		<canvas bind:this={canvas} aria-hidden="true"></canvas>
 		{#if failed}
 			<div class="flat">

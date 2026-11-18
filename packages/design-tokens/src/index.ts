@@ -47,6 +47,8 @@ export const size = {
 export type LearningColorName = keyof typeof learning;
 
 const effects = {
+	'panel-shadow': '0 12px 32px rgba(38, 63, 58, .08), 0 2px 5px rgba(38, 63, 58, .04)',
+	'control-shadow': '0 4px 0 rgba(38, 63, 58, .12), 0 8px 16px rgba(38, 63, 58, .06)',
 	'spring-out': 'cubic-bezier(.22, 1.25, .4, 1)',
 	'spring-settle': 'cubic-bezier(.3, .85, .35, 1.08)',
 	'contact-shadow': '0 5px 8px rgba(43, 49, 42, .15), 0 13px 20px rgba(43, 49, 42, .07)'

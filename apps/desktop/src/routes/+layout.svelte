@@ -20,7 +20,7 @@
 	const BASE_H = 800;
 	let scale = $state(1);
 	let viewportH = $state(800);
-	const layoutScale = $derived(page.route.id === '/world-soccer' || page.route.id === '/tic-tac-toe' ? 1 : scale);
+	const layoutScale = $derived(page.route.id === '/world-soccer' || page.route.id === '/tic-tac-toe' || page.route.id === '/learning-runner' || page.route.id === '/animal-safari' ? 1 : scale);
 	function fit() {
 		viewportH = window.innerHeight;
 		scale = Math.max(

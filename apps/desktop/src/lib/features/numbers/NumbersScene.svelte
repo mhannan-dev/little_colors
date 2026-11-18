@@ -312,7 +312,7 @@
 			</div>
 		</div>
 	{:else if q && ctx}
-		<div class="progress" aria-hidden="true">
+		<div class="progress game-progress" aria-hidden="true">
 			{#each round.activities as a, i (a.id)}
 				<span class="pdot" class:filled={i < index || (i === index && mState === 'COMPLETE')}></span>
 			{/each}

@@ -26,7 +26,8 @@
 	const unhover = () => hoverTimer && clearTimeout(hoverTimer);
 </script>
 
-<div class="picker">
+	<div class="picker" class:reduced={$settings.reducedMotion}>
+	<div class="intro"><span aria-hidden="true">✦</span><h1>{$settings.language === 'bn-BD' ? 'আজ কী নিয়ে খেলব?' : 'What shall we play with?'}</h1><p>{$settings.language === 'bn-BD' ? 'পছন্দের কার্ডে ট্যাপ করি, একসঙ্গে শিখি।' : 'Pick a card. Let’s learn and explore together.'}</p></div>
 	{#each cards as c (c.set)}
 		<button
 			class="card"
@@ -47,6 +48,7 @@
 				{/each}
 			</span>
 			<span class="name">{name(c.set)}</span>
+			<span class="start" aria-hidden="true">↗</span>
 		</button>
 	{/each}
 	{#if onfree}
@@ -69,6 +71,7 @@
 		>
 			<span class="cubes" aria-hidden="true"><span class="cube free">🏎️</span><span class="cube free">🎈</span></span>
 			<span class="name">{narrationText('race.free.card', $settings.language, true)}</span>
+			<span class="start" aria-hidden="true">↗</span>
 		</button>
 	{/if}
 </div>
@@ -80,18 +83,27 @@
 		flex-wrap: wrap;
 		align-items: center;
 		justify-content: center;
-		gap: 36px;
+		gap: 24px;
 		padding: 24px;
+		align-content: center;
+		width: 100%;
+		background: radial-gradient(ellipse at 50% 35%, #e9f3ec 0, transparent 65%);
 	}
+	.intro { flex-basis: 100%; text-align: center; margin-bottom: 16px; }
+	.intro > span { color: var(--learn-green); font-size: 30px; }
+	h1 { margin: 4px 0; font-size: 34px; line-height: 1.25; }
+	p { margin: 8px 0 0; color: var(--text-secondary); font-size: 19px; }
 	.card {
+		position: relative;
 		display: flex;
 		flex-direction: column;
 		align-items: center;
 		gap: 18px;
-		padding: 28px 30px 22px;
-		border: 4px solid var(--border-soft);
+		padding: 32px 20px 54px;
+		border: 2px solid color-mix(in srgb, var(--card) 25%, var(--border-soft));
 		border-radius: var(--radius-xl);
-		background: var(--surface);
+		background: linear-gradient(155deg, var(--surface) 40%, color-mix(in srgb, var(--card) 9%, var(--surface)));
+		box-shadow: var(--panel-shadow), inset 0 3px 0 var(--surface);
 		cursor: pointer;
 		transition: transform 250ms ease, border-color 250ms ease;
 	}
@@ -100,6 +112,8 @@
 		transform: translateY(-6px);
 		border-color: var(--card);
 	}
+	.card:active { transform: translateY(1px); }
+	.start { position: absolute; bottom: 14px; right: 18px; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: color-mix(in srgb, var(--card) 12%, var(--surface)); color: var(--text-primary); font-size: 20px; }
 	.cubes {
 		display: flex;
 		gap: 10px;
@@ -107,8 +121,8 @@
 	.cube {
 		display: grid;
 		place-items: center;
-		width: 76px;
-		height: 76px;
+		width: clamp(56px, 5vw, 76px);
+		height: clamp(56px, 5vw, 76px);
 		border-radius: 16px;
 		background: var(--card);
 		box-shadow: inset 0 0 0 9px var(--card), inset 0 0 0 40px var(--surface), 0 6px 0 rgba(0, 0, 0, 0.15);
@@ -120,8 +134,9 @@
 	.cube.free {
 		font-size: 40px;
 	}
+	.card[data-set='bangla'] .cube { font-size: 34px; }
 	.name {
-		font-size: 26px;
+		font-size: 24px;
 		font-weight: 700;
 		color: var(--text-primary);
 	}
@@ -129,5 +144,8 @@
 		.card {
 			transition: none;
 		}
+		.card:hover, .card:active { transform: none; }
 	}
+	.reduced .card { transition: none; } .reduced .card:hover, .reduced .card:active { transform: none; }
+	@media(max-height:700px) { .intro { margin-bottom: 0; } .intro > span { display: none; } .card { padding-top: 24px; padding-bottom: 42px; } }
 </style>
