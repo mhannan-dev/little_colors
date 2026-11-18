@@ -10,6 +10,10 @@ build/
 .svelte-kit/
 .vite/
 .cache/
+.output/
+.vercel/
+.netlify/
+.wrangler/
 *.tsbuildinfo
 vite.config.*.timestamp-*
 
@@ -44,6 +48,9 @@ playwright/.cache/
 *.jks
 *.p12
 *.pfx
+.envrc
+.direnv/
+*.mobileprovision
 
 # ── Logs ───────────────────────────────────────
 *.log
@@ -55,12 +62,19 @@ yarn-error.log*
 .idea/
 *.swp
 *.swo
-.vscode/*
-!.vscode/extensions.json
-!.vscode/settings.json
+**/.vscode/*
+!**/.vscode/extensions.json
+!**/.vscode/settings.json
 .claude/settings.local.json
+*.sublime-workspace
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
 
 # ── OS ─────────────────────────────────────────
 .DS_Store
 Thumbs.db
 desktop.ini
+ehthumbs.db
+$RECYCLE.BIN/

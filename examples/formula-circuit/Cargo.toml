@@ -2,6 +2,7 @@
 name = "formula-circuit"
 version = "0.1.0"
 edition = "2024"
+license = "MIT"
 
 [dependencies]
 bevy = { version = "=0.18.1", default-features = false, features = [
